@@ -7,8 +7,13 @@ C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Window
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\Views\ScriptsView.g.cs
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\WidgetWindow.g.cs
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\App.g.cs
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative_Content.g.cs
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative_MarkupCompile.cache
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative_MarkupCompile.lref
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\app.ico
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\sidebar_logo.png
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\Assets\mic_start.wav
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\Assets\mic_stop.wav
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative.exe
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative.deps.json
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative.runtimeconfig.json
@@ -23,6 +28,7 @@ C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Window
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\NAudio.WinMM.dll
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\Microsoft.Windows.SDK.NET.dll
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\WinRT.Runtime.dll
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\App.baml
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\DashboardWindow.baml
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\MainWindow.baml
 C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\WidgetWindow.baml

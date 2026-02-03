@@ -112,7 +112,7 @@ namespace CosmoWhisper
         {
              try 
              { 
-                BlurManager.EnableBlur(this);
+                BlurManager.ApplyMica(this);
                 InitializePreferences(); 
                 CheckAuthStatus();
              } 
@@ -825,11 +825,11 @@ namespace CosmoWhisper
             if (ComboDateTime != null)
             {
                 // Default fallback if not set
-                if (string.IsNullOrEmpty(p.DateTimeFormat)) p.DateTimeFormat = "dd/MM/yyyy";
+                if (string.IsNullOrEmpty(p.SelectedDateFormat)) p.SelectedDateFormat = "dd/MM/yyyy";
                 
                 foreach (ComboBoxItem item in ComboDateTime.Items)
                 {
-                    if (item.Tag?.ToString() == p.DateTimeFormat)
+                    if (item.Tag?.ToString() == p.SelectedDateFormat)
                     {
                         ComboDateTime.SelectedItem = item;
                         break;
@@ -1330,9 +1330,9 @@ namespace CosmoWhisper
             if (!string.IsNullOrEmpty(format))
             {
                 var p = PreferenceManager.Shared.Preferences;
-                if (p.DateTimeFormat != format)
+                if (p.SelectedDateFormat != format)
                 {
-                    p.DateTimeFormat = format;
+                    p.SelectedDateFormat = format;
                     PreferenceManager.Shared.Save();
                 }
             }

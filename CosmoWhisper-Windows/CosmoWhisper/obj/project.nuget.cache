@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "G3NrbNffPO0=",
+  "dgSpecHash": "e2ZR7EoV3vc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
+  "projectFilePath": "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\louis\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",
     "C:\\Users\\louis\\.nuget\\packages\\microsoft.win32.registry\\4.7.0\\microsoft.win32.registry.4.7.0.nupkg.sha512",

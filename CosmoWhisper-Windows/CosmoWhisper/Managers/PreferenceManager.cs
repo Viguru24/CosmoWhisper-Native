@@ -30,6 +30,8 @@ namespace CosmoWhisper.Managers
         // Intelligence: API Keys & AI Models
         public string GroqApiKey { get; set; } = "";
         public string OpenAIApiKey { get; set; } = "";
+        public string AnthropicApiKey { get; set; } = "";
+        public string XAiApiKey { get; set; } = "";
         public string AIModel { get; set; } = "whisper-large-v3";
 
         // Setup: Mic ID & Calibration
@@ -52,7 +54,8 @@ namespace CosmoWhisper.Managers
 
         // Language Settings
         public string InterfaceLanguage { get; set; } = "en-GB"; // Default to UK English
-        public string DateTimeFormat { get; set; } = "dd/MM/yyyy"; // Default to UK Short Date
+        public string SelectedDateFormat { get; set; } = "dd/MM/yyyy";
+        public string SelectedTimeFormat { get; set; } = "HH:mm";
         public bool EnableRegionalSpelling { get; set; } = false; // Auto-convert US/UK spelling
         private double _uiScale = 1.0;
         public double UIScale { get => _uiScale; set { _uiScale = value; OnPropertyChanged(nameof(UIScale)); } }
@@ -66,7 +69,17 @@ namespace CosmoWhisper.Managers
         public string BackendUrl { get; set; } = "http://localhost:5000"; // Default dev URL from the old app
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
-        public int UsageLimitMinutes { get; set; } = 23; // Default limit from the old app's backend
+        public int UsageLimitMinutes { get; set; } = 20; // Corrected 20 minute monthly limit
+        
+        // Cumulative Stats
+        public long TotalWords { get; set; } = 23797; // Using current placeholder as initial
+        public int TotalTranscriptions { get; set; } = 1987; // Using current placeholder as initial
+        public double TotalTimeSavedMinutes { get; set; } = 360; // 6h = 360m
+        
+        // Startup Settings
+        public bool LaunchOnStartup { get; set; } = false;
+        
+        public bool InteractionSoundsEnabled { get; set; } = true;
     }
 
     public class PreferenceManager

@@ -24,7 +24,7 @@ namespace CosmoWhisper
         private Random _rnd = new Random();
         private HotKeyManager _hotKeyManager = new HotKeyManager();
         private MouseButtonManager _mouseButtonManager = new MouseButtonManager();
-        private DashboardWindow _dashboard;
+        public static DashboardWindow _dashboard;
         private Storyboard _soundWaveStoryboard;
         private Storyboard _rippleStoryboard;
         private Storyboard _idleBreathingStoryboard;
@@ -35,9 +35,15 @@ namespace CosmoWhisper
             
             // Apply blur
             this.SourceInitialized += (s, e) => {
-                BlurManager.EnableBlur(this);
+                // BlurManager.ApplyMica(this); // Disabled to fix black corners on transparent widget
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
+                UpdateTopmostState();
+            };
+
+            // Ensure we stay on top when other windows are focused
+            this.Deactivated += (s, e) => {
+                UpdateTopmostState();
             };
 
             // Apply widget transparency from preferences
@@ -80,7 +86,6 @@ namespace CosmoWhisper
                     AudioRecorder.Shared.StartRecording();
                 }
                 Dispatcher.Invoke(() => {
-                    if (HotkeyIndicator != null) HotkeyIndicator.Visibility = Visibility.Visible;
                 });
             };
             _hotKeyManager.KeyReleased += () => {
@@ -89,13 +94,12 @@ namespace CosmoWhisper
                     AudioRecorder.Shared.StopRecording();
                 }
                 Dispatcher.Invoke(() => {
-                    if (HotkeyIndicator != null) HotkeyIndicator.Visibility = Visibility.Collapsed;
                 });
             };
             _hotKeyManager.ErrorOccurred += (msg) => {
                 Dispatcher.Invoke(() => {
                     string keyName = PreferenceManager.Shared.Preferences.ActivationKey;
-                    // StatusLabel removed - no longer used
+    
                 });
             };
             
@@ -161,7 +165,7 @@ namespace CosmoWhisper
                     VisualizerPanel.Visibility = Visibility.Collapsed;
                     SoundWavePanel.Visibility = Visibility.Visible;
                     _soundWaveStoryboard.Begin();
-                    SetTheme(Colors.Red, "");
+                    SetTheme(Colors.LimeGreen, "");
                 }
                 else
                 {
@@ -205,14 +209,14 @@ namespace CosmoWhisper
         {
             Dispatcher.Invoke(async () => {
                 string snippet = text.Length > 20 ? text.Substring(0, 17) + "..." : text;
-                // StatusLabel removed - no longer used
+
                 
                 await Task.Delay(3000);
                 
                 // Return to neutral state if not recording again
                 if (!isRecordingActive)
                 {
-                    // StatusLabel removed - no longer used
+    
                 }
             });
         }
@@ -220,7 +224,7 @@ namespace CosmoWhisper
         private void OnManusStatusChanged(string status)
         {
             Dispatcher.Invoke(() => {
-                // StatusLabel removed - no longer used
+
                 SetTheme(Colors.MediumPurple, status.ToUpper());
                 if (status.Contains("THINKING"))
                 {
@@ -240,7 +244,7 @@ namespace CosmoWhisper
                 var firstLine = response.Split('\n')[0];
                 if (firstLine.Length > 30) firstLine = firstLine.Substring(0, 27) + "...";
                 
-                // StatusLabel removed - no longer used
+
                 
                 // If it contains a plan, maybe we want to provide more feedback
                 if (response.Contains("Plan:"))
@@ -261,7 +265,7 @@ namespace CosmoWhisper
                 
                 if (!isRecordingActive)
                 {
-                    // StatusLabel removed - no longer used
+    
                     SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), "IDLE");
                 }
             });
@@ -298,7 +302,7 @@ namespace CosmoWhisper
         {
             Dispatcher.Invoke(() => {
                 // Show full error in status (don't use SetTheme as it overwrites the text)
-                // StatusLabel removed - no longer used
+
                 OrbMain.Fill = new SolidColorBrush(Colors.OrangeRed);
                 OrbGlow.Fill = new SolidColorBrush(Colors.OrangeRed);
                 
@@ -332,9 +336,9 @@ namespace CosmoWhisper
         public void ApplyWidgetTransparency()
         {
             var p = PreferenceManager.Shared.Preferences;
-            if (MainBorder != null && MainBorder.Background is SolidColorBrush brush)
+            if (MainBorder != null && MainBorder.Background != null)
             {
-                brush.Opacity = p.WidgetOpacity;
+                MainBorder.Background.Opacity = p.WidgetOpacity;
             }
         }    
 
@@ -353,7 +357,7 @@ namespace CosmoWhisper
             AudioRecorder.Shared.ToggleRecording();
         }
 
-        private void Gear_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        public void ToggleDashboard()
         {
             try
             {
@@ -361,9 +365,12 @@ namespace CosmoWhisper
                 if (_dashboard == null || !_dashboard.IsLoaded)
                 {
                     _dashboard = new DashboardWindow();
+                    _dashboard.IsVisibleChanged += (s, e) => {
+                        UpdateTopmostState();
+                    };
                 }
                 
-                if (_dashboard.IsVisible && _dashboard.WindowState == WindowState.Normal)
+                if (_dashboard.IsVisible && _dashboard.WindowState != WindowState.Minimized)
                 {
                     _dashboard.Hide();
                 }
@@ -392,18 +399,40 @@ namespace CosmoWhisper
                        _dashboard.Top = (SystemParameters.PrimaryScreenHeight - _dashboard.Height) / 2;
                     }
                 }
+                UpdateTopmostState();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Failed to open Dashboard: {ex.Message}\n\n{ex.StackTrace}", "Widget Error");
-                // Log to Desktop
-                try 
-                { 
-                    System.IO.File.AppendAllText(
-                        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CosmoWhisper_CrashLog.txt"),
-                        $"{DateTime.Now}: Widget Gear Crash: {ex}\n----------------\n");
-                } catch { }
+                System.Windows.MessageBox.Show($"Failed to toggle Dashboard: {ex.Message}", "Widget Error");
             }
+        }
+
+        private void UpdateTopmostState()
+        {
+            try
+            {
+                // If dashboard is visible, widget should NOT be topmost to avoid overlap
+                bool shouldBeTop = !(_dashboard != null && _dashboard.IsVisible);
+                
+                if (this.Topmost != shouldBeTop)
+                {
+                    this.Topmost = shouldBeTop;
+                }
+
+                // If it should be on top, force it to the front of the top level
+                if (shouldBeTop)
+                {
+                    // This "kick" ensures we don't get buried by other topmost windows
+                    this.Topmost = false;
+                    this.Topmost = true;
+                }
+            }
+            catch { }
+        }
+
+        private void Gear_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            ToggleDashboard();
         }
 
         private void Gear_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
