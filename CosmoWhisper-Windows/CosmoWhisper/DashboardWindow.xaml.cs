@@ -115,6 +115,7 @@ namespace CosmoWhisper
                 BlurManager.ApplyMica(this);
                 InitializePreferences(); 
                 CheckAuthStatus();
+                AudioRecorder.Shared.StartMonitoring();
                 
                 // Initialize API key field as locked
                 if (TxtGroqApiKey != null) TxtGroqApiKey.IsEnabled = false;
@@ -138,6 +139,20 @@ namespace CosmoWhisper
         private void Vault_Click(object sender, RoutedEventArgs e)
         {
             OpenVault();
+        }
+
+        private void ResetStats_Click(object sender, RoutedEventArgs e)
+        {
+            var result = System.Windows.MessageBox.Show("Are you sure you want to reset all performance stats? This cannot be undone.", "Reset Stats", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
+                var p = PreferenceManager.Shared.Preferences;
+                p.TotalWords = 0;
+                p.TotalTranscriptions = 0;
+                p.TotalTimeSavedMinutes = 0;
+                PreferenceManager.Shared.Save();
+                UpdateDashboardStats();
+            }
         }
     
         private void OpenVault()
@@ -176,7 +191,7 @@ namespace CosmoWhisper
 
         private void ShowDashboard()
         {
-            AudioRecorder.Shared.StopMonitoring();
+            AudioRecorder.Shared.StartMonitoring();
             SwitchToView(DashboardHeader, DashboardView, BtnDashboard);
         }
 
@@ -218,6 +233,7 @@ namespace CosmoWhisper
 
         private async void CheckAuthStatus()
         {
+             UpdateDashboardStats();
              if (!string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.AuthToken))
              {
                  await BackendService.Shared.SyncStatus();
@@ -254,6 +270,15 @@ namespace CosmoWhisper
                     UsageProgressBar.Background = (p.UsageMinutes >= p.UsageLimitMinutes && !isPro) 
                         ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444")) 
                         : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+                }
+
+                // Update Performance Snapshot Stats
+                if (StatTotalWords != null) StatTotalWords.Text = p.TotalWords.ToString("N0");
+                if (StatTranscriptions != null) StatTranscriptions.Text = p.TotalTranscriptions.ToString("N0");
+                if (StatTimeSaved != null)
+                {
+                    double hours = p.TotalTimeSavedMinutes / 60.0;
+                    StatTimeSaved.Text = hours >= 1 ? $"{hours:F1}h" : $"{p.TotalTimeSavedMinutes:F0}m";
                 }
 
                 // Update Account View Controls
@@ -373,18 +398,25 @@ namespace CosmoWhisper
         {
             Dispatcher.Invoke(() =>
             {
-                if (LiveMonitorBar == null) return;
-                
                 float minDb = -60;
-                float normalized = (db - minDb) / (0 - minDb); 
+                float normalized = (db - minDb) / (0 - minDb);
                 if (normalized < 0) normalized = 0;
                 if (normalized > 1) normalized = 1;
 
-                // Smooth Animation for the bar
-                var animation = new DoubleAnimation(normalized * 350, TimeSpan.FromMilliseconds(50));
-                LiveMonitorBar.BeginAnimation(WidthProperty, animation);
+                if (LiveMonitorBar != null)
+                {
+                    var animation = new DoubleAnimation(normalized * 350, TimeSpan.FromMilliseconds(50));
+                    LiveMonitorBar.BeginAnimation(WidthProperty, animation);
+                }
+
+                if (LiveMonitorBarDashboard != null)
+                {
+                    var dashAnim = new DoubleAnimation(normalized * 200, TimeSpan.FromMilliseconds(50));
+                    LiveMonitorBarDashboard.BeginAnimation(WidthProperty, dashAnim);
+                }
 
                 if (TxtMicLevel != null) TxtMicLevel.Text = $"{(int)(normalized * 100)}%";
+                if (TxtMicLevelDashboard != null) TxtMicLevelDashboard.Text = $"{(int)(normalized * 100)}%";
 
                 // Also update widget if recording
                 var widget = System.Windows.Application.Current.Windows.OfType<WidgetWindow>().FirstOrDefault();

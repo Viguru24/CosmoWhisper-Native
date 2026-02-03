@@ -403,6 +403,29 @@
                                         </Grid>
                                     </Border>
 
+                                    <!-- Live Monitor Bar (Added to Dashboard) -->
+                                    <Border Background="#1A1C30" CornerRadius="12" Margin="0,0,0,30" Padding="20">
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="&#x1F399;" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="LIVE MONITOR" Foreground="White" Opacity="0.5" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock x:Name="TxtMicLevelDashboard" Text="0%" Foreground="#00E676" FontWeight="Bold" FontSize="12" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                                <Grid Height="8" Width="200" VerticalAlignment="Center">
+                                                    <Border Background="#20FFFFFF" CornerRadius="4"/>
+                                                    <Border x:Name="LiveMonitorBarDashboard" HorizontalAlignment="Left" Width="0" CornerRadius="4" Background="#007AFF"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                     <!-- Stats Section Header -->
+                                    <Grid Margin="0,30,0,15">
+                                        <TextBlock Text="Performance Snapshot" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                                        <Button x:Name="BtnResetStats" HorizontalAlignment="Right" Content="&#x21BA; Reset All" Background="Transparent" Foreground="#007AFF" BorderThickness="0" Cursor="Hand" Click="ResetStats_Click" FontSize="12" FontWeight="SemiBold"/>
+                                    </Grid>
+
                                     <!-- Stats Cards Row -->
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -418,7 +441,7 @@
                                                     <TextBlock Text="&#x1F4AC;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
                                                     <TextBlock Text="TOTAL WORDS" Foreground="White" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                                                 </StackPanel>
-                                                <TextBlock Text="23,797" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatTotalWords" Text="0" Foreground="White" FontSize="28" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Border>
 
@@ -429,7 +452,7 @@
                                                     <TextBlock Text="&#x1F4C8;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
                                                     <TextBlock Text="TIME SAVED" Foreground="White" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                                                 </StackPanel>
-                                                <TextBlock Text="6h" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatTimeSaved" Text="0h" Foreground="White" FontSize="28" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Border>
 
@@ -440,7 +463,7 @@
                                                     <TextBlock Text="&#x1F504;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
                                                     <TextBlock Text="TRANSCRIPTIONS" Foreground="White" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                                                 </StackPanel>
-                                                <TextBlock Text="1,987" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatTranscriptions" Text="0" Foreground="White" FontSize="28" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Border>
                                     </Grid>
