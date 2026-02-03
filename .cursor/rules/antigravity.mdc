@@ -1,0 +1,30 @@
+---
+description: "Antigravity IDE Logic"
+globs: 
+---
+
+# Antigravity IDE Logic
+
+This rule enforces the "Planning with Files" workflow.
+
+If the user mentions "Antigravity" or if this rule is active, you MUST ensure that the following three files exist in the root of the workspace:
+
+1. `task_plan.md`
+2. `findings.md`
+3. `progress.md`
+
+## 1. task_plan.md
+This file tracks the phases, progress, and decisions of the project. It should be updated whenever a major phase is completed or a new one begins.
+
+## 2. findings.md
+This file serves as a knowledge base. Store research, discoveries, and important technical details here. If you learn something new about the codebase or a library, write it down here.
+
+## 3. progress.md
+This file is a session log. Record what you have done, what tests you have run, and their results. It serves as a continuous stream of consciousness for the development process.
+
+## Rules
+- ALWAYS check if these files exist at the start of a session.
+- If they do not exist, CREATE them immediately.
+- Update `progress.md` frequently with short, concise entries.
+- Update `task_plan.md` when moving between high-level tasks.
+- Write to `findings.md` when you discover something non-obvious.

@@ -1,0 +1,3 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\DashboardWindow.xaml.cs(824,22): error CS0111: Type 'DashboardWindow' already defines a member called 'Personality_Click' with the same parameter types [C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\CosmoWhisper_20od32on_wpftmp.csproj]

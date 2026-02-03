@@ -1,0 +1,12 @@
+2026-01-30 18:25:29 - Engine Error: 
+2026-01-30 18:25:29 - Engine Error: The parameter is incorrect.
+
+The OutputNode must belong to the same AudioGraph as the InputNode
+2026-01-30 18:25:29 - Engine Error: The parameter is incorrect.
+
+The OutputNode must belong to the same AudioGraph as the InputNode
+2026-01-30 18:25:29 - Engine Error: File Output Error: UnknownFailure
+2026-01-30 18:45:59 - Stop Failed: Cannot access a disposed object.
+2026-01-30 18:46:13 - Stop Failed: Cannot access a disposed object.
+2026-01-30 18:55:25 - Stop Failed: Cannot access a disposed object.
+2026-01-30 19:01:13 - Stop Failed: Cannot access a disposed object.
