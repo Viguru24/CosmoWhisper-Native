@@ -1,0 +1,3 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\DashboardWindow.xaml(668,15): error MC3000: 'The 'Grid' start tag on line 59 position 18 does not match the end tag of 'Border'. Line 668, position 15.' XML is not valid. [C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\CosmoWhisper.csproj]
