@@ -35,8 +35,7 @@ namespace CosmoWhisper.Managers
             {"twitch", "https://twitch.tv"},
             {"youtube", "https://youtube.com"},
             {"cosmowhisper", "https://cosmowhisper.com"},
-            {"library", "https://cosmowhisper.com/smart-commands"},
-            {"vault", "http://localhost:8338"}
+            {"library", "https://cosmowhisper.com/smart-commands"}
         };
 
         private readonly Dictionary<string, string> _appShortcuts = new()
@@ -136,23 +135,22 @@ namespace CosmoWhisper.Managers
             // --- 4. SYSTEM ---
             if (IsTriggered("insert date", "todays date", "current date")) 
             { 
-                string fmt = PreferenceManager.Shared.Preferences.DateTimeFormat;
-                // If the format contains time-only chars (like 'HH:mm'), assume user might want it for date too? 
-                // Actually, the user setting is called "DateTimeFormat", so we should use it for the DATE command if it fits,
-                // BUT typically 'Insert Date' implies just date. 
-                // However, since we merged the setting into one 'Date & Time Formatting' dropdown, let's use that format.
-                
+                string fmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
                 await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false); 
                 CommandExecuted?.Invoke(); return true; 
             }
             if (IsTriggered("insert time", "current time")) 
             { 
-                // For "Time", we usually want HH:mm. If the user picked a format with time, we could use that,
-                // but usually "Time" implies just the time component.
-                // Let's stick to standard time format or maybe add a separate Time format later. 
-                // For now, standard ShortTimePattern.
-                await InputController.Shared.PasteText(DateTime.Now.ToString("t"), false, false); 
+                string fmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
+                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false); 
                 CommandExecuted?.Invoke(); return true; 
+            }
+            if (IsTriggered("insert date and time"))
+            {
+                string dFmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
+                string tFmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
+                await InputController.Shared.PasteText(DateTime.Now.ToString($"{dFmt} {tFmt}"), false, false);
+                CommandExecuted?.Invoke(); return true;
             }
             
             if (IsTriggered("volume up", "louder")) { InputController.Shared.SendKey(0xAF, false); InputController.Shared.SendKey(0xAF, true); CommandExecuted?.Invoke(); return true; }

@@ -1,0 +1,6 @@
+10:     <Grid>
+32:         <!-- Background Glow -->
+148:         <Ellipse x:Name="Glow1" Fill="#50007AFF" Width="600" Height="600" Margin="-200,-200,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+28:             <Ellipse.Effect>
+42:                 <BlurEffect Radius="100"/>
+29:             </Ellipse.Effect>

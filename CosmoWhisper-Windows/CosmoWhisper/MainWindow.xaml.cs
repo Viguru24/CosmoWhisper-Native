@@ -20,6 +20,7 @@ namespace CosmoWhisper;
 
 public partial class MainWindow : Window
 {
+    #pragma warning disable CS8618
     public MainWindow()
     {
         InitializeComponent();

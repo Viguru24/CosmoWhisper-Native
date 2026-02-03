@@ -3,6 +3,7 @@ using System.Data;
 using System.Windows;
 using System.Linq;
 using System.Threading.Tasks;
+using CosmoWhisper.Managers;
 
 namespace CosmoWhisper;
 
@@ -11,10 +12,17 @@ namespace CosmoWhisper;
 /// </summary>
 public partial class App : System.Windows.Application
 {
+    private TrayManager? _trayManager;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // 1. Register the protocol handler (idempotent)
         Managers.ProtocolHandler.Register();
+
+        // Warm up SoundManager Early
+        _ = Task.Run(() => {
+            try { var sm = SoundManager.Shared; } catch { }
+        });
 
         // 2. Handle protocol URLs
         if (e.Args.Length > 0)
@@ -38,7 +46,68 @@ public partial class App : System.Windows.Application
             });
             return;
         }
+
+        // 3. Initialize System Tray Manager
+        _trayManager = new TrayManager();
+        _trayManager.Initialize();
+        
+        _trayManager.ShowDashboardRequested += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var widget = Windows.OfType<WidgetWindow>().FirstOrDefault();
+                if (widget != null)
+                {
+                    widget.ToggleDashboard();
+                }
+                else
+                {
+                    // Fallback if widget window is closed (shouldn't happen)
+                    var dashboard = Windows.OfType<DashboardWindow>().FirstOrDefault();
+                    if (dashboard == null)
+                    {
+                        dashboard = new DashboardWindow();
+                        dashboard.Show();
+                    }
+                    else
+                    {
+                        dashboard.Activate();
+                        dashboard.WindowState = WindowState.Normal;
+                    }
+                }
+            });
+        };
+
+        _trayManager.ToggleCapsuleRequested += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var widget = Windows.OfType<WidgetWindow>().FirstOrDefault();
+                if (widget != null)
+                {
+                    widget.Visibility = widget.Visibility == Visibility.Visible 
+                        ? Visibility.Hidden 
+                        : Visibility.Visible;
+                }
+            });
+        };
+
+        _trayManager.ExitRequested += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _trayManager?.Dispose();
+                Shutdown();
+            });
+        };
+
         base.OnStartup(e);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _trayManager?.Dispose();
+        base.OnExit(e);
     }
 }
 

@@ -49,17 +49,22 @@ namespace CosmoWhisper.Services
                 form.Add(new StringContent(model), "model");
                 form.Add(new StringContent("json"), "response_format");
                 
-                string langCode = p.InterfaceLanguage.Split('-')[0]; // Use first part (e.g., 'en' from 'en-GB')
-                form.Add(new StringContent(langCode), "language");
+                string langCode = p.InterfaceLanguage.ToLower().Split('-')[0]; 
+                if (langCode != "auto")
+                {
+                    form.Add(new StringContent(langCode), "language");
+                }
 
-                // Add prompt for regional spelling and technical terms
-                string basePrompt = "Transcribe verbatim. Do not repeat. Do not hallucinate.";
+                // Add prompt for regional spelling, technical terms, and Focused App Context
+                string appContext = Managers.AudioRecorder.Shared.GetCurrentFocusedApp();
+                string basePrompt = $"Transcribe verbatim. Do not repeat. Do not hallucinate. Context: The user is currently using {appContext}.";
+                
                 if (langCode == "en")
                 {
-                    basePrompt = p.InterfaceLanguage == "en-GB" 
-                        ? "Transcribe verbatim in British English (e.g., colour, organise). Do not repeat. Do not hallucinate."
-                        : "Transcribe verbatim in American English (e.g., color, organize). Do not repeat. Do not hallucinate.";
+                    string variant = p.InterfaceLanguage == "en-GB" ? "British English (e.g., colour, organise)" : "American English (e.g., color, organize)";
+                    basePrompt = $"Transcribe verbatim in {variant}. Do not repeat. Do not hallucinate. Context: The user is using {appContext}.";
                 }
+                
                 form.Add(new StringContent(basePrompt), "prompt");
 
                 var response = await _httpClient.PostAsync(TranscriptionUrl, form);
@@ -151,15 +156,25 @@ namespace CosmoWhisper.Services
                 string langHint = GetLanguageHint(p.InterfaceLanguage);
                 string finalPrompt = prompt + langHint;
 
+                // ITEM 4: Dual-Track Inference (Fast-track for short commands)
+                // Use a smaller, faster model if the prompt or context is short
+                string modelName = "llama-3.3-70b-versatile"; // Default "Cloud" track
+                bool isFastTrack = prompt.Length < 100 && context.Length < 500;
+                
+                if (isFastTrack)
+                {
+                    modelName = "llama-3.1-8b-instant"; // Swift "Fast" track
+                }
+
                 var request = new
                 {
-                    model = "llama-3.3-70b-versatile",
+                    model = modelName,
                     messages = new[]
                     {
                         new { role = "system", content = finalPrompt },
                         new { role = "user", content = context }
                     },
-                    temperature = 0.5
+                    temperature = isFastTrack ? 0.3 : 0.5 // Lower temperature for fast commands to ensure precision
                 };
 
                 var response = await _httpClient.PostAsJsonAsync("https://api.groq.com/openai/v1/chat/completions", request);

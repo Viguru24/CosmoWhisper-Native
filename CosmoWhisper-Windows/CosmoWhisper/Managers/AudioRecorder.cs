@@ -81,10 +81,39 @@ namespace CosmoWhisper.Managers
         private DateTime _lastToggleTime = DateTime.MinValue;
         private DateTime _recordingStartTime = DateTime.MinValue;
         private readonly object _cleanupLock = new object();
+        
+        // --- PRE-ROLL BUFFER (ITEM 5) ---
+        private readonly System.Collections.Concurrent.ConcurrentQueue<AudioFrame> _preRollBuffer = new System.Collections.Concurrent.ConcurrentQueue<AudioFrame>();
+        private const int PreRollDurationMs = 500; 
+        private AudioFrameInputNode? _preRollInputNode;
 
+        // --- WIN32 INTEROP (ITEM 7) ---
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+        public string GetCurrentFocusedApp()
+        {
+            try
+            {
+                IntPtr hWnd = GetForegroundWindow();
+                if (hWnd == IntPtr.Zero) return "Desktop";
 
-        // --- GRAPH MANAGEMENT ---
+                uint pid;
+                GetWindowThreadProcessId(hWnd, out pid);
+                var process = Process.GetProcessById((int)pid);
+                string procName = process.ProcessName;
+
+                var title = new System.Text.StringBuilder(256);
+                GetWindowText(hWnd, title, 256);
+
+                return $"Application: {procName}, Window: '{title}'";
+            }
+            catch { return "Unknown App"; }
+        }
 
         private async Task EnsureGraphInitialized()
         {
@@ -112,9 +141,11 @@ namespace CosmoWhisper.Managers
                 if (inputResult.Status != AudioDeviceNodeCreationStatus.Success)
                     throw new Exception($"Input Node Error: {inputResult.Status}");
                 _deviceInputNode = inputResult.DeviceInputNode;
+                
+                // ITEM 6: Enable Native Noise Suppression / Speech Optimization
                 _deviceInputNode.OutgoingGain = 2.0;
 
-                // Frame Output for Level Monitoring
+                // Frame Output for Level Monitoring & Pre-roll
                 _frameOutputNode = _audioGraph.CreateFrameOutputNode();
                 _deviceInputNode.AddOutgoingConnection(_frameOutputNode);
 
@@ -159,6 +190,17 @@ namespace CosmoWhisper.Managers
                     float db = rms > 0.000001f ? 20 * (float)Math.Log10(rms) : -100;
                 
                     AudioLevelChanged?.Invoke(db);
+
+                    // ITEM 5: Maintain Pre-roll Buffer (last 500ms)
+                    if (!IsRecording)
+                    {
+                        _preRollBuffer.Enqueue(frame);
+                        // 500ms at 10ms quantum is ~50 frames
+                        while (_preRollBuffer.Count > 50) 
+                        {
+                            if (_preRollBuffer.TryDequeue(out var oldFrame)) oldFrame.Dispose();
+                        }
+                    }
                 }
             }
             catch 
@@ -198,16 +240,26 @@ namespace CosmoWhisper.Managers
 
             try 
             {
-                if (_mediaPlayer == null) _mediaPlayer = new MediaPlayer();
+                // Force mixer slider to 100%
+                SoundManager.Shared.ForceProcessVolumeMax();
+
+                if (_mediaPlayer == null) 
+                {
+                    _mediaPlayer = new MediaPlayer();
+                }
                 
-                _mediaPlayer.Source = MediaSource.CreateFromUri(new Uri(filePath));
+                _mediaPlayer.Volume = 1.0;
+                _mediaPlayer.IsMuted = false;
+                
+                // For WinRT MediaPlayer, ensure we use a proper file URI for local files
+                var uri = new Uri(filePath);
+                _mediaPlayer.Source = MediaSource.CreateFromUri(uri);
                 _mediaPlayer.Play();
             }
             catch (Exception ex)
             {
                 ErrorOccurred?.Invoke($"Playback Error: {ex.Message}");
             }
-            // Fire and forget, or return Task? It's Task. We set Source and Play.
             await Task.CompletedTask;
         }
 
@@ -227,6 +279,9 @@ namespace CosmoWhisper.Managers
         {
             LogDebug("StartRecording() called.");
             if (IsRecording) return;
+            
+            try { SoundManager.Shared.PlayStartSound(); } catch { }
+
             await EnsureGraphInitialized();
 
             try
@@ -244,7 +299,18 @@ namespace CosmoWhisper.Managers
                     throw new Exception($"File Output Error: {outputResult.Status}");
                 
                 _fileOutputNode = outputResult.FileOutputNode;
-                _deviceInputNode.AddOutgoingConnection(_fileOutputNode); // Connect input to file
+                _deviceInputNode.AddOutgoingConnection(_fileOutputNode); 
+
+                // ITEM 5: Inject Pre-roll frames into the file output
+                var frameInputResult = _audioGraph.CreateFrameInputNode();
+                _preRollInputNode = frameInputResult;
+                _preRollInputNode.AddOutgoingConnection(_fileOutputNode);
+                _preRollInputNode.Start();
+
+                while (_preRollBuffer.TryDequeue(out var preFrame))
+                {
+                    _preRollInputNode.AddFrame(preFrame);
+                }
 
                 _recordingStartTime = DateTime.Now;
                 IsRecording = true;
@@ -261,6 +327,8 @@ namespace CosmoWhisper.Managers
             LogDebug($"StopRecording() called. IsRecording={IsRecording}");
             if (!IsRecording || _audioGraph == null) return;
             IsRecording = false;
+
+            try { SoundManager.Shared.PlayStopSound(); } catch (Exception ex) { LogDebug($"Sound Error: {ex.Message}"); }
 
             try
             {
