@@ -411,21 +411,15 @@ namespace CosmoWhisper
         {
             try
             {
-                // If dashboard is visible, widget should NOT be topmost to avoid overlap
-                bool shouldBeTop = !(_dashboard != null && _dashboard.IsVisible);
-                
-                if (this.Topmost != shouldBeTop)
+                // Widget should ALWAYS be topmost to ensure it's accessible as a mini-controller
+                if (!this.Topmost)
                 {
-                    this.Topmost = shouldBeTop;
-                }
-
-                // If it should be on top, force it to the front of the top level
-                if (shouldBeTop)
-                {
-                    // This "kick" ensures we don't get buried by other topmost windows
-                    this.Topmost = false;
                     this.Topmost = true;
                 }
+
+                // Periodic "kick" ensuring we stay above other topmost windows
+                this.Topmost = false;
+                this.Topmost = true;
             }
             catch { }
         }
