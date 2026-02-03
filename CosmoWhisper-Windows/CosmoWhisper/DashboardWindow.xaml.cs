@@ -115,6 +115,9 @@ namespace CosmoWhisper
                 BlurManager.ApplyMica(this);
                 InitializePreferences(); 
                 CheckAuthStatus();
+                
+                // Initialize API key field as locked
+                if (TxtGroqApiKey != null) TxtGroqApiKey.IsEnabled = false;
              } 
              catch (Exception ex) 
              { 
@@ -1341,7 +1344,7 @@ namespace CosmoWhisper
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://cosmowhisper.com/smart-commands",
+                FileName = "https://cosmowhisper.com/features",
                 UseShellExecute = true
             });
         }
@@ -1350,7 +1353,7 @@ namespace CosmoWhisper
         {
              Process.Start(new ProcessStartInfo
             {
-                FileName = "https://cosmowhisper.com/docs",
+                FileName = "https://cosmowhisper.com/faq",
                 UseShellExecute = true
             });
         }
@@ -1434,6 +1437,64 @@ namespace CosmoWhisper
                  FileName = "https://cosmowhisper.com/signup", // Placeholder URL
                  UseShellExecute = true
              });
+        }
+
+        // Lock/Unlock API Key Field
+        private bool isApiKeyUnlocked = false;
+        private const string UNLOCK_CODE = "10810";
+
+        private void TxtUnlockCode_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Auto-check if code is correct
+            if (TxtUnlockCode.Text == UNLOCK_CODE && !isApiKeyUnlocked)
+            {
+                UnlockApiKey();
+            }
+        }
+
+        private void BtnToggleLock_Click(object sender, RoutedEventArgs e)
+        {
+            if (isApiKeyUnlocked)
+            {
+                // Lock it
+                LockApiKey();
+            }
+            else
+            {
+                // Try to unlock
+                if (TxtUnlockCode.Text == UNLOCK_CODE)
+                {
+                    UnlockApiKey();
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Incorrect unlock code. Please enter 10810.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        private void UnlockApiKey()
+        {
+            isApiKeyUnlocked = true;
+            TxtGroqApiKey.IsEnabled = true;
+            BtnToggleLock.Content = "🔒 Lock"; // Lock emoji
+            BtnToggleLock.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5A623"));
+            TxtGroqWarning.Visibility = Visibility.Collapsed;
+            TxtGroqSuccess.Visibility = Visibility.Visible;
+            UnlockPanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void LockApiKey()
+        {
+            isApiKeyUnlocked = false;
+            TxtGroqApiKey.IsEnabled = false;
+            TxtGroqApiKey.Clear();
+            BtnToggleLock.Content = "🔓 Unlock"; // Unlock emoji
+            BtnToggleLock.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#007AFF"));
+            TxtGroqWarning.Visibility = Visibility.Visible;
+            TxtGroqSuccess.Visibility = Visibility.Collapsed;
+            UnlockPanel.Visibility = Visibility.Visible;
+            TxtUnlockCode.Clear();
         }
     }
 }

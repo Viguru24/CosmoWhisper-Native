@@ -276,7 +276,7 @@
                             <!-- Main Navigation -->
                             <Button x:Name="BtnDashboard" Content="&#x1F4CA; Dashboard" Style="{StaticResource SidebarButton}" Click="Dashboard_Click"/>
                             <Button x:Name="BtnSmartCommands" Content="&#x26A1; Smart Commands" Style="{StaticResource SidebarButton}" Click="SmartCommands_Click"/>
-                            <Button x:Name="BtnVault" Content="&#x2020; Secure Vault" Style="{StaticResource SidebarButton}" Click="Vault_Click"/>
+                            
                             
                             <!-- Settings Group -->
                             <TextBlock Text="SETTINGS" Margin="20,20,0,10" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="SemiBold"/>
@@ -943,6 +943,27 @@
                                                 </Grid>
                                             </Border>
                                              <TextBlock x:Name="TxtGroqWarning" Text="&#x26A0; Enter code 10810 to unlock custom API keys" Foreground="#F5A623" FontSize="11" Margin="0,5,0,0"/>
+                                             
+                                             <!-- Unlock Passcode UI -->
+                                             <Grid x:Name="UnlockPanel" Margin="0,10,0,0">
+                                                 <Grid.ColumnDefinitions>
+                                                     <ColumnDefinition Width="*"/>
+                                                     <ColumnDefinition Width="Auto"/>
+                                                 </Grid.ColumnDefinitions>
+                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
+                                                     <TextBox x:Name="TxtUnlockCode" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" MaxLength="5" TextChanged="TxtUnlockCode_TextChanged"/>
+                                                 </Border>
+                                                 <Button x:Name="BtnToggleLock" Grid.Column="1" Content="&#x1F513; Unlock" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="15,8" Margin="10,0,0,0" FontWeight="SemiBold" Click="BtnToggleLock_Click">
+                                                     <Button.Template>
+                                                         <ControlTemplate TargetType="Button">
+                                                             <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                             </Border>
+                                                         </ControlTemplate>
+                                                     </Button.Template>
+                                                 </Button>
+                                             </Grid>
+                                             
                                              <TextBlock x:Name="TxtGroqSuccess" Text="✅ Groq Premium Access Enabled" Foreground="#2ECC71" FontSize="11" Margin="0,2,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Border>
@@ -975,7 +996,7 @@
                                     <!-- Personality -->
                                     <Border Background="#15FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
                                         <StackPanel>
-                                            <TextBlock Text="ðŸ—¨ï¸ AI Personality / Verbosity" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                            <TextBlock Text="&#x1F5E8; AI Personality / Verbosity" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                             <Grid>
                                                  <Grid.ColumnDefinitions>
                                                      <ColumnDefinition Width="*"/>
@@ -1365,23 +1386,23 @@
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="40"/>
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
                                                         <StackPanel>
-                                                            <TextBlock Text="&#x1F1FA;&#x1F1F8; US English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5"/>
-                                                            <TextBlock Text="&#x2022; color" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; center" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; organize" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; realize" Foreground="White" Opacity="0.7" FontSize="11"/>
+                                                            <TextBlock Text="&#x1F1FA;&#x1F1F8; US English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; color" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; center" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; organize" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; realize" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                         </StackPanel>
-                                                        <TextBlock Grid.Column="1" Text="&#x2194;" Foreground="White" Opacity="0.3" Margin="15,0" VerticalAlignment="Center" FontSize="16"/>
+                                                        <TextBlock Grid.Column="1" Text="&#x2194;" Foreground="White" Opacity="0.3" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="16"/>
                                                         <StackPanel Grid.Column="2">
-                                                            <TextBlock Text="&#x1F1EC;&#x1F1E7; UK English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5"/>
-                                                            <TextBlock Text="&#x2022; colour" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; centre" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; organise" Foreground="White" Opacity="0.7" FontSize="11"/>
-                                                            <TextBlock Text="&#x2022; realise" Foreground="White" Opacity="0.7" FontSize="11"/>
+                                                            <TextBlock Text="&#x1F1EC;&#x1F1E7; UK English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; colour" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; centre" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; organise" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x2022; realise" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </StackPanel>
@@ -1454,8 +1475,8 @@
                                         <Border Grid.Column="0" Background="#15FFFFFF" CornerRadius="15" Padding="25" Cursor="Hand" MouseLeftButtonDown="VisitDocs_Click">
                                             <StackPanel>
                                                 <TextBlock Text="&#x1F4D6;" FontSize="24" Margin="0,0,0,10"/>
-                                                <TextBlock Text="User Manual" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                                <TextBlock Text="Learn how to master dictation." Foreground="White" Opacity="0.5" FontSize="12"/>
+                                                <TextBlock Text="User Manual" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                <TextBlock Text="Learn how to master dictation." Foreground="White" Opacity="0.5" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </Border>
 
@@ -1463,8 +1484,8 @@
                                         <Border Grid.Column="2" Background="#15FFFFFF" CornerRadius="15" Padding="25" Cursor="Hand" MouseLeftButtonDown="VisitGitHub_Click">
                                             <StackPanel>
                                                 <TextBlock Text="&#x1F4BB;" FontSize="24" Margin="0,0,0,10"/>
-                                                <TextBlock Text="Open Source" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                                <TextBlock Text="View source and contribute." Foreground="White" Opacity="0.5" FontSize="12"/>
+                                                <TextBlock Text="Open Source" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                <TextBlock Text="View source and contribute." Foreground="White" Opacity="0.5" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </Border>
                                     </Grid>
@@ -1632,4 +1653,7 @@
         </Border>
     </Grid>
 </Window>
+
+
+
 
