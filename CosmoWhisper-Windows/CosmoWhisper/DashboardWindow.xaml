@@ -270,7 +270,8 @@
 
                     <!-- Sidebar -->
                     <Border Grid.Column="0" Background="#1A1C30" CornerRadius="30,0,0,30">
-                        <StackPanel Margin="10,40,10,10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,40,10,10">
                             <TextBlock Text="CosmoWhisper" Margin="20,0,0,30" Foreground="White" FontSize="20" FontWeight="SemiBold"/>
                             
                             <!-- Main Navigation -->
@@ -292,7 +293,8 @@
                             <!-- Exit Button -->
                             <Button Content="&#x1F6AA; Exit App" Style="{StaticResource SidebarButton}" Margin="5,60,5,5" Foreground="#FFFF453A" Click="Exit_Click"/>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
+                </Border>
 
                     <!-- Main Content -->
                     <Grid Grid.Column="1" Margin="30">
@@ -470,11 +472,10 @@
                                 </StackPanel>
                             </ScrollViewer>
 
-                            <!-- VIEW 2: SMART COMMANDS (Hidden by default) -->
                             <ScrollViewer x:Name="SmartCommandsView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                                 <StackPanel>
                                 <Grid Margin="0,0,0,20">
-                                    <TextBlock Text="&#x1F4DD; Magic Spells" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                    <TextBlock Text="&#x1F4DD; Spellbook" Foreground="White" FontSize="28" FontWeight="Bold"/>
                                     <Button HorizontalAlignment="Right" Content="&#x1F310; Open Cloud Library" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold" Click="OpenLibraryWeb_Click">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
@@ -485,202 +486,369 @@
                                         </Button.Template>
                                     </Button>
                                 </Grid>
-                                <!-- Text Manipulation Section -->
-                                <TextBlock Text="&#x1F4DD; Text Manipulation" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                
+                                <!-- Text Sorcery Section -->
+                                <TextBlock Text="&#x2728; Text Sorcery" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="220" Height="120" Background="#252A3D" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <!-- World Eater (Select All) -->
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF3B82F6" Offset="0"/>
+                                                <GradientStop Color="#FF06B6D4" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Select All" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="Selects all text" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="World Eater" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Select All'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Consume every character in the field. Leave nothing behind." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#252A3D" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    
+                                    <!-- Apocalypse (Delete All) -->
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFEF4444" Offset="0"/>
+                                                <GradientStop Color="#FFB91C1C" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Delete All" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Clear All'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Deletes everything" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="Apocalypse" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Delete All'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Nuke the field. Start fresh. No regrets." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                    <!-- The Cloner (Copy) -->
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF8B5CF6" Offset="0"/>
+                                                <GradientStop Color="#FF6D28D9" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Copy All" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Copy That'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Copies to clipboard" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Cloner" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Copy That'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Steal it. Stash it. It's yours now." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                    <!-- Manifest (Paste) -->
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF10B981" Offset="0"/>
+                                                <GradientStop Color="#FF059669" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Cut All" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Cut Everything'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Cuts to clipboard" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="Manifest" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Paste That'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Dump the payload. Bring it into reality." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    
+                                     <!-- Time Travel (Undo) -->
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFF59E0B" Offset="0"/>
+                                                <GradientStop Color="#FFD97706" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Paste" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Paste That'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Pastes from clipboard" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Undo" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Undo That'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Undoes last action" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="Time Travel" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Undo That'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Mistakes were made. Go back. GO BACK!" Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
 
-                                <!-- Text Formatting Section -->
-                                <TextBlock Text="&#x1F3A8; Text Formatting" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <!-- Portal Gun (App Launcher) -->
+                                <TextBlock Text="&#x1F680; Portal Gun" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <TextBlock Text="Say 'Open [App]' to teleport instantly." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Uppercase" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'All Caps'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="CONVERTS TO UPPERCASE" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Writer" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Open Word'" Foreground="#60A5FA" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Summon the blank page. Let the words flow." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Lowercase" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'All Lowercase'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="converts to lowercase" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Grid" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Open Excel'" Foreground="#4ADE80" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Crunch the numbers. calculate the infinite." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Title Case" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="Converts To Title Case" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Net" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Open Chrome'" Foreground="#F87171" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Access the hive mind. Surf the chaos." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Vibes" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Open Spotify'" Foreground="#4ADE80" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Drop the needle. Set the mood." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                     <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Brain" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Open Calculator'" Foreground="#FBBF24" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Quick math. Solve the equation." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
 
-                                <!-- App Launcher Section -->
-                                <TextBlock Text="&#x1F680; App Launcher" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
-                                <TextBlock Text="Say 'Open [App]' or 'Launch [App]'" Foreground="White" Opacity="0.7" FontSize="12" Margin="0,0,0,15"/>
+                                <!-- Hyperspace (Web Navigation) -->
+                                <TextBlock Text="&#x1F310; Hyperspace" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <TextBlock Text="Say 'Visit [Site]' to engage warp drive." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Word" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="Microsoft Word" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Oracle" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Visit Google'" Foreground="#60A5FA" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Ask questions. Get answers. Know everything." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Excel" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="Microsoft Excel" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Stream" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Visit YouTube'" Foreground="#F87171" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Watch the world. Lose hours of your life." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Chrome" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="Google Chrome" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Hub" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Visit GitHub'" Foreground="#C084FC" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Push commits. Merge conflicts. Ship code." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Code" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="VS Code" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Spotify" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="Music Player" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Calculator" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="Windows Calc" Foreground="White" Opacity="0.5" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Mind" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Visit ChatGPT'" Foreground="#4ADE80" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Talk to the machine. Let it do the thinking." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
 
-                                <!-- Web Navigation Section -->
-                                <TextBlock Text="&#x1F310; Web Navigation" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
-                                <TextBlock Text="Say 'Visit [Site]' or 'Go to [Site]'" Foreground="White" Opacity="0.7" FontSize="12" Margin="0,0,0,15"/>
+                                <!-- Synthetic Intelligence (AI Commands) -->
+                                <TextBlock Text="&#x1F916; Synthetic Intelligence" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="Google" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="google.com" Foreground="#007AFF" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                         <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFEC4899" Offset="0"/>
+                                                <GradientStop Color="#FFBE185D" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="Cosmo" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Ask [Question]'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Consult the machine spirit. Get answers instantly." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="YouTube" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="youtube.com" Foreground="#007AFF" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF6366F1" Offset="0"/>
+                                                <GradientStop Color="#FF4338CA" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Polisher" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Fix Grammar'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Your personal editor. Make it sound professional." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="GitHub" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="github.com" Foreground="#007AFF" FontSize="10" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Width="140" Height="90" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,8,8" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="12" VerticalAlignment="Center">
-                                            <TextBlock Text="ChatGPT" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                                            <TextBlock Text="chatgpt.com" Foreground="#007AFF" FontSize="10" Margin="0,3,0,0"/>
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF14B8A6" Offset="0"/>
+                                                <GradientStop Color="#FF0F766E" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="TL;DR" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Summarize'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Too long; didn't read. Give me the gist." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
 
-                                <!-- AI Commands Section -->
-                                <TextBlock Text="&#x1F916; AI Commands" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <!-- Style Bender (Formatting) -->
+                                <TextBlock Text="&#x2712;&#xFE0F; Style Bender" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFEA580C" Offset="0"/>
+                                                <GradientStop Color="#FFC2410C" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Ask [question]" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="AI answers your question" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="Scream Mode" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Uppercase'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="LOUD NOISES. MAKE THEM HEAR YOU." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF0EA5E9" Offset="0"/>
+                                                <GradientStop Color="#FF0284C7" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Summarize" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Summarize This'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Summarizes selected text" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="Whisper Mode" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Lowercase'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="shhh. lower your voice. be discreet." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF8B5CF6" Offset="0"/>
+                                                <GradientStop Color="#FF7C3AED" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Fix Grammar" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Polish' / 'Fix This'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Fixes grammar errors" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
-                                        <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Make Professional" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="Makes text professional" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Diplomat" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Title Case'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Make It Official. Look Like A Boss." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
 
-                                <!-- Utility Section -->
-                                <TextBlock Text="&#x1F4C5; Utility" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <!-- God Mode (Developer) -->
+                                <TextBlock Text="&#x1F4BB; God Mode" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                 <WrapPanel Margin="0,0,0,30">
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF10B981" Offset="0"/>
+                                                <GradientStop Color="#FF047857" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Insert Date" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Date'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Types today's date" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Architect" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Dev Tools'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="See the Matrix. Inspect the code. Hack the planet." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                </WrapPanel>
+
+                                <!-- Reality Anchors (Utility) -->
+                                <TextBlock Text="&#x23F0; Reality Anchors" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <WrapPanel Margin="0,0,0,30">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF6366F1" Offset="0"/>
+                                                <GradientStop Color="#FF4F46E5" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Current Time" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'Time'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Types current time" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The Chronomancer" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Date' / 'Time'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Timestamp reality. Mark this moment in history." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Width="220" Height="120" Background="#15FFFFFF" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFDB2777" Offset="0"/>
+                                                <GradientStop Color="#FFBE185D" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
                                         <StackPanel Margin="15" VerticalAlignment="Center">
-                                            <TextBlock Text="Dev Tools" Foreground="White" FontSize="16" FontWeight="Medium"/>
-                                            <TextBlock Text="or 'F12' / 'Inspector'" Foreground="#007AFF" FontSize="11" Margin="0,2,0,0"/>
-                                            <TextBlock Text="Opens browser dev tools" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,5,0,0"/>
+                                            <TextBlock Text="The DJ" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Volume Up/Down'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Master the gain. Crank it up or shut it down." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </WrapPanel>
+
+                                <!-- The Hunter (Search) -->
+                                <TextBlock Text="&#x1F50D; The Hunter" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <WrapPanel Margin="0,0,0,30">
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF0D9488" Offset="0"/>
+                                                <GradientStop Color="#FF0F766E" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+                                            <TextBlock Text="The Seeker" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Trigger: 'Search [Query]'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Find the truth. Or cat videos. The universe awaits." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </WrapPanel>
@@ -941,31 +1109,64 @@
                                     <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
                                         <StackPanel>
                                             <TextBlock Text="AI Service Provider" Foreground="White" Opacity="0.6" Margin="0,0,0,10" FontWeight="SemiBold"/>
-                                            <ComboBox SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0">
-                                                 <ComboBoxItem Content="Groq (Free &amp; Fast)" IsSelected="True"/>
-                                                 <ComboBoxItem Content="OpenAI (Premium)"/>
-                                                 <ComboBoxItem Content="Anthropic Claude"/>
+                                            <ComboBox x:Name="ComboAIProvider" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboAIProvider_SelectionChanged">
+                                                 <ComboBoxItem Content="Groq (Free &amp; Fast)" Tag="Groq" IsSelected="True"/>
+                                                 <ComboBoxItem Content="OpenAI (Premium)" Tag="OpenAI"/>
+                                                 <ComboBoxItem Content="Anthropic Claude" Tag="Anthropic"/>
                                             </ComboBox>
 
                                             <TextBlock Text="Model Name" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
-                                            <ComboBox SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0">
+                                            <ComboBox x:Name="ComboAIModel" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0">
                                                  <ComboBoxItem Content="llama-3.3-70b-versatile" IsSelected="True"/>
                                                  <ComboBoxItem Content="mixtral-8x7b-32768"/>
                                                  <ComboBoxItem Content="gemma-7b-it"/>
                                             </ComboBox>
 
-                                            <TextBlock Text="🔗 Groq API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
-                                            <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
-                                                <Grid>
-                                                     <Grid.ColumnDefinitions>
-                                                         <ColumnDefinition Width="*"/>
-                                                         <ColumnDefinition Width="Auto"/>
-                                                     </Grid.ColumnDefinitions>
-                                                     <PasswordBox x:Name="TxtGroqApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="•"/>
-                                                     <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                </Grid>
-                                            </Border>
-                                             <TextBlock x:Name="TxtGroqWarning" Text="&#x26A0; Enter code 10810 to unlock custom API keys" Foreground="#F5A623" FontSize="11" Margin="0,5,0,0"/>
+                                            <!-- Groq Key -->
+                                            <StackPanel x:Name="PanelGroqKey">
+                                                <TextBlock Text="🔗 Groq API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
+                                                    <Grid>
+                                                         <Grid.ColumnDefinitions>
+                                                             <ColumnDefinition Width="*"/>
+                                                             <ColumnDefinition Width="Auto"/>
+                                                         </Grid.ColumnDefinitions>
+                                                         <PasswordBox x:Name="TxtGroqApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="•"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- OpenAI Key -->
+                                            <StackPanel x:Name="PanelOpenAIKey" Visibility="Collapsed">
+                                                <TextBlock Text="🔗 OpenAI API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
+                                                    <Grid>
+                                                         <Grid.ColumnDefinitions>
+                                                             <ColumnDefinition Width="*"/>
+                                                             <ColumnDefinition Width="Auto"/>
+                                                         </Grid.ColumnDefinitions>
+                                                         <PasswordBox x:Name="TxtOpenAIApiKey_Int" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="•"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Anthropic Key -->
+                                            <StackPanel x:Name="PanelAnthropicKey" Visibility="Collapsed">
+                                                <TextBlock Text="🔗 Anthropic API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
+                                                    <Grid>
+                                                         <Grid.ColumnDefinitions>
+                                                             <ColumnDefinition Width="*"/>
+                                                             <ColumnDefinition Width="Auto"/>
+                                                         </Grid.ColumnDefinitions>
+                                                         <PasswordBox x:Name="TxtAnthropicApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="•"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                             <TextBlock x:Name="TxtGroqWarning" Text="&#x26A0; Enter unlock code to enable custom API keys" Foreground="#F5A623" FontSize="11" Margin="0,5,0,0"/>
                                              
                                              <!-- Unlock Passcode UI -->
                                              <Grid x:Name="UnlockPanel" Margin="0,10,0,0">
@@ -1465,7 +1666,7 @@
                             </ScrollViewer>
 
                             <!-- VIEW 9: LIBRARY (CLOUD) -->
-                            <ScrollViewer x:Name="LibraryView" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden">
+                            <ScrollViewer x:Name="CloudLibraryView" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden">
                                 <StackPanel>
                                     <Border Background="#252A3D" CornerRadius="20" Padding="40" Margin="0,0,0,30">
                                         <StackPanel HorizontalAlignment="Center">
