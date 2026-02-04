@@ -215,8 +215,7 @@ namespace CosmoWhisper
 
         private void ShowLibrary()
         {
-            AudioRecorder.Shared.StopMonitoring();
-            SwitchToView(null, LibraryView, BtnLibrary); // Library has no header text stack
+            SwitchToView(null, CloudLibraryView, BtnLibrary); // Library has no header text stack
         }
 
         private void ShowAccount()
@@ -309,31 +308,43 @@ namespace CosmoWhisper
         private void SwitchToView(UIElement header, UIElement view, System.Windows.Controls.Button activeBtn)
         {
             if (view == null) return;
-            if (view.Visibility == Visibility.Visible) return;
+            // REMOVED: if (view.Visibility == Visibility.Visible) return; 
+            // We must proceed to ensure all OTHER views are collapsed, even if this one thinks it's visible.
+
 
             try
             {
                 // Collapse everything first (with null checks)
-                if (DashboardHeader != null) DashboardHeader.Visibility = Visibility.Collapsed;
-                if (DashboardView != null) DashboardView.Visibility = Visibility.Collapsed;
-                if (SmartCommandsHeader != null) SmartCommandsHeader.Visibility = Visibility.Collapsed;
-                if (SmartCommandsView != null) SmartCommandsView.Visibility = Visibility.Collapsed;
-                if (MicrophoneHeader != null) MicrophoneHeader.Visibility = Visibility.Collapsed;
-                if (MicrophoneView != null) MicrophoneView.Visibility = Visibility.Collapsed;
-                if (NarrationHeader != null) NarrationHeader.Visibility = Visibility.Collapsed;
-                if (NarrationView != null) NarrationView.Visibility = Visibility.Collapsed;
-                if (IntelligenceHeader != null) IntelligenceHeader.Visibility = Visibility.Collapsed;
-                if (IntelligenceView != null) IntelligenceView.Visibility = Visibility.Collapsed;
-                if (VocabularyHeader != null) VocabularyHeader.Visibility = Visibility.Collapsed;
-                if (VocabularyView != null) VocabularyView.Visibility = Visibility.Collapsed;
-                if (PreferencesHeader != null) PreferencesHeader.Visibility = Visibility.Collapsed;
-                if (PreferencesView != null) PreferencesView.Visibility = Visibility.Collapsed;
-                if (LanguageHeader != null) LanguageHeader.Visibility = Visibility.Collapsed;
-                if (LanguageView != null) LanguageView.Visibility = Visibility.Collapsed;
-                if (AccountHeader != null) AccountHeader.Visibility = Visibility.Collapsed;
-                if (AccountView != null) AccountView.Visibility = Visibility.Collapsed;
-                if (LoginHeader != null) LoginHeader.Visibility = Visibility.Collapsed;
-                if (LoginView != null) LoginView.Visibility = Visibility.Collapsed;
+                // Nuclear Option: Explicitly iterate ALL children of the content grid to ensure everything is collapsed.
+                // We assume these views are direct children of the Grid named 'ContentContainer' (if named) or just finding them by type if possible,
+                // but since they are named fields, we can just be very explicit.
+                
+                // 1. Force collapse ALL known views
+                var allViews = new List<UIElement> { 
+                    DashboardView, SmartCommandsView, MicrophoneView, VocabularyView, 
+                    NarrationView, IntelligenceView, PreferencesView, LanguageView, 
+                    AccountView, CloudLibraryView, LoginView 
+                };
+
+                foreach (var v in allViews)
+                {
+                    if (v != null) v.Visibility = Visibility.Collapsed;
+                }
+                
+                // PARANOID DOUBLE CHECK: Explicitly collapse CloudLibraryView outside the loop
+                if (CloudLibraryView != null) CloudLibraryView.Visibility = Visibility.Collapsed;
+
+                // 2. Force collapse Headers
+                var allHeaders = new List<UIElement> {
+                   DashboardHeader, SmartCommandsHeader, MicrophoneHeader, VocabularyHeader,
+                   NarrationHeader, IntelligenceHeader, PreferencesHeader, LanguageHeader,
+                   AccountHeader, LoginHeader
+                };
+
+                foreach (var h in allHeaders)
+                {
+                    if (h != null) h.Visibility = Visibility.Collapsed;
+                }
 
                 // Inactivate all buttons
                 SetButtonInactive(BtnDashboard);
@@ -343,9 +354,9 @@ namespace CosmoWhisper
                 SetButtonInactive(BtnNarration);
                 SetButtonInactive(BtnIntelligence);
                 SetButtonInactive(BtnPreferences);
-                SetButtonInactive(BtnPreferences);
                 SetButtonInactive(BtnLanguage);
                 SetButtonInactive(BtnAccount);
+                SetButtonInactive(BtnLibrary);
 
                 // Show selected
                 if (header != null) header.Visibility = Visibility.Visible;
@@ -886,19 +897,38 @@ namespace CosmoWhisper
             {
                 TxtGroqApiKey.Password = p.GroqApiKey;
                 TxtGroqApiKey.PasswordChanged += (s, e) => {
-                    if (TxtGroqApiKey.Password == "10810")
+                    var prefs = PreferenceManager.Shared.Preferences;
+                    if (prefs.IsAIUnlocked)
                     {
-                        p.IsAIUnlocked = true;
-                        p.GroqApiKey = ""; // Clear the code
-                        TxtGroqApiKey.Password = "";
-                        System.Windows.MessageBox.Show("Premium Intelligence Unlocked!");
-                        UpdateGroqStatusUI();
+                        prefs.GroqApiKey = TxtGroqApiKey.Password;
+                        PreferenceManager.Shared.Save();
                     }
-                    else if (p.IsAIUnlocked)
+                };
+            }
+
+            if (TxtOpenAIApiKey_Int != null)
+            {
+                TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
+                TxtOpenAIApiKey_Int.PasswordChanged += (s, e) => {
+                    var prefs = PreferenceManager.Shared.Preferences;
+                    if (prefs.IsAIUnlocked)
                     {
-                        p.GroqApiKey = TxtGroqApiKey.Password;
+                        prefs.OpenAIApiKey = TxtOpenAIApiKey_Int.Password;
+                        PreferenceManager.Shared.Save();
                     }
-                    PreferenceManager.Shared.Save();
+                };
+            }
+
+            if (TxtAnthropicApiKey != null)
+            {
+                TxtAnthropicApiKey.Password = p.AnthropicApiKey;
+                TxtAnthropicApiKey.PasswordChanged += (s, e) => {
+                    var prefs = PreferenceManager.Shared.Preferences;
+                    if (prefs.IsAIUnlocked)
+                    {
+                        prefs.AnthropicApiKey = TxtAnthropicApiKey.Password;
+                        PreferenceManager.Shared.Save();
+                    }
                 };
             }
             UpdateGroqStatusUI();
@@ -925,9 +955,24 @@ namespace CosmoWhisper
         {
             if (TxtGroqWarning == null || TxtGroqSuccess == null) return;
             var p = PreferenceManager.Shared.Preferences;
+            bool isUnlocked = p.IsAIUnlocked;
             
-            TxtGroqWarning.Visibility = p.IsAIUnlocked ? Visibility.Collapsed : Visibility.Visible;
-            TxtGroqSuccess.Visibility = p.IsAIUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            TxtGroqWarning.Visibility = isUnlocked ? Visibility.Collapsed : Visibility.Visible;
+            TxtGroqSuccess.Visibility = isUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            
+            if (UnlockPanel != null) UnlockPanel.Visibility = isUnlocked ? Visibility.Collapsed : Visibility.Visible;
+            
+            if (TxtGroqApiKey != null) TxtGroqApiKey.IsEnabled = isUnlocked;
+            if (TxtOpenAIApiKey_Int != null) TxtOpenAIApiKey_Int.IsEnabled = isUnlocked;
+            if (TxtAnthropicApiKey != null) TxtAnthropicApiKey.IsEnabled = isUnlocked;
+            
+            if (BtnToggleLock != null)
+            {
+                BtnToggleLock.Content = isUnlocked ? "🔒 Lock" : "🔓 Unlock";
+                BtnToggleLock.Background = isUnlocked 
+                    ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F5A623"))
+                    : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+            }
         }
 
         private void SldUIScale_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -1471,14 +1516,27 @@ namespace CosmoWhisper
              });
         }
 
-        // Lock/Unlock API Key Field
-        private bool isApiKeyUnlocked = false;
         private const string UNLOCK_CODE = "10810";
+
+        private void ComboAIProvider_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboAIProvider == null || ComboAIProvider.SelectedItem == null) return;
+            
+            var item = ComboAIProvider.SelectedItem as ComboBoxItem;
+            var tag = item?.Tag?.ToString(); // "Groq", "OpenAI", "Anthropic"
+
+            if (PanelGroqKey != null) PanelGroqKey.Visibility = tag == "Groq" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelOpenAIKey != null) PanelOpenAIKey.Visibility = tag == "OpenAI" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelAnthropicKey != null) PanelAnthropicKey.Visibility = tag == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
+
+            // Update status UI to ensure correct enabled state
+            UpdateGroqStatusUI();
+        }
 
         private void TxtUnlockCode_TextChanged(object sender, TextChangedEventArgs e)
         {
             // Auto-check if code is correct
-            if (TxtUnlockCode.Text == UNLOCK_CODE && !isApiKeyUnlocked)
+            if (TxtUnlockCode.Text == UNLOCK_CODE && !PreferenceManager.Shared.Preferences.IsAIUnlocked)
             {
                 UnlockApiKey();
             }
@@ -1486,7 +1544,7 @@ namespace CosmoWhisper
 
         private void BtnToggleLock_Click(object sender, RoutedEventArgs e)
         {
-            if (isApiKeyUnlocked)
+            if (PreferenceManager.Shared.Preferences.IsAIUnlocked)
             {
                 // Lock it
                 LockApiKey();
@@ -1500,33 +1558,36 @@ namespace CosmoWhisper
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Incorrect unlock code. Please enter 10810.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show("Incorrect unlock code. Access Denied.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
         }
 
         private void UnlockApiKey()
         {
-            isApiKeyUnlocked = true;
-            TxtGroqApiKey.IsEnabled = true;
-            BtnToggleLock.Content = "🔒 Lock"; // Lock emoji
-            BtnToggleLock.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5A623"));
-            TxtGroqWarning.Visibility = Visibility.Collapsed;
-            TxtGroqSuccess.Visibility = Visibility.Visible;
-            UnlockPanel.Visibility = Visibility.Collapsed;
+            var p = PreferenceManager.Shared.Preferences;
+            p.IsAIUnlocked = true;
+            PreferenceManager.Shared.Save();
+            
+            UpdateGroqStatusUI();
+            System.Windows.MessageBox.Show("Premium Intelligence Unlocked!");
         }
 
         private void LockApiKey()
         {
-            isApiKeyUnlocked = false;
-            TxtGroqApiKey.IsEnabled = false;
-            TxtGroqApiKey.Clear();
-            BtnToggleLock.Content = "🔓 Unlock"; // Unlock emoji
-            BtnToggleLock.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#007AFF"));
-            TxtGroqWarning.Visibility = Visibility.Visible;
-            TxtGroqSuccess.Visibility = Visibility.Collapsed;
-            UnlockPanel.Visibility = Visibility.Visible;
-            TxtUnlockCode.Clear();
+            var p = PreferenceManager.Shared.Preferences;
+            p.IsAIUnlocked = false;
+            p.GroqApiKey = "";
+            p.OpenAIApiKey = "";
+            p.AnthropicApiKey = "";
+            PreferenceManager.Shared.Save();
+            
+            if (TxtGroqApiKey != null) TxtGroqApiKey.Clear();
+            if (TxtOpenAIApiKey_Int != null) TxtOpenAIApiKey_Int.Clear();
+            if (TxtAnthropicApiKey != null) TxtAnthropicApiKey.Clear();
+            
+            UpdateGroqStatusUI();
+            if (TxtUnlockCode != null) TxtUnlockCode.Clear();
         }
     }
 }

@@ -9,8 +9,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using CosmoWhisper.Managers;
-using CosmoWhisper.Manus;
-
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Brush = System.Windows.Media.Brush;
@@ -68,16 +66,8 @@ namespace CosmoWhisper
             AudioRecorder.Shared.TranscriptionReceived += OnTranscriptionReceived;
             AudioRecorder.Shared.ErrorOccurred += OnErrorOccurred;
 
-            // Wire up Manus Events
-            ManusAgent.Shared.ManusStatusChanged += OnManusStatusChanged;
-            ManusAgent.Shared.ManusResponseReceived += OnManusResponseReceived;
-
             // Command feedback
             CommandController.Shared.CommandExecuted += OnCommandExecuted;
-
-            // Narration feedback
-            NarrationManager.Shared.SpeechStarted += OnSpeechStarted;
-            NarrationManager.Shared.SpeechEnded += OnSpeechEnded;
 
             // Wire up HotKey for push-to-talk
             _hotKeyManager.KeyPressed += () => {
@@ -221,56 +211,6 @@ namespace CosmoWhisper
             });
         }
 
-        private void OnManusStatusChanged(string status)
-        {
-            Dispatcher.Invoke(() => {
-
-                SetTheme(Colors.MediumPurple, status.ToUpper());
-                if (status.Contains("THINKING"))
-                {
-                    // Visual feedback for thinking
-                }
-                else
-                {
-                    // Reset
-                }
-            });
-        }
-
-        private void OnManusResponseReceived(string response)
-        {
-            Dispatcher.Invoke(async () => {
-                // Show first line of response in StatusLabel
-                var firstLine = response.Split('\n')[0];
-                if (firstLine.Length > 30) firstLine = firstLine.Substring(0, 27) + "...";
-                
-
-                
-                // If it contains a plan, maybe we want to provide more feedback
-                if (response.Contains("Plan:"))
-                {
-                    OrbGlow.Fill = Brushes.Gold;
-                }
-
-                // Speak response if it's not too long or just speak the summary
-                var summary = firstLine;
-                if (response.Contains("Plan:")) summary = "I have updated the project plan.";
-                
-                if (PreferenceManager.Shared.Preferences.ManusNarrationEnabled)
-                {
-                    await NarrationManager.Shared.SpeakAsync(summary);
-                }
-
-                await Task.Delay(5000);
-                
-                if (!isRecordingActive)
-                {
-    
-                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), "IDLE");
-                }
-            });
-        }
-
         private void OnCommandExecuted()
         {
             Dispatcher.Invoke(() => {
@@ -279,22 +219,6 @@ namespace CosmoWhisper
                 // Extra flash
                 var colorAnim = new ColorAnimation(Colors.Gold, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
                 OrbGlow.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
-            });
-        }
-
-        private void OnSpeechStarted()
-        {
-            Dispatcher.Invoke(() => {
-                SetTheme(Colors.DeepPink, "SPEAKING");
-                _pulseStoryboard?.Begin();
-            });
-        }
-
-        private void OnSpeechEnded()
-        {
-            Dispatcher.Invoke(() => {
-                SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), "READY");
-                _pulseStoryboard?.Stop();
             });
         }
 

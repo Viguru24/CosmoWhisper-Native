@@ -8,7 +8,6 @@ using System.Windows;
 using NAudio.Wave;
 using NAudio.CoreAudioApi;
 using CosmoWhisper.Services;
-using CosmoWhisper.Manus;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Windows.Media;
@@ -460,10 +459,6 @@ namespace CosmoWhisper.Managers
                                 } catch { }
                             }
 
-                            if (prefs.EnableManusAgent)
-                            {
-                                _ = ManusAgent.Shared.ProcessTask(corrected);
-                            }
                             await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
                         }
                     }
