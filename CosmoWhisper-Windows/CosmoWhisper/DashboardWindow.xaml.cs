@@ -361,13 +361,22 @@ namespace CosmoWhisper
         private void BtnBackupNow_Click(object sender, RoutedEventArgs e) => _prefs.BackupNow(sender as System.Windows.Controls.Button);
 
         private TaskCompletionSource<(string? password, string? name)>? _vaultTask;
-        public async Task<(string? password, string? name)> GetVaultPasswordAsync()
+        public async Task<(string? password, string? name)> GetVaultPasswordAsync(bool isRestore = false)
         {
             _vaultTask = new TaskCompletionSource<(string? password, string? name)>();
             TxtVaultName.Text = "";
             TxtVaultPassword.Password = "";
+            
+            // Dynamic UI
+            TxtVaultTitle.Text = isRestore ? "🔓 Unlock Your Vault" : "🔐 Secure Your Vault";
+            LblVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
+            TxtVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
+            
             VaultPasswordOverlay.Visibility = Visibility.Visible;
-            TxtVaultName.Focus();
+            
+            if (isRestore) TxtVaultPassword.Focus();
+            else TxtVaultName.Focus();
+            
             return await _vaultTask.Task;
         }
 

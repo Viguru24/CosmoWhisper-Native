@@ -2140,15 +2140,16 @@
                     <BlurEffect Radius="20"/>
                 </Border.Effect>
             </Border>
-            <Border Width="400" Height="250" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Width="400" MaxHeight="550" Height="Auto" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="30" Color="Black" Opacity="0.5"/>
                 </Border.Effect>
-                <StackPanel Margin="30">
-                    <TextBlock Text="&#x1F512; Secure Your Vault" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="30">
+                    <TextBlock x:Name="TxtVaultTitle" Text="&#x1F512; Secure Your Vault" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                     <TextBlock Text="Enter a password to encrypt your backup. You will need this same password to restore." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
                     
-                    <TextBlock Text="Backup Name (Optional)" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
+                    <TextBlock x:Name="LblVaultName" Text="Backup Name (Optional)" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
                     <TextBox x:Name="TxtVaultName" Height="40" Background="#10FFFFFF" Foreground="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0" Margin="0,0,0,15">
                          <TextBox.Resources>
                             <Style TargetType="Border">
@@ -2183,6 +2184,7 @@
                         </Button>
                     </Grid>
                 </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
 
