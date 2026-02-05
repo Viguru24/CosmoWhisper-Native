@@ -11,7 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.2.5</Version>
+    <Version>2.2.6</Version>
 
     <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
   </PropertyGroup>

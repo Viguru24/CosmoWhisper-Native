@@ -21,6 +21,9 @@ namespace CosmoWhisper.Managers
                 // Ensure Cosmo keeps its volume at 100% across all devices
                 _ = Task.Run(async () =>
                 {
+                    // Wait for system to settle (prevent startup race conditions)
+                    await Task.Delay(10000);
+
                     while (true)
                     {
                         try { ForceProcessVolumeMax(); } catch { }

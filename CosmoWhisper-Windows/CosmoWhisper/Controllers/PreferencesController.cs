@@ -364,6 +364,9 @@ namespace CosmoWhisper.Controllers
 
                 string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
 
+                // Wait for dialog to fully close before showing password overlay
+                await System.Threading.Tasks.Task.Delay(400);
+
                 // Ask for password
                 var (password, _) = await Window.GetVaultPasswordAsync(true);
                 if (string.IsNullOrEmpty(password)) return;
