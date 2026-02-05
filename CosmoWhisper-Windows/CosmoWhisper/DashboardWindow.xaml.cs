@@ -307,23 +307,30 @@ namespace CosmoWhisper
         }
 
         private TaskCompletionSource<bool>? _dialogTask;
-        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "✨", bool showCancel = false)
+        private TaskCompletionSource<string?>? _listDialogTask;
+
+        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "📂")
         {
-            _dialogTask = new TaskCompletionSource<bool>();
+            _listDialogTask = new TaskCompletionSource<string?>();
             TxtDialogTitle.Text = title;
             TxtDialogMessage.Text = message;
             TxtDialogIcon.Text = icon;
-            BtnDialogCancel.Visibility = showCancel ? Visibility.Visible : Visibility.Collapsed;
             
-            if (showCancel)
-            {
-                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
-            }
-            else
-            {
-                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 2);
-            }
+            BtnDialogCancel.Visibility = Visibility.Visible;
+            System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
+            BtnDialogConfirm.Content = "Restore Selected";
 
+            ListDialogOptions.ItemsSource = options;
+            ListDialogOptions.Visibility = Visibility.Visible;
+            ListDialogOptions.SelectedIndex = 0;
+
+            await AnimateDialogOpen();
+
+            return await _listDialogTask.Task;
+        }
+
+        private async Task AnimateDialogOpen()
+        {
             // Reset transform and opacity
             UniversalDialog.Opacity = 0;
             DialogScale.ScaleX = 0.8;
@@ -344,20 +351,46 @@ namespace CosmoWhisper
             UniversalDialog.BeginAnimation(OpacityProperty, fadeAnim);
             DialogScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnim);
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
+        }
+
+        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "✨", bool showCancel = false)
+        {
+            _dialogTask = new TaskCompletionSource<bool>();
+            TxtDialogTitle.Text = title;
+            TxtDialogMessage.Text = message;
+            TxtDialogIcon.Text = icon;
+            BtnDialogCancel.Visibility = showCancel ? Visibility.Visible : Visibility.Collapsed;
+            BtnDialogConfirm.Content = "Confirm";
+            ListDialogOptions.Visibility = Visibility.Collapsed;
+            
+            if (showCancel)
+            {
+                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
+            }
+            else
+            {
+                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 2);
+            }
+
+            await AnimateDialogOpen();
 
             return await _dialogTask.Task;
         }
 
         private async void DialogConfirm_Click(object sender, RoutedEventArgs e)
         {
+            string? selected = ListDialogOptions.SelectedItem?.ToString();
             await HideDialogAsync();
+            
             _dialogTask?.SetResult(true);
+            _listDialogTask?.SetResult(selected);
         }
 
         private async void DialogCancel_Click(object sender, RoutedEventArgs e)
         {
             await HideDialogAsync();
             _dialogTask?.SetResult(false);
+            _listDialogTask?.SetResult(null);
         }
 
         private async Task HideDialogAsync()

@@ -26,13 +26,31 @@ namespace CosmoWhisper.Controllers
         public void Initialize()
         {
             if (Window.VocabList == null) return;
-
+            
+            // Load key-value pairs
             VocabularyItems.Clear();
             foreach (var kvp in VocabularyManager.Shared.Replacements)
             {
                 VocabularyItems.Add(new VocabularyItem { Key = kvp.Key, Value = kvp.Value, OriginalKey = kvp.Key });
             }
             Window.VocabList.ItemsSource = VocabularyItems;
+
+            // Load hints
+            if (Window.TxtVocabHints != null)
+            {
+                Window.TxtVocabHints.Text = PreferenceManager.Shared.Preferences.TranscriptionHints;
+                Window.TxtVocabHints.TextChanged -= TxtVocabHints_TextChanged;
+                Window.TxtVocabHints.TextChanged += TxtVocabHints_TextChanged;
+            }
+        }
+
+        private void TxtVocabHints_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                PreferenceManager.Shared.Preferences.TranscriptionHints = tb.Text;
+                PreferenceManager.Shared.Save();
+            }
         }
 
         public void AddVocabulary()
@@ -155,6 +173,9 @@ namespace CosmoWhisper.Controllers
 
             if (Window.TxtVocabHints != null)
                 Window.TxtVocabHints.Text = "";
+            
+            PreferenceManager.Shared.Preferences.TranscriptionHints = "";
+            PreferenceManager.Shared.Save();
 
             ToggleSecureMode(false);
         }
