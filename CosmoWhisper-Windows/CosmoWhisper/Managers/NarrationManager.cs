@@ -14,7 +14,8 @@ namespace CosmoWhisper.Managers
         private NarrationManager() { }
         public async Task SpeakAsync(string text)
         {
-            try {
+            try
+            {
                 SpeechStarted?.Invoke();
                 LogToFile($"Speaking text: {text.Length} chars");
                 using var synth = new SpeechSynthesizer();
@@ -27,9 +28,13 @@ namespace CosmoWhisper.Managers
                 dr.ReadBytes(buf);
                 await File.WriteAllBytesAsync(tempFile, buf);
                 await AudioRecorder.Shared.PlayAudio(tempFile);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 LogToFile($"Speak Error: {ex.Message}");
-            } finally {
+            }
+            finally
+            {
                 SpeechEnded?.Invoke();
             }
         }

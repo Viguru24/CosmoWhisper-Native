@@ -20,11 +20,11 @@ namespace CosmoWhisper;
 
 public partial class MainWindow : Window
 {
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     public MainWindow()
     {
         InitializeComponent();
-        
+
         // Subscribe to recorder events
         AudioRecorder.Shared.IsRecordingChanged += OnIsRecordingChanged;
         AudioRecorder.Shared.AudioLevelChanged += OnAudioLevelChanged;
@@ -36,7 +36,8 @@ public partial class MainWindow : Window
 
     private void OnErrorOccurred(string error)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             OutputTextBox.Foreground = Brushes.Red;
             OutputTextBox.Text = $"ERROR: {error}";
         });
@@ -50,35 +51,40 @@ public partial class MainWindow : Window
 
     private void OnManusStatusChanged(string status)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             ManusTextBox.Text = status;
         });
     }
 
     private void OnManusResponseReceived(string response)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             ManusTextBox.Text = response;
         });
     }
 
     private void OnIsRecordingChanged(bool isRecording)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             RecordButton.Content = isRecording ? "Stop Recording" : "Start Recording";
         });
     }
 
     private void OnAudioLevelChanged(float level)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             AudioLevelMeter.Value = level;
         });
     }
 
     private void OnTranscriptionReceived(string text)
     {
-        Dispatcher.Invoke(() => {
+        Dispatcher.Invoke(() =>
+        {
             OutputTextBox.Text = text;
         });
     }

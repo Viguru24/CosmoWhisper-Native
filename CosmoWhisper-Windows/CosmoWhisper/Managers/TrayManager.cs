@@ -95,30 +95,30 @@ namespace CosmoWhisper.Managers
                 }
             }
             catch { }
-            
+
             return SystemIcons.Application;
         }
 
         private bool _isPaused = false;
         public bool IsPaused => _isPaused;
         public event Action<bool>? PauseStateChanged;
-        
+
         private void TogglePause(ToolStripMenuItem item)
         {
             _isPaused = !_isPaused;
             item.Text = _isPaused ? "▶️ Resume Recording" : "⏸️ Pause Recording";
-            
+
             // Update tray tooltip
             if (_trayIcon != null)
             {
-                _trayIcon.Text = _isPaused 
-                    ? "CosmoWhisper - PAUSED" 
+                _trayIcon.Text = _isPaused
+                    ? "CosmoWhisper - PAUSED"
                     : "CosmoWhisper - Voice Control for Windows";
             }
 
             // Notify listeners of pause state change
             PauseStateChanged?.Invoke(_isPaused);
-            
+
             if (_isPaused)
             {
                 ShowBalloon("Paused", "Voice recording is paused. Click to resume.", ToolTipIcon.Info);

@@ -35,20 +35,20 @@ namespace CosmoWhisper.Managers
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken);
                 string url = $"{prefs.BackendUrl.TrimEnd('/')}/api/license/status";
-                
+
                 var response = await _httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
                     var status = JsonSerializer.Deserialize<LicenseStatus>(json);
-                    
+
                     if (status != null)
                     {
                         prefs.UserTier = status.tier;
                         prefs.UsageMinutes = status.usageMinutes;
                         prefs.UsageLimitMinutes = status.limitMinutes;
                         prefs.IsAIUnlocked = !status.isOverLimit;
-                        
+
                         PreferenceManager.Shared.Save();
                         return true;
                     }
@@ -58,7 +58,7 @@ namespace CosmoWhisper.Managers
             {
                 Debug.WriteLine($"[LICENSE] Sync failed: {ex.Message}");
             }
-            
+
             return false;
         }
 
@@ -71,7 +71,7 @@ namespace CosmoWhisper.Managers
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken);
                 string url = $"{prefs.BackendUrl.TrimEnd('/')}/api/license/report-usage";
-                
+
                 var content = new StringContent(
                     JsonSerializer.Serialize(new { durationMs = durationSeconds * 1000 }),
                     System.Text.Encoding.UTF8,

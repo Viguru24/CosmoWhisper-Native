@@ -21,13 +21,15 @@ namespace CosmoWhisper.Managers
 
         public void UpdateBaseAddress()
         {
-             string url = PreferenceManager.Shared.Preferences.BackendUrl;
-             if (string.IsNullOrEmpty(url)) url = "http://localhost:5000";
-             if (!url.EndsWith("/")) url += "/";
-             
-             try {
+            string url = PreferenceManager.Shared.Preferences.BackendUrl;
+            if (string.IsNullOrEmpty(url)) url = "http://localhost:5000";
+            if (!url.EndsWith("/")) url += "/";
+
+            try
+            {
                 _client.BaseAddress = new Uri(url);
-             } catch {}
+            }
+            catch { }
         }
 
         private void SetAuthHeader()
@@ -50,14 +52,14 @@ namespace CosmoWhisper.Managers
                 var payload = new { email, password };
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
+
                 var response = await _client.PostAsync("api/auth/login", content);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<LoginResponse>(responseString, _jsonOptions);
-                    
+
                     if (result != null)
                     {
                         var p = PreferenceManager.Shared.Preferences;
@@ -69,11 +71,14 @@ namespace CosmoWhisper.Managers
                 }
                 else
                 {
-                    try {
+                    try
+                    {
                         var responseString = await response.Content.ReadAsStringAsync();
                         var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
                         return (false, error?.error ?? "Login failed");
-                    } catch {
+                    }
+                    catch
+                    {
                         return (false, "Login failed: " + response.ReasonPhrase);
                     }
                 }
@@ -96,7 +101,7 @@ namespace CosmoWhisper.Managers
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var status = JsonSerializer.Deserialize<StatusResponse>(responseString, _jsonOptions);
-                    
+
                     if (status != null)
                     {
                         var p = PreferenceManager.Shared.Preferences;
@@ -110,7 +115,7 @@ namespace CosmoWhisper.Managers
             }
             catch (Exception ex)
             {
-                 System.Diagnostics.Debug.WriteLine($"Sync Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Sync Error: {ex.Message}");
             }
             return false;
         }
@@ -123,7 +128,7 @@ namespace CosmoWhisper.Managers
                 var payload = new { durationMs };
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
+
                 var response = await _client.PostAsync("api/license/report-usage", content);
                 return response.IsSuccessStatusCode;
             }

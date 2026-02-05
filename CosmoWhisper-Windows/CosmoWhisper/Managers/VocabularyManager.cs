@@ -21,9 +21,9 @@ namespace CosmoWhisper.Managers
             _filePath = Path.Combine(folder, "vocabulary.json");
             Load();
 
-            if (Replacements.Count == 0)
+            if (Replacements.Count == 0 && !File.Exists(_filePath))
             {
-                // Seed with Example Data if empty
+                // Seed with Example Data if empty and file doesn't exist
                 Replacements["my address"] = "1007 Mountain Drive, Gotham City, NJ";
                 Replacements["my email"] = "bruce.wayne@wayne-enterprises.com";
                 Replacements["my phone"] = "+1 555-010-1939";

@@ -9,8 +9,9 @@ namespace CosmoWhisper.Views
         {
             InitializeComponent();
             LoadDevices();
-            
-            SldSensitivity.ValueChanged += (s, e) => {
+
+            SldSensitivity.ValueChanged += (s, e) =>
+            {
                 TxtSensitivityValue.Text = $"{(int)e.NewValue}%";
                 PreferenceManager.Shared.Preferences.MicSensitivity = e.NewValue / 100.0;
                 PreferenceManager.Shared.Save();
@@ -22,7 +23,7 @@ namespace CosmoWhisper.Views
             var devices = await AudioRecorder.Shared.EnumerateInputDevices();
             ComboMics.ItemsSource = devices;
             ComboMics.DisplayMemberPath = "Name";
-            
+
             // Set selected device from preferences
             // (Simplified for now)
         }

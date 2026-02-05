@@ -2,7 +2,11 @@ using System;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Windows;
+using MessageBoxButton = System.Windows.MessageBoxButton;
+using MessageBoxImage = System.Windows.MessageBoxImage;
+using MessageBoxResult = System.Windows.MessageBoxResult;
 using CosmoWhisper.Managers;
+using CosmoWhisper;
 
 namespace CosmoWhisper.Managers
 {
@@ -15,7 +19,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 string exePath = Process.GetCurrentProcess().MainModule.FileName;
-                
+
                 using (var key = Registry.ClassesRoot.CreateSubKey(ProtocolName))
                 {
                     key.SetValue("", "URL:CosmoWhisper Protocol");
@@ -58,7 +62,7 @@ namespace CosmoWhisper.Managers
                         {
                             PreferenceManager.Shared.Preferences.IsAIUnlocked = true;
                             PreferenceManager.Shared.Save();
-                            System.Windows.MessageBox.Show("Welcome to the Inner Circle. Cosmo Intelligence Unlocked!", "Protocol Activation", MessageBoxButton.OK, MessageBoxImage.Information);
+                            _ = CosmoMessage.Show("Protocol Activation", "Welcome to the Inner Circle. Cosmo Intelligence Unlocked!", "👤");
                         }
                     }
                     else if (action.Equals("configure", StringComparison.OrdinalIgnoreCase))
@@ -68,7 +72,7 @@ namespace CosmoWhisper.Managers
                         {
                             PreferenceManager.Shared.Preferences.GroqApiKey = groqKey;
                             PreferenceManager.Shared.Save();
-                            System.Windows.MessageBox.Show("Groq API Key synced from website!", "Configuration Synced", MessageBoxButton.OK, MessageBoxImage.Information);
+                            _ = CosmoMessage.Show("Configuration Synced", "Groq API Key synced from website!", "☁️");
                         }
                     }
                     else if (action.Equals("license", StringComparison.OrdinalIgnoreCase))
@@ -78,13 +82,16 @@ namespace CosmoWhisper.Managers
                         {
                             PreferenceManager.Shared.Preferences.LicenseToken = token;
                             PreferenceManager.Shared.Save();
-                            
+
                             // Immediately sync status
-                            Task.Run(async () => {
+                            Task.Run(async () =>
+                            {
                                 bool success = await LicenseManager.Shared.SyncStatusAsync();
-                                if (success) {
-                                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                                        System.Windows.MessageBox.Show("License Token successfully activated!", "Access Granted", MessageBoxButton.OK, MessageBoxImage.Information);
+                                if (success)
+                                {
+                                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        _ = CosmoMessage.Show("Access Granted", "License Token successfully activated!", "🎟️");
                                     });
                                 }
                             });

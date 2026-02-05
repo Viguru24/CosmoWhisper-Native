@@ -19,15 +19,15 @@ namespace CosmoWhisper.Manus
         private readonly LocalFileOperator _fileOperator = new();
 
         public string Name => "Manus-Windows";
-        
+
         public async Task<string> ProcessTask(string userRequest)
         {
-            return await Task.Run(async () => 
+            return await Task.Run(async () =>
             {
                 try
                 {
                     ManusStatusChanged?.Invoke("MANUS: Thinking...");
-                    
+
                     string systemPrompt = @"You are Manus, the project manager agent. 
 Analyze the user request. If they want to CREATE or MANAGE a plan, output a specific command line starting with 'CMD:'.
 Formats:
@@ -45,7 +45,7 @@ If it's just a question, answer it directly without CMD.";
                     {
                         var resultBuilder = new System.Text.StringBuilder();
                         var lines = response.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                        
+
                         foreach (var line in lines)
                         {
                             if (line.Trim().StartsWith("CMD:"))
@@ -53,7 +53,7 @@ If it's just a question, answer it directly without CMD.";
                                 var parts = line.Substring(4).Split('|');
                                 var command = parts[0].Trim().ToLower();
                                 var id = parts.Length > 1 ? parts[1].Trim() : null;
-                                
+
                                 if (command == "mark_step")
                                 {
                                     int index = (parts.Length > 2 && int.TryParse(parts[2], out int idx)) ? idx : -1;

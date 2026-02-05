@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using CosmoWhisper.Managers;
+using CosmoWhisper;
 
 namespace CosmoWhisper.Services
 {
@@ -26,10 +27,10 @@ namespace CosmoWhisper.Services
         private void RefreshConfig()
         {
             var p = PreferenceManager.Shared.Preferences;
-            string key = string.IsNullOrWhiteSpace(p.GroqApiKey) 
+            string key = string.IsNullOrWhiteSpace(p.GroqApiKey)
                 ? "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" // Default fallback
                 : p.GroqApiKey;
-            
+
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
         }
 
@@ -44,12 +45,12 @@ namespace CosmoWhisper.Services
                 var fileBytes = await File.ReadAllBytesAsync(filePath);
                 var fileContent = new ByteArrayContent(fileBytes);
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/mp4");
-                
+
                 form.Add(fileContent, "file", Path.GetFileName(filePath));
                 form.Add(new StringContent(model), "model");
                 form.Add(new StringContent("json"), "response_format");
-                
-                string langCode = p.InterfaceLanguage.ToLower().Split('-')[0]; 
+
+                string langCode = p.InterfaceLanguage.ToLower().Split('-')[0];
                 if (langCode != "auto")
                 {
                     form.Add(new StringContent(langCode), "language");
@@ -58,36 +59,35 @@ namespace CosmoWhisper.Services
                 // Add prompt for regional spelling, technical terms, and Focused App Context
                 string appContext = Managers.AudioRecorder.Shared.GetCurrentFocusedApp();
                 string basePrompt = $"Transcribe verbatim. Do not repeat. Do not hallucinate. Context: The user is currently using {appContext}.";
-                
+
                 if (langCode == "en")
                 {
                     string variant = p.InterfaceLanguage == "en-GB" ? "British English (e.g., colour, organise)" : "American English (e.g., color, organize)";
                     basePrompt = $"Transcribe verbatim in {variant}. Do not repeat. Do not hallucinate. Context: The user is using {appContext}.";
                 }
-                
+
                 form.Add(new StringContent(basePrompt), "prompt");
 
                 var response = await _httpClient.PostAsync(TranscriptionUrl, form);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorBody = await response.Content.ReadAsStringAsync();
                     var errorMsg = $"Groq API {response.StatusCode}: {errorBody}";
                     System.Diagnostics.Debug.WriteLine($"[Groq Error] {errorMsg}");
-                    
+
                     // Log to file with absolute path
                     var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "groq_errors.log");
                     try
                     {
-                        File.AppendAllText(logPath, 
+                        File.AppendAllText(logPath,
                             $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {errorMsg}\n");
                     }
                     catch { }
-                    
+
                     // Show popup for critical errors
-                    System.Windows.MessageBox.Show($"Groq API Error: {response.StatusCode}\n\nCheck {logPath} for details", 
-                        "API Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    
+                    _ = CosmoMessage.Show("Groq API Error", $"API returned {response.StatusCode}. Check the logs for details.", "📡");
+
                     return $"Error: Groq API {response.StatusCode}";
                 }
 
@@ -98,16 +98,16 @@ namespace CosmoWhisper.Services
             {
                 var errorMsg = $"Transcription exception: {ex.GetType().Name} - {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"[Transcription] {errorMsg}");
-                
+
                 // Log to file with absolute path
                 var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "groq_errors.log");
                 try
                 {
-                    File.AppendAllText(logPath, 
+                    File.AppendAllText(logPath,
                         $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - EXCEPTION: {errorMsg}\n");
                 }
                 catch { }
-                
+
                 return $"Error: {ex.Message}";
             }
         }
@@ -120,17 +120,17 @@ namespace CosmoWhisper.Services
             {
                 using var ttsClient = new HttpClient();
                 ttsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-                
+
                 var request = new
                 {
                     model = "tts-1",
                     input = text,
-                    voice = voice.ToLower(), 
+                    voice = voice.ToLower(),
                     speed = speed
                 };
 
                 var response = await ttsClient.PostAsJsonAsync("https://api.openai.com/v1/audio/speech", request);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var err = await response.Content.ReadAsStringAsync();
@@ -160,7 +160,7 @@ namespace CosmoWhisper.Services
                 // Use a smaller, faster model if the prompt or context is short
                 string modelName = "llama-3.3-70b-versatile"; // Default "Cloud" track
                 bool isFastTrack = prompt.Length < 100 && context.Length < 500;
-                
+
                 if (isFastTrack)
                 {
                     modelName = "llama-3.1-8b-instant"; // Swift "Fast" track
@@ -178,7 +178,7 @@ namespace CosmoWhisper.Services
                 };
 
                 var response = await _httpClient.PostAsJsonAsync("https://api.groq.com/openai/v1/chat/completions", request);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();

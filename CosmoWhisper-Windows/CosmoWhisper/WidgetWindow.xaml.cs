@@ -26,13 +26,16 @@ namespace CosmoWhisper
         private Storyboard _soundWaveStoryboard;
         private Storyboard _rippleStoryboard;
         private Storyboard _idleBreathingStoryboard;
+        private SolidColorBrush _cachedWhiteBrush;
+        private SolidColorBrush _cachedBlueBrush;
 
         public WidgetWindow()
         {
             InitializeComponent();
-            
+
             // Apply blur
-            this.SourceInitialized += (s, e) => {
+            this.SourceInitialized += (s, e) =>
+            {
                 // BlurManager.ApplyMica(this); // Disabled to fix black corners on transparent widget
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
@@ -40,7 +43,8 @@ namespace CosmoWhisper
             };
 
             // Ensure we stay on top when other windows are focused
-            this.Deactivated += (s, e) => {
+            this.Deactivated += (s, e) =>
+            {
                 UpdateTopmostState();
             };
 
@@ -50,15 +54,24 @@ namespace CosmoWhisper
             _soundWaveStoryboard = (Storyboard)FindResource("SoundWaveAnimation");
             _rippleStoryboard = (Storyboard)FindResource("RippleAnimation");
             _idleBreathingStoryboard = (Storyboard)FindResource("IdleBreathingAnimation");
-            
+
             // Start animations
             _idleBreathingStoryboard.Begin();
-            
+
             // Capture the bars we created in XAML
             foreach (var child in VisualizerPanel.Children)
             {
                 if (child is System.Windows.Shapes.Rectangle rect) _bars.Add(rect);
             }
+
+            // Cache brushes
+            _cachedWhiteBrush = new SolidColorBrush(Colors.White) { Opacity = 0.8 };
+            if (_cachedWhiteBrush.CanFreeze) _cachedWhiteBrush.Freeze();
+
+            _cachedBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255)) { Opacity = 0.8 }; // Original logic used White 0.8 too? No, it used different color.
+            // Wait, line 185 was: new SolidColorBrush(isRecordingActive ? Colors.White : System.Windows.Media.Color.FromRgb(255, 255, 255)) { Opacity = 0.8 };
+            // Both are White? "System.Windows.Media.Color.FromRgb(255, 255, 255)" IS White.
+            // So we only need one brush.
 
             // Wire up Audio Events
             AudioRecorder.Shared.IsRecordingChanged += OnIsRecordingChanged;
@@ -70,64 +83,77 @@ namespace CosmoWhisper
             CommandController.Shared.CommandExecuted += OnCommandExecuted;
 
             // Wire up HotKey for push-to-talk
-            _hotKeyManager.KeyPressed += () => {
+            _hotKeyManager.KeyPressed += () =>
+            {
                 if (!AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StartRecording();
                 }
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                 });
             };
-            _hotKeyManager.KeyReleased += () => {
+            _hotKeyManager.KeyReleased += () =>
+            {
                 if (AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StopRecording();
                 }
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                 });
             };
-            _hotKeyManager.ErrorOccurred += (msg) => {
-                Dispatcher.Invoke(() => {
+            _hotKeyManager.ErrorOccurred += (msg) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
                     string keyName = PreferenceManager.Shared.Preferences.ActivationKey;
-    
+
                 });
             };
-            
+
             // Wire up Mouse Button for push-to-talk
-            _mouseButtonManager.ButtonPressed += () => {
+            _mouseButtonManager.ButtonPressed += () =>
+            {
                 if (!AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StartRecording();
                 }
             };
-            _mouseButtonManager.ButtonReleased += () => {
+            _mouseButtonManager.ButtonReleased += () =>
+            {
                 if (AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StopRecording();
                 }
             };
-            _mouseButtonManager.ErrorOccurred += (msg) => {
-                Dispatcher.Invoke(() => {
+            _mouseButtonManager.ErrorOccurred += (msg) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
                     // Handle mouse button errors silently
                 });
             };
-            
-            PreferenceManager.Shared.PreferencesUpdated += () => {
-                Dispatcher.Invoke(() => {
+
+            PreferenceManager.Shared.PreferencesUpdated += () =>
+            {
+                Dispatcher.Invoke(() =>
+                {
                     _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                     _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
                     ApplyWidgetTransparency();
                 });
             };
 
-            this.Closed += (s, e) => {
+            this.Closed += (s, e) =>
+            {
                 SavePosition();
                 _hotKeyManager.Dispose();
                 _mouseButtonManager.Dispose();
             };
 
             this.LocationChanged += (s, e) => SavePosition();
-            
+
             LoadPosition();
         }
 
@@ -148,7 +174,8 @@ namespace CosmoWhisper
 
         private void OnIsRecordingChanged(bool isRecording)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 if (isRecording)
                 {
                     // Show colorful sound wave, hide visualizer
@@ -171,7 +198,8 @@ namespace CosmoWhisper
 
         public void UpdateVolumeIndicator(float normalized)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 // Scale Orb based on level
                 float scale = 1.0f + (normalized * 0.5f);
                 OrbScale.ScaleX = scale;
@@ -182,14 +210,23 @@ namespace CosmoWhisper
                 {
                     double variation = _rnd.NextDouble() * 0.5 + 0.5;
                     bar.Height = Math.Max(4, normalized * 30 * variation);
-                    bar.Fill = new SolidColorBrush(isRecordingActive ? Colors.White : System.Windows.Media.Color.FromRgb(255, 255, 255)) { Opacity = 0.8 };
+                    bar.Fill = _cachedWhiteBrush;
                 }
             });
         }
 
         private void OnAudioLevelChanged(float db)
         {
-            float normalized = Math.Max(0, db + 60) / 60f; // 0 to 1
+            // Use same logic as Dashboard for consistency
+            float minDb = -80;
+            float sensitivityFactor = (float)AudioRecorder.Shared.Sensitivity * 2.0f;
+
+            float normalized = (db - minDb) / (0 - minDb);
+            normalized *= sensitivityFactor;
+
+            if (normalized < 0) normalized = 0;
+            if (normalized > 1) normalized = 1;
+
             UpdateVolumeIndicator(normalized);
         }
 
@@ -197,25 +234,28 @@ namespace CosmoWhisper
 
         private void OnTranscriptionReceived(string text)
         {
-            Dispatcher.Invoke(async () => {
-                string snippet = text.Length > 20 ? text.Substring(0, 17) + "..." : text;
+            if (string.IsNullOrWhiteSpace(text)) return;
 
-                
-                await Task.Delay(3000);
-                
-                // Return to neutral state if not recording again
+            Dispatcher.Invoke(async () =>
+            {
+                // Returns to neutral state if not recording
                 if (!isRecordingActive)
                 {
-    
+                    // UI provides feedback via Orb
+                    var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
+                    OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
                 }
+
+                await Task.Delay(2000);
             });
         }
 
         private void OnCommandExecuted()
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 _rippleStoryboard?.Begin();
-                
+
                 // Extra flash
                 var colorAnim = new ColorAnimation(Colors.Gold, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
                 OrbGlow.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
@@ -224,18 +264,19 @@ namespace CosmoWhisper
 
         private void OnErrorOccurred(string error)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 // Show full error in status (don't use SetTheme as it overwrites the text)
 
                 OrbMain.Fill = new SolidColorBrush(Colors.OrangeRed);
                 OrbGlow.Fill = new SolidColorBrush(Colors.OrangeRed);
-                
+
                 System.Diagnostics.Debug.WriteLine($"Cosmo Error: {error}");
-                
+
                 // Log to file for debugging
                 try
                 {
-                    System.IO.File.AppendAllText("cosmo_errors.log", 
+                    System.IO.File.AppendAllText("cosmo_errors.log",
                         $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
                 }
                 catch { }
@@ -247,16 +288,16 @@ namespace CosmoWhisper
             OrbMain.Fill = new SolidColorBrush(color);
             OrbGlow.Fill = new SolidColorBrush(color);
             if (OrbShadow != null) OrbShadow.Color = color;
-            
+
             if (MainBorder != null)
             {
                 MainBorder.BorderBrush = new SolidColorBrush(color) { Opacity = 0.5 };
             }
-            
+
             if (statusText == "ERROR") OrbMain.Fill = Brushes.OrangeRed;
             if (statusText.Contains("THINKING")) OrbMain.Fill = Brushes.Gold;
         }
-        
+
         public void ApplyWidgetTransparency()
         {
             var p = PreferenceManager.Shared.Preferences;
@@ -264,7 +305,7 @@ namespace CosmoWhisper
             {
                 MainBorder.Background.Opacity = p.WidgetOpacity;
             }
-        }    
+        }
 
         private void ResetBars()
         {
@@ -289,19 +330,20 @@ namespace CosmoWhisper
                 if (_dashboard == null || !_dashboard.IsLoaded)
                 {
                     _dashboard = new DashboardWindow();
-                    _dashboard.IsVisibleChanged += (s, e) => {
+                    _dashboard.IsVisibleChanged += (s, e) =>
+                    {
                         UpdateTopmostState();
                     };
                 }
-                
+
                 if (_dashboard.IsVisible && _dashboard.WindowState != WindowState.Minimized)
                 {
                     _dashboard.Hide();
                 }
                 else
                 {
-                    _dashboard.Show(); 
-                    
+                    _dashboard.Show();
+
                     if (_dashboard.WindowState == WindowState.Minimized)
                     {
                         _dashboard.WindowState = WindowState.Normal;
@@ -318,16 +360,16 @@ namespace CosmoWhisper
                     // If coordinates are weird (offscreen), force center
                     if (_dashboard.Left < -10000 || _dashboard.Top < -10000)
                     {
-                       _dashboard.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                       _dashboard.Left = (SystemParameters.PrimaryScreenWidth - _dashboard.Width) / 2;
-                       _dashboard.Top = (SystemParameters.PrimaryScreenHeight - _dashboard.Height) / 2;
+                        _dashboard.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                        _dashboard.Left = (SystemParameters.PrimaryScreenWidth - _dashboard.Width) / 2;
+                        _dashboard.Top = (SystemParameters.PrimaryScreenHeight - _dashboard.Height) / 2;
                     }
                 }
                 UpdateTopmostState();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Failed to toggle Dashboard: {ex.Message}", "Widget Error");
+                _ = CosmoMessage.Show("Widget Error", $"Failed to toggle Dashboard: {ex.Message}", "⚠️");
             }
         }
 
