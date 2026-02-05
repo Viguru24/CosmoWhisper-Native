@@ -28,3 +28,11 @@ This file is a session log. Record what you have done, what tests you have run, 
 - Update `progress.md` frequently with short, concise entries.
 - Update `task_plan.md` when moving between high-level tasks.
 - Write to `findings.md` when you discover something non-obvious.
+
+## 🛡️ NATIVE APP BUILD & LAUNCH PROTOCOL
+**MANDATORY: Before every build and launch of the CosmoWhisper Windows app:**
+1.  **NUKE:** Execute `TaskKill /F /IM CosmoWhisperNative.exe /T` and `Stop-Process -Name "CosmoWhisperNative" -Force`.
+2.  **VERIFY:** Run `Get-Process` to confirm zero instances remain. Do not proceed until verified.
+3.  **CLEAN BUILD:** Run `dotnet build` and catch any "File in use" errors. If it fails, stop and investigate.
+4.  **FORCE LAUNCH:** Use `Start-Process` with a foreground activation flag.
+5.  **VISIBILITY CHECK:** If the build succeeded but the user can't see the app, immediately check `crash_log.txt` for XAML initialization errors.

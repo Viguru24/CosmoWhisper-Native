@@ -429,6 +429,8 @@
                                         <TextBlock Text="Exit App" Foreground="#FF453A" VerticalAlignment="Center" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Button>
+                                <TextBlock Text="Version 2.2.3-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>
