@@ -2199,7 +2199,35 @@
                                 <DropShadowEffect BlurRadius="10" Color="Black" Opacity="0.3"/>
                             </TextBlock.Effect>
                         </TextBlock>
-                        <TextBlock x:Name="TxtDialogMessage" Text="Your environment is now secured." Foreground="White" Opacity="0.75" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,35" LineHeight="22"/>
+                        <TextBlock x:Name="TxtDialogMessage" Text="Your environment is now secured." Foreground="White" Opacity="0.75" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,15" LineHeight="22"/>
+
+                        <!-- Selection List (Optional) -->
+                        <ListBox x:Name="ListDialogOptions" Visibility="Collapsed" Background="#2A2D45" BorderThickness="0" MaxHeight="200" Margin="0,0,0,25" Foreground="White" SelectionMode="Single">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="10,8"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="8">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#40FFFFFF"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
                         
                         <Grid>
                             <Grid.ColumnDefinitions>

@@ -21,6 +21,7 @@ namespace CosmoWhisper.Managers
         public bool RestoreClipboard { get; set; } = true;
         public bool AutoSubmit { get; set; } = true;
         public string BackupDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
+        public string TranscriptionHints { get; set; } = "";
 
         // Voice Studio: Speed, Pitch & Selection
         public double VoiceSpeed { get; set; } = 1.0;

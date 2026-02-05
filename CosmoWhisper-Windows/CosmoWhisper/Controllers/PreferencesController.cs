@@ -289,9 +289,12 @@ namespace CosmoWhisper.Controllers
 
                     using (var archive = System.IO.Compression.ZipFile.Open(tempZip, System.IO.Compression.ZipArchiveMode.Create))
                     {
-                        foreach (string file in Directory.GetFiles(sourceFolder, "*.json"))
+                        // Backup all files and folders in AppData/CosmoWhisper
+                        foreach (string file in Directory.GetFiles(sourceFolder, "*.*", SearchOption.AllDirectories))
                         {
-                            archive.CreateEntryFromFile(file, Path.GetFileName(file));
+                            // Relative path for zip
+                            string relativePath = Path.GetRelativePath(sourceFolder, file);
+                            archive.CreateEntryFromFile(file, relativePath);
                         }
                     }
 
@@ -337,32 +340,41 @@ namespace CosmoWhisper.Controllers
                     return;
                 }
 
-                var latestVault = Directory.GetFiles(destDir, "CosmoVault_*.vault")
+                var vaults = Directory.GetFiles(destDir, "CosmoVault_*.vault")
                     .OrderByDescending(f => f)
-                    .FirstOrDefault();
+                    .ToList();
 
-                if (latestVault == null)
+                if (vaults.Count == 0)
                 {
-                    // Fallback to old format directories if any
-                    var latestDir = Directory.GetDirectories(destDir, "CosmoVault_*")
+                    // Fallback search
+                    var legacyDirs = Directory.GetDirectories(destDir, "CosmoVault_*")
                         .OrderByDescending(d => d)
-                        .FirstOrDefault();
-                    
-                    if (latestDir != null)
+                        .ToList();
+
+                    if (legacyDirs.Count > 0)
                     {
-                        var res = await Window.ShowDialogAsync("Legacy Backup", "Found an UNENCRYPTED legacy backup. Restore it?", "⚠️", true);
+                        var res = await Window.ShowDialogAsync("Legacy Backup", $"Found {legacyDirs.Count} unencrypted legacy backup(s). Restore the most recent one?", "⚠️", true);
                         if (res)
                         {
-                            PreferenceManager.Shared.Restore(latestDir);
+                            PreferenceManager.Shared.Restore(legacyDirs[0]);
                             Initialize();
                             await Window.ShowDialogAsync("Success", "Legacy restore successful.", "✅");
                         }
-                        return;
                     }
-
-                    await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found in the folder.", "🔍");
+                    else
+                    {
+                        await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found in the backup folder.", "🔍");
+                    }
                     return;
                 }
+
+                // Show selection list
+                var vaultNames = vaults.Select(v => Path.GetFileName(v)).ToList();
+                string? selectedVaultName = await Window.ShowListDialogAsync("Select Vault", "Choose a restore point from your secure history:", vaultNames, "🛡️");
+
+                if (string.IsNullOrEmpty(selectedVaultName)) return;
+
+                string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
 
                 // Ask for password
                 string? password = await Window.GetVaultPasswordAsync();
@@ -375,7 +387,7 @@ namespace CosmoWhisper.Controllers
                 try
                 {
                     string tempZip = Path.Combine(tempDir, "data.zip");
-                    SecurityManager.DecryptFile(latestVault, tempZip, password);
+                    SecurityManager.DecryptFile(selectedVaultPath, tempZip, password);
 
                     // 2. Unzip to AppData
                     string appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
@@ -384,7 +396,14 @@ namespace CosmoWhisper.Controllers
                     {
                         foreach (var entry in archive.Entries)
                         {
-                            entry.ExtractToFile(Path.Combine(appDataFolder, entry.FullName), true);
+                            string fullPath = Path.Combine(appDataFolder, entry.FullName);
+                            string? directory = Path.GetDirectoryName(fullPath);
+                            if (directory != null) Directory.CreateDirectory(directory);
+                            
+                            if (!string.IsNullOrEmpty(entry.Name)) // Don't try to extract directory-only entries
+                            {
+                                entry.ExtractToFile(fullPath, true);
+                            }
                         }
                     }
 
