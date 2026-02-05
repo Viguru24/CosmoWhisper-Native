@@ -1,5 +1,0 @@
-2026-02-04 18:48:48 - Worker Error: 'RippleEffect' name cannot be found in the name scope of 'CosmoWhisper.WidgetWindow'.
-2026-02-04 19:41:14 - Init Failed: The parameter is incorrect.
-
-The OutputNode must belong to the same AudioGraph as the InputNode
-2026-02-04 19:41:14 - Init Failed: Object reference not set to an instance of an object.

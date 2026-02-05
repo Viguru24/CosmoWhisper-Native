@@ -11,7 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.2.3</Version>
+    <Version>2.2.4</Version>
 
     <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
   </PropertyGroup>
@@ -22,11 +22,20 @@
 
   <ItemGroup>
     <Resource Include="app.ico" />
+    <Content Include="app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="sidebar_logo.png" />
     <Content Include="Assets\mic_start.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\mic_stop.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\chime_on.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\chime_off.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Uninstall.ps1">

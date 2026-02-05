@@ -58,3 +58,9 @@ Publish_*/
 CosmoWhisper-Windows/CosmoWhisper/publish_output/
 CosmoWhisper-Windows/CosmoSetup/bin/
 CosmoWhisper-Windows/CosmoWhisper/bin/
+CosmoWhisper-Windows/Deploy/
+*.exe
+*.dll
+*.pdb
+*.zip
+*.vault
