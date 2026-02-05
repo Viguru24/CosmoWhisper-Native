@@ -328,7 +328,7 @@ namespace CosmoWhisper.Controllers
                     return;
                 }
 
-                var vaults = Directory.GetFiles(destDir, "CosmoVault_*.vault")
+                var vaults = Directory.GetFiles(destDir, "*.vault")
                     .OrderByDescending(f => f)
                     .ToList();
 
@@ -365,7 +365,7 @@ namespace CosmoWhisper.Controllers
                 string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
 
                 // Ask for password
-                var (password, _) = await Window.GetVaultPasswordAsync();
+                var (password, _) = await Window.GetVaultPasswordAsync(true);
                 if (string.IsNullOrEmpty(password)) return;
 
                 // 1. Decrypt to temporary zip
