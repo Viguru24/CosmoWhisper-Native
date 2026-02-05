@@ -41,7 +41,7 @@ namespace CosmoWhisper.Managers
             {
                 _currentVk = vkCode;
                 Debug.WriteLine($"[HotKey] Setting up for VK {vkCode}...");
-                
+
                 if (_hookID != IntPtr.Zero)
                 {
                     UnhookWindowsHookEx(_hookID);
@@ -49,7 +49,7 @@ namespace CosmoWhisper.Managers
 
                 _proc = HookCallback;
                 _hookID = SetHook(_proc);
-                
+
                 if (_hookID == IntPtr.Zero)
                 {
                     ErrorOccurred?.Invoke($"Key hook failed for VK {vkCode}. Use mic button instead.");
@@ -68,8 +68,8 @@ namespace CosmoWhisper.Managers
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-                return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(null), 0);
-            }
+            return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(null), 0);
+        }
 
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -77,7 +77,7 @@ namespace CosmoWhisper.Managers
             if (nCode >= 0)
             {
                 int vkCode = Marshal.ReadInt32(lParam);
-                
+
                 if (vkCode == (int)_currentVk)
                 {
                     if (wParam == (IntPtr)WM_KEYDOWN) KeyPressed?.Invoke();

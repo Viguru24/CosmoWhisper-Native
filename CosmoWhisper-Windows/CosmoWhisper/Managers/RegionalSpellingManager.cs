@@ -97,7 +97,7 @@ namespace CosmoWhisper.Managers
                     _ukToUs[kvp.Value] = kvp.Key;
                 }
             }
-            
+
             // Add unique UK to US if any
             _ukToUs["aluminium"] = "aluminum";
         }
@@ -110,7 +110,7 @@ namespace CosmoWhisper.Managers
             // Determine target dialect
             // If InterfaceLanguage is en-GB, we want UK spellings (convert US to UK)
             // If InterfaceLanguage is en-US, we want US spellings (convert UK to US)
-            
+
             bool targetUk = prefs.InterfaceLanguage == "en-GB";
             bool targetUs = prefs.InterfaceLanguage == "en-US";
 
@@ -130,7 +130,7 @@ namespace CosmoWhisper.Managers
                 // Use regex with word boundaries to avoid partial matches (e.g., "colorado" shouldn't become "colourado")
                 // We also need to handle capitalization
                 string pattern = $@"\b{Regex.Escape(kvp.Key)}\b";
-                processed = Regex.Replace(processed, pattern, m => 
+                processed = Regex.Replace(processed, pattern, m =>
                 {
                     return MatchCase(m.Value, kvp.Value);
                 }, RegexOptions.IgnoreCase);
@@ -141,10 +141,10 @@ namespace CosmoWhisper.Managers
         private string MatchCase(string original, string replacement)
         {
             if (string.IsNullOrEmpty(original)) return replacement;
-            
+
             // All uppercase
             if (original.ToUpper() == original) return replacement.ToUpper();
-            
+
             // Title case (First letter upper)
             if (char.IsUpper(original[0]))
             {
@@ -152,7 +152,7 @@ namespace CosmoWhisper.Managers
                     return char.ToUpper(replacement[0]) + replacement.Substring(1);
                 return replacement.ToUpper();
             }
-            
+
             return replacement.ToLower();
         }
     }

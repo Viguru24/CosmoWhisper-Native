@@ -20,7 +20,8 @@ public partial class App : System.Windows.Application
         Managers.ProtocolHandler.Register();
 
         // Warm up SoundManager Early
-        _ = Task.Run(() => {
+        _ = Task.Run(() =>
+        {
             try { var sm = SoundManager.Shared; } catch { }
         });
 
@@ -38,7 +39,8 @@ public partial class App : System.Windows.Application
 
         if (e.Args.Contains("--list-devices"))
         {
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 var devices = await global::Windows.Devices.Enumeration.DeviceInformation.FindAllAsync(global::Windows.Devices.Enumeration.DeviceClass.AudioCapture);
                 var list = string.Join("\n", devices.Select(d => $"{d.Name} | ID: {d.Id}"));
                 System.IO.File.WriteAllText("mic_devices_windows.txt", list);
@@ -50,7 +52,7 @@ public partial class App : System.Windows.Application
         // 3. Initialize System Tray Manager
         _trayManager = new TrayManager();
         _trayManager.Initialize();
-        
+
         _trayManager.ShowDashboardRequested += () =>
         {
             Dispatcher.Invoke(() =>
@@ -85,8 +87,8 @@ public partial class App : System.Windows.Application
                 var widget = Windows.OfType<WidgetWindow>().FirstOrDefault();
                 if (widget != null)
                 {
-                    widget.Visibility = widget.Visibility == Visibility.Visible 
-                        ? Visibility.Hidden 
+                    widget.Visibility = widget.Visibility == Visibility.Visible
+                        ? Visibility.Hidden
                         : Visibility.Visible;
                 }
             });

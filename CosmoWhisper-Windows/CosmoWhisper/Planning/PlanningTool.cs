@@ -44,7 +44,8 @@ namespace CosmoWhisper.Planning
                     var loaded = JsonSerializer.Deserialize<Dictionary<string, Plan>>(json);
                     if (loaded != null) { _plans = loaded; _currentPlanId = _plans.Keys.LastOrDefault(); }
                 }
-            } catch { }
+            }
+            catch { }
         }
 
         private void SavePlans()
@@ -54,12 +55,14 @@ namespace CosmoWhisper.Planning
                 string directory = Path.GetDirectoryName(_storagePath)!;
                 if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
                 File.WriteAllText(_storagePath, JsonSerializer.Serialize(_plans, new JsonSerializerOptions { WriteIndented = true }));
-            } catch { }
+            }
+            catch { }
         }
 
         public string Execute(string command, string? planId = null, string? title = null, List<string>? steps = null, int? stepIndex = null, string? stepStatus = null, string? stepNotes = null)
         {
-            string result = command.ToLower() switch {
+            string result = command.ToLower() switch
+            {
                 "create" => CreatePlan(planId, title, steps),
                 "update" => UpdatePlan(planId, title, steps),
                 "list" => ListPlans(),
@@ -105,7 +108,8 @@ namespace CosmoWhisper.Planning
         private string FormatPlan(Plan plan)
         {
             var sb = new StringBuilder($"Plan: {plan.Title} ({plan.PlanId})\n==========\n");
-            for (int i = 0; i < plan.Steps.Count; i++) {
+            for (int i = 0; i < plan.Steps.Count; i++)
+            {
                 string ico = plan.Steps[i].Status switch { "completed" => "[✓]", "in_progress" => "[→]", "blocked" => "[!]", _ => "[ ]" };
                 sb.AppendLine($"{i}. {ico} {plan.Steps[i].Title}");
             }

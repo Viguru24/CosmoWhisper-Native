@@ -20,30 +20,46 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="10" Margin="5">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="12" Margin="8,4">
                             <Border.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                             </Border.RenderTransform>
-                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0"/>
+                            <Grid>
+                                <!-- Left Accent Line (Hidden by default) -->
+                                <Border x:Name="AccentLine" Width="4" Height="20" HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource ThemeGlowBrush}" Opacity="0" Margin="-4,0,0,0"/>
+                                
+                                <ContentPresenter x:Name="Content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0"/>
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#2AFFFFFF"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#40FFFFFF"/>
+                                <Setter TargetName="BtnBorder" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#40FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#10FFFFFF" Offset="0.5"/>
+                                            <GradientStop Color="#05FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="AccentLine" Property="Opacity" Value="1"/>
+                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#60FFFFFF"/>
                                 <Setter TargetName="BtnBorder" Property="BorderThickness" Value="1"/>
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.03" Duration="0:0:0.15"/>
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.03" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.05" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.05" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="AccentLine" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.15"/>
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="AccentLine" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
@@ -178,126 +194,291 @@
     </Window.Resources>
 
     <Grid>
-        <!-- Background Glow -->
-        <Ellipse x:Name="Glow1" Fill="#50007AFF" Width="600" Height="600" Margin="-200,-200,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <Ellipse.Effect>
-                <BlurEffect Radius="100"/>
-            </Ellipse.Effect>
-            <Ellipse.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.3" To="0.7" Duration="0:0:5"/>
-                            <ThicknessAnimation Storyboard.TargetProperty="Margin" From="-200,-200,0,0" To="-150,-150,0,0" Duration="0:0:8"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Ellipse.Triggers>
-        </Ellipse>
-        <Ellipse x:Name="Glow2" Fill="#508000FF" Width="500" Height="500" Margin="0,0,-100,-100" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <Ellipse.Effect>
-                <BlurEffect Radius="100"/>
-            </Ellipse.Effect>
-            <Ellipse.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.3" To="0.7" Duration="0:0:6"/>
-                            <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,0,-100,-100" To="0,0,-50,-50" Duration="0:0:10"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Ellipse.Triggers>
-        </Ellipse>
+        <!-- PREMIUM AMBIENT NEBULA BACKGROUND -->
+        <Canvas x:Name="CosmicBackground" IsHitTestVisible="False">
+            <!-- Deep Space Base -->
+            <Rectangle Width="2000" Height="2000" Canvas.Left="-500" Canvas.Top="-500">
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5">
+                        <GradientStop Color="{DynamicResource ThemeBgStartColor}" Offset="0"/>
+                        <GradientStop Color="{DynamicResource ThemeBgMidColor}" Offset="0.7"/>
+                        <GradientStop Color="{DynamicResource ThemeBgEndColor}" Offset="1"/>
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
 
-        <Ellipse x:Name="Glow3" Fill="#3000FFD4" Width="400" Height="400" Margin="100,-150,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <Ellipse.Effect><BlurEffect Radius="120"/></Ellipse.Effect>
-            <Ellipse.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.2" To="0.5" Duration="0:0:7"/>
-                            <ThicknessAnimation Storyboard.TargetProperty="Margin" From="100,-150,0,0" To="150,-100,0,0" Duration="0:0:12"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Ellipse.Triggers>
-        </Ellipse>
+            <!-- Simplified Gradient Only (Blobs Removed) -->
+        </Canvas>
 
-        <Ellipse x:Name="Glow4" Fill="#20FF007A" Width="300" Height="300" Margin="-100,0,0,-150" HorizontalAlignment="Left" VerticalAlignment="Bottom">
-            <Ellipse.Effect><BlurEffect Radius="150"/></Ellipse.Effect>
-            <Ellipse.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.1" To="0.4" Duration="0:0:9"/>
-                            <ThicknessAnimation Storyboard.TargetProperty="Margin" From="-100,0,0,-150" To="-50,0,0,-100" Duration="0:0:15"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Ellipse.Triggers>
-        </Ellipse>
 
-        <!-- Glass Container -->
-        <Border CornerRadius="30" Margin="0">
+
+        <!-- Premium Glass Container -->
+        <Border x:Name="RootContentBorder" CornerRadius="30" Margin="20">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#FF131B2E" Offset="0"/>
-                    <GradientStop Color="#FF0B1020" Offset="1"/>
+                    <GradientStop Color="#B21E293B" Offset="0"/> <!-- 70% opacity premium slate -->
+                    <GradientStop Color="#CC0F172A" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#60FFFFFF" Offset="0"/>
-                    <GradientStop Color="#10FFFFFF" Offset="0.4"/>
-                    <GradientStop Color="#05FFFFFF" Offset="0.6"/>
-                    <GradientStop Color="#25FFFFFF" Offset="1"/>
+                    <GradientStop Color="#40FFFFFF" Offset="0"/>
+                    <GradientStop Color="#10FFFFFF" Offset="0.5"/>
+                    <GradientStop Color="#30FFFFFF" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="40" Color="Black" Opacity="0.3" ShadowDepth="0"/>
+                <DropShadowEffect BlurRadius="50" Color="Black" Opacity="0.5" ShadowDepth="0"/>
             </Border.Effect>
-            <Border BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="30">
+            <Border BorderBrush="#1AFFFFFF" BorderThickness="1.2" CornerRadius="30">
                 <Grid x:Name="MainContainer">
                     <Grid.LayoutTransform>
                         <ScaleTransform ScaleX="{Binding Path=Preferences.UIScale, Source={x:Static Managers:PreferenceManager.Shared}}" 
                                        ScaleY="{Binding Path=Preferences.UIScale, Source={x:Static Managers:PreferenceManager.Shared}}"/>
                     </Grid.LayoutTransform>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="240"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Sidebar -->
-                    <Border Grid.Column="0" Background="#1A1C30" CornerRadius="30,0,0,30">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="10,40,10,10">
-                            <TextBlock Text="CosmoWhisper" Margin="20,0,0,30" Foreground="White" FontSize="20" FontWeight="SemiBold"/>
-                            
-                            <!-- Main Navigation -->
-                            <Button x:Name="BtnDashboard" Content="&#x1F4CA; Dashboard" Style="{StaticResource SidebarButton}" Click="Dashboard_Click"/>
-                            <Button x:Name="BtnSmartCommands" Content="&#x26A1; Smart Commands" Style="{StaticResource SidebarButton}" Click="SmartCommands_Click"/>
-                            
-                            
-                            <!-- Settings Group -->
-                            <TextBlock Text="SETTINGS" Margin="20,20,0,10" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="SemiBold"/>
-                            <Button x:Name="BtnMicrophone" Content="&#x1F3A4; Microphone" Style="{StaticResource SidebarButton}" Click="Microphone_Click"/>
-                            <Button x:Name="BtnVocabulary" Content="&#x1F5E3; Vocabulary" Style="{StaticResource SidebarButton}" Click="Vocabulary_Click"/>
-                            <Button x:Name="BtnNarration" Content="&#x1F50A; Narration" Style="{StaticResource SidebarButton}" Click="Narration_Click"/>
-                            <Button x:Name="BtnIntelligence" Content="&#x1F9E0; Intelligence" Style="{StaticResource SidebarButton}" Click="Intelligence_Click"/>
-                            <Button x:Name="BtnPreferences" Content="&#x2699; Preferences" Style="{StaticResource SidebarButton}" Click="Preferences_Click"/>
-                            <Button x:Name="BtnLibrary" Content="&#x1F4DA; Library" Style="{StaticResource SidebarButton}" Click="Library_Click"/>
-                            <Button x:Name="BtnLanguage" Content="&#x1F310; Language" Style="{StaticResource SidebarButton}" Click="Language_Click"/>
-                            <Button x:Name="BtnAccount" Content="&#x1F464; Account" Style="{StaticResource SidebarButton}" Click="Account_Click"/>
+                    <!-- Top Edge highlight for physical depth -->
+                    <Border Height="1" VerticalAlignment="Top" Margin="30,1,30,0" Background="#30FFFFFF" Grid.ColumnSpan="2"/>
 
-                            <!-- Exit Button -->
-                            <Button Content="&#x1F6AA; Exit App" Style="{StaticResource SidebarButton}" Margin="5,60,5,5" Foreground="#FFFF453A" Click="Exit_Click"/>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
+                    <!-- Sidebar (Menu) -->
+                    <Border Grid.Column="0" CornerRadius="30,0,0,30" BorderBrush="#1AFFFFFF" BorderThickness="0,0,1,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#40FFFFFF" Offset="0"/> <!-- Light top sheen -->
+                                <GradientStop Color="#00FFFFFF" Offset="0.2"/>
+                                <GradientStop Color="#00FFFFFF" Offset="0.8"/>
+                                <GradientStop Color="#20000000" Offset="1"/> <!-- Dark bottom shadow -->
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                    <!-- Main Content -->
-                    <Grid Grid.Column="1" Margin="30">
+                            <!-- Premium Logo Section (Pinned Top) -->
+                            <StackPanel Grid.Row="0" Margin="10,35,20,25">
+                                <Image Source="sidebar_logo.png" Width="42" Height="42" HorizontalAlignment="Left" Margin="22,0,0,12" RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Effect>
+                                        <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
+                                    </Image.Effect>
+                                </Image>
+                                <StackPanel Margin="22,0,8,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Cosmo" FontSize="18" FontWeight="ExtraBold" Foreground="#00F7FF">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect Color="#00F7FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
+                                        <TextBlock Text="Whisper" FontSize="18" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect Color="#BF5AF2" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Border Height="2" Width="40" Background="#4000F7FF" HorizontalAlignment="Left" Margin="2,4,0,0" CornerRadius="1"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Scrollable Navigation (Main Body) -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="10,0,20,10">
+                                    <!-- Main Navigation -->
+                                    <Button x:Name="BtnDashboard" Style="{StaticResource SidebarButton}" Click="Dashboard_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F4CA;" Foreground="#00F7FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Dashboard" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnSmartCommands" Style="{StaticResource SidebarButton}" Click="SmartCommands_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x26A1;" Foreground="#FFD700" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Smart Commands" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Separator Background="#10FFFFFF" Margin="20,15" Height="1"/>
+                                    
+                                    <!-- Settings Group -->
+                                    <TextBlock Text="SETTINGS" Margin="22,5,0,12" Foreground="White" Opacity="0.3" FontSize="10" FontWeight="ExtraBold"/>
+                                    <Button x:Name="BtnMicrophone" Style="{StaticResource SidebarButton}" Click="Microphone_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F3A4;" Foreground="#FF453A" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Microphone" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnVocabulary" Style="{StaticResource SidebarButton}" Click="Vocabulary_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F5E3;" Foreground="#32D74B" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Vocabulary" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnNarration" Style="{StaticResource SidebarButton}" Click="Narration_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F50A;" Foreground="#BF5AF2" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Narration" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnIntelligence" Style="{StaticResource SidebarButton}" Click="Intelligence_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F9E0;" Foreground="#FF9F0A" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Intelligence" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    
+                                    <!-- Preferences Group + Appearance Hooked In -->
+                                    <Button x:Name="BtnPreferences" Style="{StaticResource SidebarButton}" Click="Preferences_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x2699;" Foreground="#64D2FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Preferences" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Themes (Appearance) - Moved here per request -->
+                                    <StackPanel Orientation="Horizontal" Margin="42,5,10,15">
+                                        <Button Width="26" Height="26" Margin="3" ToolTip="Ocean Blue" Click="ThemeOcean_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
+                                                        <Ellipse Fill="#3b82f6" Margin="4"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Width="26" Height="26" Margin="3" ToolTip="Sunset Glow" Click="ThemeSunset_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
+                                                        <Ellipse Fill="#ec4899" Margin="4"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Width="26" Height="26" Margin="3" ToolTip="Forest Night" Click="ThemeForest_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
+                                                        <Ellipse Fill="#10b981" Margin="4"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Width="26" Height="26" Margin="3" ToolTip="Purple Dream" Click="ThemePurple_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
+                                                        <Ellipse Fill="#9333ea" Margin="4"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <Button x:Name="BtnLibrary" Style="{StaticResource SidebarButton}" Click="Library_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F4DA;" Foreground="#5E5CE6" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnLanguage" Style="{StaticResource SidebarButton}" Click="Language_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F310;" Foreground="#FF375F" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Language" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnAccount" Style="{StaticResource SidebarButton}" Click="Account_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F464;" Foreground="#0A84FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Account" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Footer Section (Pinned Bottom) -->
+                            <StackPanel Grid.Row="2" Margin="10,0,20,30">
+                                <Separator Background="#10FFFFFF" Margin="20,0,20,15" Height="1"/>
+                                <Button Style="{StaticResource SidebarButton}" Click="Exit_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#x1F6AA;" Foreground="#FF453A" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Exit App" Foreground="#FF453A" VerticalAlignment="Center" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Main Content (Window) -->
+                    <Border Grid.Column="1" CornerRadius="0,30,30,0">
+                        <!-- THEME 1: OCEAN BLUE (Default) -->
+                        <!-- Change x:Name to switch themes: ThemeOcean, ThemeSunset, ThemeForest, ThemePurple -->
+                        <Border.Background>
+                            <DynamicResource ResourceKey="ThemeBackgroundBrush"/>
+                        </Border.Background>
+                        
+                        <!-- THEME 2: SUNSET GLOW -->
+                        <!--
+                        <Border.Background>
+                            <LinearGradientBrush x:Name="ThemeSunset" StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#1A1A2E" Offset="0"/>
+                                <GradientStop Color="#16213E" Offset="0.3"/>
+                                <GradientStop Color="#0F3460" Offset="0.6"/>
+                                <GradientStop Color="#E94560" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        -->
+                        
+                        <!-- THEME 3: FOREST NIGHT -->
+                        <!--
+                        <Border.Background>
+                            <LinearGradientBrush x:Name="ThemeForest" StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#0A1F1F" Offset="0"/>
+                                <GradientStop Color="#134E4A" Offset="0.5"/>
+                                <GradientStop Color="#065F46" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        -->
+                        
+                        <!-- THEME 4: PURPLE DREAM -->
+                        <!--
+                        <Border.Background>
+                            <LinearGradientBrush x:Name="ThemePurple" StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#1A0B2E" Offset="0"/>
+                                <GradientStop Color="#2D1B4E" Offset="0.5"/>
+                                <GradientStop Color="#4A1C6F" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        -->
+                        
+                        <Grid>
+                            
+                            <!-- Content Grid -->
+                            <Grid Margin="30">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -371,7 +552,10 @@
                             <ScrollViewer x:Name="DashboardView" VerticalScrollBarVisibility="Hidden">
                                 <StackPanel>
                                     <!-- Pro Banner -->
-                                    <Border Background="#252A3D" CornerRadius="12" BorderBrush="#30007AFF" BorderThickness="1" Margin="0,0,0,30">
+                                    <Border Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1.2" Margin="0,0,0,30">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="15" ShadowDepth="0" Opacity="0.15"/>
+                                        </Border.Effect>
                                         <Grid Margin="25">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -379,8 +563,8 @@
                                             </Grid.RowDefinitions>
                                             
                                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
-                                                <Border Background="#30007AFF" Width="32" Height="32" CornerRadius="8" Margin="0,0,15,0">
-                                                    <TextBlock Text="&#x26A1;" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#007AFF"/>
+                                                <Border Background="{DynamicResource ThemeGlowBrush}" Width="32" Height="32" CornerRadius="8" Opacity="0.2" Margin="0,0,15,0">
+                                                    <TextBlock Text="&#x26A1;" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ThemeGlowBrush}"/>
                                                 </Border>
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal">
@@ -396,36 +580,21 @@
                                             <!-- Progress Bar -->
                                             <Grid Grid.Row="1">
                                                 <Border Height="6" Background="#20FFFFFF" CornerRadius="3"/>
-                                                <Border x:Name="UsageProgressBar" HorizontalAlignment="Left" Width="300" Height="6" Background="#007AFF" CornerRadius="3">
+                                                <Border x:Name="UsageProgressBar" HorizontalAlignment="Left" Width="300" Height="6" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="3">
                                                     <Border.Effect>
-                                                        <DropShadowEffect Color="#007AFF" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                                                        <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                                                     </Border.Effect>
                                                 </Border>
                                             </Grid>
                                         </Grid>
                                     </Border>
 
-                                    <!-- Live Monitor Bar (Added to Dashboard) -->
-                                    <Border Background="#1A1C30" CornerRadius="12" Margin="0,0,0,30" Padding="20">
-                                        <Grid>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="&#x1F399;" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="LIVE MONITOR" Foreground="White" Opacity="0.5" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                <TextBlock x:Name="TxtMicLevelDashboard" Text="0%" Foreground="#00E676" FontWeight="Bold" FontSize="12" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                                                <Grid Height="8" Width="200" VerticalAlignment="Center">
-                                                    <Border Background="#20FFFFFF" CornerRadius="4"/>
-                                                    <Border x:Name="LiveMonitorBarDashboard" HorizontalAlignment="Left" Width="0" CornerRadius="4" Background="#007AFF"/>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+
 
                                      <!-- Stats Section Header -->
                                     <Grid Margin="0,30,0,15">
                                         <TextBlock Text="Performance Snapshot" Foreground="White" FontSize="20" FontWeight="Bold"/>
-                                        <Button x:Name="BtnResetStats" HorizontalAlignment="Right" Content="&#x21BA; Reset All" Background="Transparent" Foreground="#007AFF" BorderThickness="0" Cursor="Hand" Click="ResetStats_Click" FontSize="12" FontWeight="SemiBold"/>
+                                        <Button x:Name="BtnResetStats" HorizontalAlignment="Right" Content="&#x21BA; Reset All" Background="Transparent" Foreground="{DynamicResource ThemeGlowBrush}" BorderThickness="0" Cursor="Hand" Click="ResetStats_Click" FontSize="12" FontWeight="SemiBold"/>
                                     </Grid>
 
                                     <!-- Stats Cards Row -->
@@ -437,7 +606,10 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Total Words -->
-                                        <Border Grid.Column="0" Background="#1A1C30" CornerRadius="12" Height="100" Margin="0,0,10,0" BorderBrush="#15FFFFFF" BorderThickness="1">
+                                        <Border Grid.Column="0" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" Height="100" Margin="0,0,10,0" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1" Opacity="0.9">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
+                                            </Border.Effect>
                                             <StackPanel VerticalAlignment="Center" Margin="25,0">
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                     <TextBlock Text="&#x1F4AC;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
@@ -448,7 +620,10 @@
                                         </Border>
 
                                         <!-- Time Saved -->
-                                        <Border Grid.Column="1" Background="#1A1C30" CornerRadius="12" Height="100" Margin="5,0,5,0" BorderBrush="#15FFFFFF" BorderThickness="1">
+                                        <Border Grid.Column="1" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" Height="100" Margin="5,0,5,0" BorderBrush="{DynamicResource ThemeSecondaryBrush}" BorderThickness="1" Opacity="0.9">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="{DynamicResource ThemeSecondaryColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
+                                            </Border.Effect>
                                             <StackPanel VerticalAlignment="Center" Margin="25,0">
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                     <TextBlock Text="&#x1F4C8;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
@@ -459,7 +634,10 @@
                                         </Border>
 
                                         <!-- Transcriptions -->
-                                        <Border Grid.Column="2" Background="#1A1C30" CornerRadius="12" Height="100" Margin="10,0,0,0" BorderBrush="#15FFFFFF" BorderThickness="1">
+                                        <Border Grid.Column="2" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeGlowBrush}" BorderThickness="1" Opacity="0.9">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
+                                            </Border.Effect>
                                             <StackPanel VerticalAlignment="Center" Margin="25,0">
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                     <TextBlock Text="&#x1F504;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
@@ -866,34 +1044,15 @@
                                         </ComboBox>
                                     </Border>
 
-                                        <Grid Margin="0,0,0,10">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#x1F399;" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="Live Monitor" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                            </StackPanel>
-                                            <TextBlock x:Name="TxtMicLevel" Text="0%" HorizontalAlignment="Right" Foreground="#00E676" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                        <Grid Height="12" Width="350" HorizontalAlignment="Left">
-                                            <Border Background="#20FFFFFF" CornerRadius="6"/>
-                                            <Border x:Name="LiveMonitorBar" HorizontalAlignment="Left" Width="0" CornerRadius="6">
-                                                <Border.Background>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#007AFF" Offset="0"/>
-                                                        <GradientStop Color="#00FFD4" Offset="1"/>
-                                                    </LinearGradientBrush>
-                                                </Border.Background>
-                                                <Border.Effect>
-                                                    <DropShadowEffect Color="#00D4FF" BlurRadius="12" Opacity="0.5" ShadowDepth="0"/>
-                                                </Border.Effect>
-                                            </Border>
-                                        </Grid>
-                                        <TextBlock Text="If the bar doesn't move when you speak, check Windows settings or select the correct device above." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,8,0,0"/>
+
+
+
 
 
                                     <!-- Microphone Sensitivity -->
                                     <Grid Margin="0,0,0,10">
                                         <TextBlock Text="Microphone Sensitivity" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                        <TextBlock Text="2%" HorizontalAlignment="Right" Foreground="#007AFF" FontWeight="Bold" FontSize="14"/>
+                                        <TextBlock Text="2%" HorizontalAlignment="Right" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" FontSize="14"/>
                                     </Grid>
                                     <TextBlock Text="Higher values strictly filter background noise. Lower values pick up whispers." Foreground="White" Opacity="0.6" FontSize="12" Margin="0,0,0,15"/>
                                     
@@ -921,7 +1080,7 @@
                                                 <TextBlock Text="Neural Auto-Calibration" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
                                                 <TextBlock Text="Measure room noise to find the perfect sensitivity automatically." Foreground="White" Opacity="0.6" FontSize="12"/>
                                             </StackPanel>
-                                            <Button x:Name="BtnCalibrate" Grid.Column="1" Content="&#x26A1; Calibrate" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold" Click="BtnCalibrate_Click">
+                                            <Button x:Name="BtnCalibrate" Grid.Column="1" Content="&#x26A1; Calibrate" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold" Click="BtnCalibrate_Click">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="8"/>
@@ -946,7 +1105,7 @@
                                                 <TextBlock Text="Play chimes when recording starts and stops" Foreground="White" Opacity="0.6" FontSize="12"/>
                                             </StackPanel>
                                             <!-- Simple Toggle Switch Representation -->
-                                            <Border x:Name="ToggleInteractionSounds" Grid.Column="1" HorizontalAlignment="Right" Width="40" Height="24" Background="#007AFF" CornerRadius="12" MouseLeftButtonDown="ToggleInteractionSounds_Click" Cursor="Hand">
+                                            <Border x:Name="ToggleInteractionSounds" Grid.Column="1" HorizontalAlignment="Right" Width="40" Height="24" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="12" MouseLeftButtonDown="ToggleInteractionSounds_Click" Cursor="Hand">
                                                 <Ellipse Width="18" Height="18" Fill="White" HorizontalAlignment="Right" Margin="3"/>
                                             </Border>
                                         </Grid>
@@ -1030,21 +1189,21 @@
                                                 <!-- Speed -->
                                                 <Grid Margin="0,0,0,5">
                                                     <TextBlock Text="Narration Speed" Foreground="White" Opacity="0.7" FontSize="12"/>
-                                                    <TextBlock x:Name="TxtSpeedValue" Text="1.0" Foreground="#007AFF" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
+                                                    <TextBlock x:Name="TxtSpeedValue" Text="1.0" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
                                                 </Grid>
                                                 <Slider x:Name="SldSpeed" Minimum="0.25" Maximum="4.0" Value="1.0" Margin="0,0,0,20" ValueChanged="SldSpeed_ValueChanged"/>
 
                                                 <!-- Volume -->
                                                 <Grid Margin="0,0,0,5">
                                                     <TextBlock Text="Narration Volume" Foreground="White" Opacity="0.7" FontSize="12"/>
-                                                    <TextBlock x:Name="TxtVolumeValue" Text="100%" Foreground="#007AFF" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
+                                                    <TextBlock x:Name="TxtVolumeValue" Text="100%" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
                                                 </Grid>
                                                 <Slider x:Name="SldVolume" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,20" ValueChanged="SldVolume_ValueChanged"/>
 
                                                 <!-- Pitch -->
                                                 <Grid Margin="0,0,0,5">
                                                     <TextBlock Text="Voice Pitch" Foreground="White" Opacity="0.7" FontSize="12"/>
-                                                    <TextBlock x:Name="TxtPitchValue" Text="1.0" Foreground="#007AFF" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
+                                                    <TextBlock x:Name="TxtPitchValue" Text="1.0" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
                                                 </Grid>
                                                 <Slider x:Name="SldPitch" Minimum="0.5" Maximum="2.0" Value="1.0" Margin="0,0,0,0" ValueChanged="SldPitch_ValueChanged"/>
 
@@ -1074,7 +1233,7 @@
                                                         <ColumnDefinition Width="10"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <Button x:Name="BtnPlaySample" Content="&#x25B7; Play Sample" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="0,10" FontWeight="SemiBold" Click="BtnPlaySample_Click">
+                                                    <Button x:Name="BtnPlaySample" Content="&#x25B7; Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,10" FontWeight="SemiBold" Click="BtnPlaySample_Click">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border Background="{TemplateBinding Background}" CornerRadius="8">
@@ -1177,7 +1336,7 @@
                                                  <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
                                                      <TextBox x:Name="TxtUnlockCode" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" MaxLength="5" TextChanged="TxtUnlockCode_TextChanged"/>
                                                  </Border>
-                                                 <Button x:Name="BtnToggleLock" Grid.Column="1" Content="&#x1F513; Unlock" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="15,8" Margin="10,0,0,0" FontWeight="SemiBold" Click="BtnToggleLock_Click">
+                                                 <Button x:Name="BtnToggleLock" Grid.Column="1" Content="&#x1F513; Unlock" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="15,8" Margin="10,0,0,0" FontWeight="SemiBold" Click="BtnToggleLock_Click">
                                                      <Button.Template>
                                                          <ControlTemplate TargetType="Button">
                                                              <Border Background="{TemplateBinding Background}" CornerRadius="8">
@@ -1201,7 +1360,7 @@
                                                     <TextBlock Text="Enable Agent" Foreground="White" FontSize="14"/>
                                                     <TextBlock Text="Processes dictation to manage tasks and plans" Foreground="White" Opacity="0.6" FontSize="11"/>
                                                 </StackPanel>
-                                                <Border x:Name="ToggleManusAgent" HorizontalAlignment="Right" Width="40" Height="24" Background="#007AFF" CornerRadius="12" MouseLeftButtonDown="ToggleManusAgent_Click" Cursor="Hand">
+                                                <Border x:Name="ToggleManusAgent" HorizontalAlignment="Right" Width="40" Height="24" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="12" MouseLeftButtonDown="ToggleManusAgent_Click" Cursor="Hand">
                                                     <Ellipse Width="18" Height="18" Fill="White" HorizontalAlignment="Right" Margin="3"/>
                                                 </Border>
                                             </Grid>
@@ -1210,7 +1369,7 @@
                                                     <TextBlock Text="Voice Feedback (Talk Back)" Foreground="White" FontSize="14"/>
                                                     <TextBlock Text="Agent will speak to confirm plan updates" Foreground="White" Opacity="0.6" FontSize="11"/>
                                                 </StackPanel>
-                                                <Border x:Name="ToggleManusNarration" HorizontalAlignment="Right" Width="40" Height="24" Background="#007AFF" CornerRadius="12" MouseLeftButtonDown="ToggleManusNarration_Click" Cursor="Hand">
+                                                <Border x:Name="ToggleManusNarration" HorizontalAlignment="Right" Width="40" Height="24" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="12" MouseLeftButtonDown="ToggleManusNarration_Click" Cursor="Hand">
                                                     <Ellipse Width="18" Height="18" Fill="White" HorizontalAlignment="Right" Margin="3"/>
                                                 </Border>
                                             </Grid>
@@ -1244,8 +1403,8 @@
                                     <TextBlock Text="List names, acronyms, or brands often mistranscribed. Separate with commas." Foreground="White" Opacity="0.5" FontSize="12" Margin="0,0,0,15"/>
                                     
                                     <Border Background="#10FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,30">
-                                         <TextBox Background="Transparent" BorderThickness="0" Foreground="White" TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"
-                                                  Text="Example: Batman, Arkham, Wayne Enterprises... (Click Mic)" Opacity="0.6"/>
+                                         <TextBox x:Name="TxtVocabHints" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"
+                                                  Text="Example: Batman, Arkham, Wayne Enterprises... (Click Mic)"/>
                                     </Border>
 
                                     <!-- Corrections Header -->
@@ -1254,7 +1413,7 @@
                                             <TextBlock Text="Instant Corrections" Foreground="White" FontWeight="Bold"/>
                                             <TextBlock Text="Force specific words to always be changed after transcription." Foreground="White" Opacity="0.5" FontSize="12"/>
                                         </StackPanel>
-                                        <Button Content="ðŸ›¡ï¸ Secure Mode" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12">
+                                        <Button Content="&#x1F6E1; Secure Mode" Click="SecureMode_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12">
                                             <Button.Resources>
                                                 <Style TargetType="Border">
                                                     <Setter Property="CornerRadius" Value="15"/>
@@ -1273,10 +1432,23 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             
-                                            <TextBox Text="When I say..." Background="Transparent" BorderThickness="0" Foreground="White" Opacity="0.5" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                                            <!-- New Input Left -->
+                                            <Grid Grid.Column="0" Margin="15,0,0,0">
+                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
+                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" Panel.ZIndex="1" IsHitTestVisible="False"/>
+                                            </Grid>
+
+                                            <!-- Arrow -->
                                             <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0" VerticalAlignment="Center" FontSize="20"/>
-                                            <TextBox Grid.Column="2" Text="Type this..." Background="Transparent" BorderThickness="0" Foreground="White" Opacity="0.5" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                                            <Button Grid.Column="3" Content="Add" Background="#007AFF" Foreground="White" BorderThickness="0" Width="60" Height="34" Margin="5" FontWeight="SemiBold">
+                                            
+                                            <!-- New Input Right -->
+                                            <Grid Grid.Column="2">
+                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
+                                                <TextBlock x:Name="PlaceholderValue" Text="Type this..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" Panel.ZIndex="1" IsHitTestVisible="False"/>
+                                            </Grid>
+
+                                            <!-- Add Button -->
+                                            <Button Grid.Column="3" Content="Add" Click="AddVocabulary_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Width="60" Height="34" Margin="5" FontWeight="SemiBold">
                                                  <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="17"/>
@@ -1287,64 +1459,59 @@
                                     </Border>
 
                                     <!-- List -->
-                                    <StackPanel>
-                                        <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="my address" Foreground="White" Opacity="0.7"/>
-                                                <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0"/>
-                                                <TextBlock Grid.Column="2" Text="1007 Mountain Drive, Gotham City, NJ" Foreground="#007AFF" FontWeight="SemiBold"/>
-                                                <Button Grid.Column="3" Content="&#x2715;" Foreground="#FF453A" Background="Transparent" BorderThickness="0"/>
-                                            </Grid>
-                                        </Border>
-                                        <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="my email" Foreground="White" Opacity="0.7"/>
-                                                <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0"/>
-                                                <TextBlock Grid.Column="2" Text="bruce.wayne@wayne-enterprises.com" Foreground="#007AFF" FontWeight="SemiBold"/>
-                                                <Button Grid.Column="3" Content="&#x2715;" Foreground="#FF453A" Background="Transparent" BorderThickness="0"/>
-                                            </Grid>
-                                        </Border>
-                                        <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="my phone" Foreground="White" Opacity="0.7"/>
-                                                <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0"/>
-                                                <TextBlock Grid.Column="2" Text="+1 555-010-1939" Foreground="#007AFF" FontWeight="SemiBold"/>
-                                                <Button Grid.Column="3" Content="&#x2715;" Foreground="#FF453A" Background="Transparent" BorderThickness="0"/>
-                                            </Grid>
-                                        </Border> 
-                                        <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="batman" Foreground="White" Opacity="0.7"/>
-                                                <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0"/>
-                                                <TextBlock Grid.Column="2" Text="I am Vengeance. I am the Night. I am Batman." Foreground="#007AFF" FontWeight="SemiBold"/>
-                                                <Button Grid.Column="3" Content="&#x2715;" Foreground="#FF453A" Background="Transparent" BorderThickness="0"/>
-                                            </Grid>
-                                        </Border>  
-                                    </StackPanel>
+                                    <ItemsControl x:Name="VocabList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" MinWidth="100"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <!-- READ MODE -->
+                                                        <TextBlock Grid.Column="0" Text="{Binding Key}" Visibility="{Binding ReadModeVisibility}"
+                                                                   Foreground="White" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Value}" Visibility="{Binding ReadModeVisibility}"
+                                                                   Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding ReadModeVisibility}">
+                                                            <Button Click="EditVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Edit">
+                                                                <TextBlock Text="✎" Foreground="White" Opacity="0.6" FontSize="14"/>
+                                                            </Button>
+                                                            <Button Click="DeleteVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Delete">
+                                                                <Border Background="#20FF453A" CornerRadius="8" Width="24" Height="24">
+                                                                     <TextBlock Text="&#x2715;" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FF453A" FontSize="10" FontWeight="Bold"/>
+                                                                </Border>
+                                                            </Button>
+                                                        </StackPanel>
+
+                                                        <!-- EDIT MODE -->
+                                                        <TextBox Grid.Column="0" Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
+                                                                 Background="#20000000" BorderBrush="#40FFFFFF" BorderThickness="1" Padding="2"
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center"/>
+                                                        
+                                                        <TextBox Grid.Column="2" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
+                                                                 Background="#20000000" BorderBrush="#40FFFFFF" BorderThickness="1" Padding="2"
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center"/>
+
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding EditModeVisibility}">
+                                                            <Button Click="SaveVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Save">
+                                                                <TextBlock Text="✓" Foreground="#4ADE80" FontSize="16" FontWeight="Bold"/>
+                                                            </Button>
+                                                            <Button Click="CancelVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Cancel">
+                                                                <TextBlock Text="✕" Foreground="#F87171" FontSize="16" FontWeight="Bold"/>
+                                                            </Button>
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </ScrollViewer>
 
@@ -1377,7 +1544,7 @@
                                                      <TextBlock Text="Mouse Button Activation" Foreground="White" FontWeight="SemiBold"/>
                                                      <TextBlock Text="Use any mouse button (Middle, Side, etc) to record." Foreground="White" Opacity="0.5" FontSize="12"/>
                                                  </StackPanel>
-                                                 <Border x:Name="ToggleMouseButton" MouseLeftButtonDown="ToggleMouseButton_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#007AFF" Cursor="Hand">
+                                                 <Border x:Name="ToggleMouseButton" MouseLeftButtonDown="ToggleMouseButton_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
                                                     <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
                                                  </Border>
                                              </Grid>
@@ -1423,7 +1590,7 @@
                                                      <TextBlock Text="Restore Clipboard Content" Foreground="White" FontWeight="SemiBold"/>
                                                      <TextBlock Text="Automatically put back your old copied text after a voice paste." Foreground="White" Opacity="0.5" FontSize="12"/>
                                                  </StackPanel>
-                                                 <Border x:Name="ToggleClipboard" MouseLeftButtonDown="ToggleClipboard_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#007AFF" Cursor="Hand">
+                                                 <Border x:Name="ToggleClipboard" MouseLeftButtonDown="ToggleClipboard_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
                                                     <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
                                                  </Border>
                                              </Grid>
@@ -1433,7 +1600,7 @@
                                                      <TextBlock Text="Auto-Submit (Press Enter)" Foreground="White" FontWeight="SemiBold"/>
                                                      <TextBlock Text="Press Enter after inserting text." Foreground="White" Opacity="0.5" FontSize="12"/>
                                                  </StackPanel>
-                                                  <Border x:Name="ToggleAutoSubmit" MouseLeftButtonDown="ToggleAutoSubmit_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#007AFF" Cursor="Hand">
+                                                  <Border x:Name="ToggleAutoSubmit" MouseLeftButtonDown="ToggleAutoSubmit_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
                                                      <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
                                                   </Border>
                                               </Grid>
@@ -1443,7 +1610,7 @@
                                                       <TextBlock Text="Auto-Copy Transcription" Foreground="White" FontWeight="SemiBold"/>
                                                       <TextBlock Text="Automatically copy processed text to your clipboard." Foreground="White" Opacity="0.5" FontSize="12"/>
                                                   </StackPanel>
-                                                   <Border x:Name="ToggleAutoCopy" MouseLeftButtonDown="ToggleAutoCopy_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#007AFF" Cursor="Hand">
+                                                   <Border x:Name="ToggleAutoCopy" MouseLeftButtonDown="ToggleAutoCopy_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
                                                      <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
                                                   </Border>
                                               </Grid>
@@ -1456,14 +1623,14 @@
                                           <StackPanel>
                                               <Grid Margin="0,0,0,5">
                                                   <TextBlock Text="Widget Transparency" Foreground="White" FontWeight="SemiBold"/>
-                                                  <TextBlock x:Name="TxtWidgetOpacityValue" Text="95%" Foreground="#007AFF" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                  <TextBlock x:Name="TxtWidgetOpacityValue" Text="95%" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right"/>
                                               </Grid>
                                               <Slider x:Name="SldWidgetOpacity" Minimum="20" Maximum="100" Value="95" Margin="0,5,0,0" ValueChanged="SldWidgetOpacity_ValueChanged"/>
                                               <TextBlock Text="Adjust how see-through the floating widget appears." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,5,0,20"/>
 
                                               <Grid Margin="0,0,0,5">
                                                   <TextBlock Text="Global UI Scale (DPI Adjustment)" Foreground="White" FontWeight="SemiBold"/>
-                                                  <TextBlock x:Name="TxtUIScaleValue" Text="100%" Foreground="#007AFF" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                  <TextBlock x:Name="TxtUIScaleValue" Text="100%" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right"/>
                                               </Grid>
                                               <Slider x:Name="SldUIScale" Minimum="80" Maximum="200" Value="100" Margin="0,5,0,0"/>
                                               <TextBlock Text="Scale the entire interface if fonts appear too small on high resolution screens." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,5,0,0"/>
@@ -1530,7 +1697,7 @@
                                                                   <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
                                                               </Button.Resources>
                                                           </Button>
-                                                          <Button x:Name="BtnBackupNow" Content="Back up now" Click="BtnBackupNow_Click" Background="#007AFF" Foreground="White" FontWeight="Bold" Padding="20,10" BorderThickness="0">
+                                                          <Button x:Name="BtnBackupNow" Content="Back up now" Click="BtnBackupNow_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" Padding="20,10" BorderThickness="0">
                                                               <Button.Resources>
                                                                   <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
                                                               </Button.Resources>
@@ -1598,7 +1765,7 @@
                                                     <TextBlock Text="Auto-Convert Spelling After Transcription" Foreground="White" FontWeight="SemiBold"/>
                                                     <TextBlock Text="Automatically converts transcribed text to match your regional spelling preference." Foreground="White" Opacity="0.5" FontSize="12"/>
                                                 </StackPanel>
-                                                <Border x:Name="ToggleRegionalSpelling" MouseLeftButtonDown="ToggleRegionalSpelling_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#007AFF" Cursor="Hand">
+                                                <Border x:Name="ToggleRegionalSpelling" MouseLeftButtonDown="ToggleRegionalSpelling_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
                                                     <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
                                                 </Border>
                                             </Grid>
@@ -1614,7 +1781,7 @@
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
                                                         <StackPanel>
-                                                            <TextBlock Text="&#x1F1FA;&#x1F1F8; US English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x1F1FA;&#x1F1F8; US English" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; color" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; center" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; organize" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
@@ -1622,7 +1789,7 @@
                                                         </StackPanel>
                                                         <TextBlock Grid.Column="1" Text="&#x2194;" Foreground="White" Opacity="0.3" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="16"/>
                                                         <StackPanel Grid.Column="2">
-                                                            <TextBlock Text="&#x1F1EC;&#x1F1E7; UK English" Foreground="#007AFF" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="&#x1F1EC;&#x1F1E7; UK English" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; colour" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; centre" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
                                                             <TextBlock Text="&#x2022; organise" Foreground="White" Opacity="0.7" FontSize="11" TextWrapping="Wrap"/>
@@ -1632,6 +1799,24 @@
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
+                                    </Border>
+
+                                    <!-- Windows Startup -->
+                                    <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                                        <Grid>
+                                            <StackPanel>
+                                                <TextBlock Text="&#x1F680; Windows Integration" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                                <Grid Margin="0,0,0,10">
+                                                    <StackPanel>
+                                                        <TextBlock Text="Launch with Windows" Foreground="White" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="Automatically start CosmoWhisper when you log into Windows." Foreground="White" Opacity="0.5" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <Border x:Name="ToggleLaunchOnStartup" MouseLeftButtonDown="ToggleLaunchOnStartup_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
+                                                        <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
+                                                    </Border>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
 
 
@@ -1674,7 +1859,7 @@
                                             <TextBlock Text="Cloud Library" Foreground="White" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                             <TextBlock Text="Explore the full master list of commands online." Foreground="White" Opacity="0.6" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
-                                            <Button Content="Open Master Commands List" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="30,15" FontWeight="Bold" Cursor="Hand" Click="OpenLibraryWeb_Click">
+                                            <Button Content="Open Master Commands List" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="30,15" FontWeight="Bold" Cursor="Hand" Click="OpenLibraryWeb_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -1727,7 +1912,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="64" Height="64" CornerRadius="32" Background="#007AFF" Margin="0,0,20,0">
+                                            <Border Width="64" Height="64" CornerRadius="32" Background="{DynamicResource ThemeAccentBrush}" Margin="0,0,20,0">
                                                 <TextBlock x:Name="AccountTierIcon" Text="CW" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -1758,7 +1943,7 @@
                                                     <TextBlock Text="Plan" Foreground="White" FontWeight="SemiBold"/>
                                                     <TextBlock x:Name="AccountUsageLabel" Text="Free Starter" Foreground="White" Opacity="0.6" FontSize="12"/>
                                                 </StackPanel>
-                                                <Button Grid.Column="1" Content="Upgrade to Pro" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="Bold">
+                                                <Button Grid.Column="1" Content="Upgrade to Pro" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="Bold">
                                                     <Button.Resources>
                                                         <Style TargetType="Border">
                                                             <Setter Property="CornerRadius" Value="8"/>
@@ -1780,7 +1965,7 @@
                                                 </StackPanel>
                                                 <!-- Progress Bar Background -->
                                                 <Border Grid.ColumnSpan="2" VerticalAlignment="Bottom" Height="4" Background="#30FFFFFF" CornerRadius="2" Margin="0,25,0,0">
-                                                    <Border x:Name="AccountUsageProgressBar" HorizontalAlignment="Left" Width="0" Background="#007AFF" CornerRadius="2"/>
+                                                    <Border x:Name="AccountUsageProgressBar" HorizontalAlignment="Left" Width="0" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="2"/>
                                                 </Border>
                                             </Grid>
                                         </StackPanel>
@@ -1830,7 +2015,7 @@
                                                 <PasswordBox x:Name="TxtLoginPassword" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14"/>
                                             </Border>
 
-                                            <Button Content="Sign In" Background="#007AFF" Foreground="White" BorderThickness="0" Padding="0,15" FontWeight="Bold" FontSize="16" Cursor="Hand" Click="PerformLogin_Click">
+                                            <Button Content="Sign In" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,15" FontWeight="Bold" FontSize="16" Cursor="Hand" Click="PerformLogin_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -1840,7 +2025,7 @@
                                                 </Button.Template>
                                             </Button>
                                             
-                                            <Button Content="Create an Account" Background="Transparent" Foreground="#007AFF" BorderThickness="0" Margin="0,20,0,0" FontSize="12" Cursor="Hand" Click="SignUp_Click"/>
+                                            <Button Content="Create an Account" Background="Transparent" Foreground="{DynamicResource ThemeGlowBrush}" BorderThickness="0" Margin="0,20,0,0" FontSize="12" Cursor="Hand" Click="SignUp_Click"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -1860,7 +2045,9 @@
                     </Grid>
                 </Grid>
             </Border>
-        </Border>
+        </Grid>
+    </Border>
+</Border>
 
 
         <!-- Premium Toast Notification Overlay -->
@@ -1875,6 +2062,180 @@
                 <TextBlock x:Name="TxtToastMessage" Text="Preference Saved!" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
+
+        <!-- Custom Confirm Delete Overlay -->
+        <Grid x:Name="OverlayConfirmDelete" Visibility="Collapsed" Background="#AA000000">
+            <Border Background="{DynamicResource ThemeSurfaceBrush}" BorderBrush="{DynamicResource ThemeGlowBrush}" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="30" MinWidth="350">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.6"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Confirm Deletion" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtConfirmDeleteMessage" Text="Are you sure you want to delete this item?" Foreground="#CCCCCC" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,25"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Cancel" Click="CancelDelete_Click" Width="100" Height="35" Margin="0,0,10,0" Background="#20FFFFFF" Foreground="White" BorderThickness="0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button Content="Delete" Click="ConfirmDelete_Click" Width="100" Height="35" Background="#AAFF453A" Foreground="White" BorderThickness="0" FontWeight="SemiBold">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Secure Mode Overlay -->
+        <Grid x:Name="OverlaySecureMode" Visibility="Collapsed" Background="#CC050510">
+            <Border Background="{DynamicResource ThemeSurfaceBrush}" BorderBrush="#FF453A" BorderThickness="1" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="40" MaxWidth="500">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="0" Color="#50FF453A"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="&#x1F6E1;" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20" Opacity="0.9"/>
+                    <TextBlock Text="Secure Erase" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="This will permanently delete ALL vocabulary entries and transcription hints from your database." Foreground="#FF6666" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,5" FontSize="14"/>
+                    <TextBlock Text="This action cannot be undone." Foreground="#AAAAAA" TextAlignment="Center" Margin="0,0,0,30" FontSize="13" FontStyle="Italic"/>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Cancel" Click="CancelSecureMode_Click" Width="120" Height="40" Margin="0,0,15,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" FontSize="14" FontWeight="SemiBold" Cursor="Hand">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="10"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button Content="Securely Erase All" Click="ConfirmSecureMode_Click" Width="160" Height="40" Background="#E6FF453A" Foreground="White" BorderThickness="0" FontSize="14" FontWeight="Bold" Cursor="Hand">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="10"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <!-- VAULT PASSWORD OVERLAY -->
+        <Grid x:Name="VaultPasswordOverlay" Visibility="Collapsed">
+            <Border Background="#CC000000" CornerRadius="30" Margin="20">
+                <Border.Effect>
+                    <BlurEffect Radius="20"/>
+                </Border.Effect>
+            </Border>
+            <Border Width="400" Height="250" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" Color="Black" Opacity="0.5"/>
+                </Border.Effect>
+                <StackPanel Margin="30">
+                    <TextBlock Text="&#x1F512; Secure Your Vault" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Enter a password to encrypt your backup. You will need this same password to restore." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                    
+                    <PasswordBox x:Name="TxtVaultPassword" Height="40" Background="#10FFFFFF" Foreground="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0">
+                         <PasswordBox.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </PasswordBox.Resources>
+                    </PasswordBox>
+                    
+                    <Grid Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Cancel" Click="CancelVault_Click" Grid.Column="0" Margin="0,0,10,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Height="40">
+                            <Button.Resources>
+                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button x:Name="BtnConfirmVault" Content="Confirm" Click="ConfirmVault_Click" Grid.Column="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="40">
+                            <Button.Resources>
+                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                            </Button.Resources>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="UniversalDialog" Visibility="Collapsed" Opacity="0">
+            <!-- Background Backdrop with Blur -->
+            <Border Background="#99000000" MouseDown="UniversalDialog_MouseDown">
+                <Border.Effect>
+                    <BlurEffect Radius="15"/>
+                </Border.Effect>
+            </Border>
+            
+            <!-- Dialog Box -->
+            <Border x:Name="DialogContent" Width="420" MinHeight="220" MaxHeight="500" Background="#1C1E32" CornerRadius="28" BorderBrush="#35FFFFFF" BorderThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" Color="#000000" Opacity="0.6" ShadowDepth="0"/>
+                </Border.Effect>
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="DialogScale" ScaleX="0.9" ScaleY="0.9"/>
+                </Border.RenderTransform>
+                <Border.RenderTransformOrigin>0.5,0.5</Border.RenderTransformOrigin>
+
+                <Grid>
+                    <!-- Background Glow -->
+                    <Ellipse Width="300" Height="200" Fill="{DynamicResource ThemeAccentBrush}" Opacity="0.1" VerticalAlignment="Top" Margin="0,-100,0,0">
+                        <Ellipse.Effect>
+                            <BlurEffect Radius="100"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
+
+                    <StackPanel Margin="35,40,35,35">
+                        <TextBlock x:Name="TxtDialogIcon" Text="✨" Foreground="White" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                        <TextBlock x:Name="TxtDialogTitle" Text="Success" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,12" TextAlignment="Center">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="10" Color="Black" Opacity="0.3"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <TextBlock x:Name="TxtDialogMessage" Text="Your environment is now secured." Foreground="White" Opacity="0.75" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,35" LineHeight="22"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Button x:Name="BtnDialogCancel" Content="Cancel" Click="DialogCancel_Click" Grid.Column="0" Margin="0,0,12,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Height="50" Visibility="Collapsed" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="14">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            
+                            <Button x:Name="BtnDialogConfirm" Content="Confirm" Click="DialogConfirm_Click" Grid.Column="1" Grid.ColumnSpan="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="50" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="ConfirmBorder" Background="{TemplateBinding Background}" CornerRadius="14">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="0.9"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
 

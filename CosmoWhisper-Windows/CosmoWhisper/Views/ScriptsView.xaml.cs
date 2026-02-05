@@ -12,7 +12,7 @@ namespace CosmoWhisper.Views
 
         private void NewScript_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show("Script editor coming soon!", "CosmoWhisper");
+            _ = CosmoWhisper.CosmoMessage.Show("Coming Soon", "The Python Scripting Engine is currently in development.", "🐍");
         }
     }
 }

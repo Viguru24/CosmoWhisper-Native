@@ -79,7 +79,7 @@ namespace CosmoWhisper.Managers
         public async Task<bool> Handle(string text)
         {
             string cmd = Regex.Replace(text.ToLower(), @"[^\w\s]", "").Trim();
-            
+
             if (string.IsNullOrWhiteSpace(cmd)) return false;
 
             try { System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cosmo_commands.txt"), $"{DateTime.Now}: Processing '{cmd}' (Original: '{text}')\n"); } catch { }
@@ -91,7 +91,7 @@ namespace CosmoWhisper.Managers
             }
 
             // Helper for trigger matching
-            bool IsTriggered(params string[] triggers) 
+            bool IsTriggered(params string[] triggers)
                 => triggers.Any(t => cmd == t || cmd.StartsWith(t + " "));
 
             // --- 1. CONFIG / MODES ---
@@ -102,7 +102,7 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("uppercase", "all caps")) { await ProcessAIOnSelection("Make the text uppercase."); return true; }
             if (IsTriggered("lowercase", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase."); return true; }
             if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case."); return true; }
-            
+
             if (cmd == "select all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); return true; }
             if (cmd == "undo" || cmd == "undo that") { InputController.Shared.ExecuteKeystroke("z", ctrl: true); return true; }
             if (cmd == "redo" || cmd == "redo that") { InputController.Shared.ExecuteKeystroke("y", ctrl: true); return true; }
@@ -133,17 +133,17 @@ namespace CosmoWhisper.Managers
 
             // --- 4. SYSTEM ---
             // --- 4. SYSTEM ---
-            if (IsTriggered("insert date", "todays date", "current date")) 
-            { 
+            if (IsTriggered("insert date", "todays date", "current date"))
+            {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
-                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false); 
-                CommandExecuted?.Invoke(); return true; 
+                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false);
+                CommandExecuted?.Invoke(); return true;
             }
-            if (IsTriggered("insert time", "current time")) 
-            { 
+            if (IsTriggered("insert time", "current time"))
+            {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
-                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false); 
-                CommandExecuted?.Invoke(); return true; 
+                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false);
+                CommandExecuted?.Invoke(); return true;
             }
             if (IsTriggered("insert date and time"))
             {
@@ -152,7 +152,7 @@ namespace CosmoWhisper.Managers
                 await InputController.Shared.PasteText(DateTime.Now.ToString($"{dFmt} {tFmt}"), false, false);
                 CommandExecuted?.Invoke(); return true;
             }
-            
+
             if (IsTriggered("volume up", "louder")) { InputController.Shared.SendKey(0xAF, false); InputController.Shared.SendKey(0xAF, true); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("volume down", "quieter")) { InputController.Shared.SendKey(0xAE, false); InputController.Shared.SendKey(0xAE, true); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("mute")) { InputController.Shared.SendKey(0xAD, false); InputController.Shared.SendKey(0xAD, true); CommandExecuted?.Invoke(); return true; }
@@ -179,7 +179,7 @@ namespace CosmoWhisper.Managers
             }
 
             // --- 6. DEVELOPER TOOLS ---
-            if (cmd == "dev tools" || cmd == "devtools" || cmd == "developer tools" || 
+            if (cmd == "dev tools" || cmd == "devtools" || cmd == "developer tools" ||
                 cmd == "f12" || cmd == "inspect" || cmd == "inspector" || cmd == "console")
             {
                 InputController.Shared.SendKey(0x7B, false); // F12 key
@@ -230,7 +230,8 @@ namespace CosmoWhisper.Managers
                 await Task.Delay(350);
 
                 string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
                     if (System.Windows.Clipboard.ContainsText()) selection = System.Windows.Clipboard.GetText();
                 });
 
@@ -250,13 +251,14 @@ namespace CosmoWhisper.Managers
             try
             {
                 LogToFile("SummarizeAndRead started.");
-                
+
                 // 1. Copy selection
                 InputController.Shared.ExecuteKeystroke("c", ctrl: true);
                 await Task.Delay(350);
 
                 string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
                     if (System.Windows.Clipboard.ContainsText()) selection = System.Windows.Clipboard.GetText();
                 });
 
@@ -269,7 +271,7 @@ namespace CosmoWhisper.Managers
                 // 2. AI Summarize
                 string prompt = "Summarize the following text into 2-3 concise sentences.";
                 string summary = await AIService.Shared.ProcessCommand(prompt, selection);
-                
+
                 if (summary.StartsWith("Error:"))
                 {
                     LogToFile($"SummarizeAndRead AI Error: {summary}");
@@ -349,14 +351,15 @@ namespace CosmoWhisper.Managers
             try
             {
                 LogToFile($"ProcessAIOnSelection started with prompt: {prompt}");
-                
+
                 // 1. Copy selection
                 InputController.Shared.ExecuteKeystroke("c", ctrl: true);
                 await Task.Delay(350); // Increased delay for clipboard sync
 
                 string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    if (System.Windows.Clipboard.ContainsText()) 
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (System.Windows.Clipboard.ContainsText())
                     {
                         selection = System.Windows.Clipboard.GetText();
                         LogToFile($"Selection captured: {selection.Length} chars");

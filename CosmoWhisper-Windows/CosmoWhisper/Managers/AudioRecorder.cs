@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows; 
+using System.Windows;
 using NAudio.Wave;
 using NAudio.CoreAudioApi;
 using CosmoWhisper.Services;
@@ -45,6 +45,7 @@ namespace CosmoWhisper.Managers
         {
             RefreshConfig();
             PreferenceManager.Shared.PreferencesUpdated += () => RefreshConfig();
+            CleanupTempFiles();
         }
 
         private void RefreshConfig()
@@ -72,6 +73,7 @@ namespace CosmoWhisper.Managers
         }
 
         private bool _isMonitoring;
+        public bool IsMonitoring => _isMonitoring;
         private AudioGraph? _audioGraph;
         private AudioDeviceInputNode? _deviceInputNode;
         private AudioFileOutputNode? _fileOutputNode;
@@ -80,10 +82,10 @@ namespace CosmoWhisper.Managers
         private DateTime _lastToggleTime = DateTime.MinValue;
         private DateTime _recordingStartTime = DateTime.MinValue;
         private readonly object _cleanupLock = new object();
-        
+
         // --- PRE-ROLL BUFFER (ITEM 5) ---
         private readonly System.Collections.Concurrent.ConcurrentQueue<AudioFrame> _preRollBuffer = new System.Collections.Concurrent.ConcurrentQueue<AudioFrame>();
-        private const int PreRollDurationMs = 500; 
+        private const int PreRollDurationMs = 500;
         private AudioFrameInputNode? _preRollInputNode;
 
         // --- WIN32 INTEROP (ITEM 7) ---
@@ -130,17 +132,17 @@ namespace CosmoWhisper.Managers
                 if (!string.IsNullOrEmpty(SelectedDeviceId))
                 {
                     var device = await DeviceInformation.CreateFromIdAsync(SelectedDeviceId);
-                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Communications, _audioGraph.EncodingProperties, device).AsTask();
+                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Other, _audioGraph.EncodingProperties, device).AsTask();
                 }
                 else
                 {
-                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Communications).AsTask();
+                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Other).AsTask();
                 }
 
                 if (inputResult.Status != AudioDeviceNodeCreationStatus.Success)
                     throw new Exception($"Input Node Error: {inputResult.Status}");
                 _deviceInputNode = inputResult.DeviceInputNode;
-                
+
                 // ITEM 6: Enable Native Noise Suppression / Speech Optimization
                 _deviceInputNode.OutgoingGain = 2.0;
 
@@ -149,7 +151,7 @@ namespace CosmoWhisper.Managers
                 _deviceInputNode.AddOutgoingConnection(_frameOutputNode);
 
                 _audioGraph.QuantumStarted += AudioGraph_QuantumStarted;
-                
+
                 // If we are just initializing, we might want to start the graph immediately so monitoring works
                 _audioGraph.Start();
             }
@@ -165,7 +167,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 if (_frameOutputNode == null) return;
-            
+
                 var frame = _frameOutputNode.GetFrame();
                 using (var buffer = frame.LockBuffer(AudioBufferAccessMode.Read))
                 using (var reference = buffer.CreateReference())
@@ -184,10 +186,10 @@ namespace CosmoWhisper.Managers
                         float val = dataInFloat[i];
                         sum += val * val;
                     }
-                
+
                     float rms = (float)Math.Sqrt(sum / samples);
                     float db = rms > 0.000001f ? 20 * (float)Math.Log10(rms) : -100;
-                
+
                     AudioLevelChanged?.Invoke(db);
 
                     // ITEM 5: Maintain Pre-roll Buffer (last 500ms)
@@ -195,14 +197,14 @@ namespace CosmoWhisper.Managers
                     {
                         _preRollBuffer.Enqueue(frame);
                         // 500ms at 10ms quantum is ~50 frames
-                        while (_preRollBuffer.Count > 50) 
+                        while (_preRollBuffer.Count > 50)
                         {
                             if (_preRollBuffer.TryDequeue(out var oldFrame)) oldFrame.Dispose();
                         }
                     }
                 }
             }
-            catch 
+            catch
             {
                 // Graph likely disposed or stopping. Ignore.
             }
@@ -221,7 +223,7 @@ namespace CosmoWhisper.Managers
         {
             if (!_isMonitoring) return;
             _isMonitoring = false;
-            
+
             // Only stop/dispose graph if we are NOT recording
             if (!IsRecording)
             {
@@ -237,19 +239,19 @@ namespace CosmoWhisper.Managers
         {
             if (!File.Exists(filePath)) return;
 
-            try 
+            try
             {
                 // Force mixer slider to 100%
                 SoundManager.Shared.ForceProcessVolumeMax();
 
-                if (_mediaPlayer == null) 
+                if (_mediaPlayer == null)
                 {
                     _mediaPlayer = new MediaPlayer();
                 }
-                
+
                 _mediaPlayer.Volume = 1.0;
                 _mediaPlayer.IsMuted = false;
-                
+
                 // For WinRT MediaPlayer, ensure we use a proper file URI for local files
                 var uri = new Uri(filePath);
                 _mediaPlayer.Source = MediaSource.CreateFromUri(uri);
@@ -278,7 +280,7 @@ namespace CosmoWhisper.Managers
         {
             LogDebug("StartRecording() called.");
             if (IsRecording) return;
-            
+
             try { SoundManager.Shared.PlayStartSound(); } catch { }
 
             await EnsureGraphInitialized();
@@ -288,7 +290,7 @@ namespace CosmoWhisper.Managers
                 _currentFilePath = Path.Combine(Path.GetTempPath(), $"cosmo_{Guid.NewGuid()}.m4a");
                 var folder = await StorageFolder.GetFolderFromPathAsync(Path.GetTempPath()).AsTask();
                 var storageFile = await folder.CreateFileAsync(Path.GetFileName(_currentFilePath), CreationCollisionOption.ReplaceExisting).AsTask();
-                
+
                 var profile = MediaEncodingProfile.CreateM4a(AudioEncodingQuality.High);
                 profile.Audio.ChannelCount = 1;
                 profile.Audio.SampleRate = 44100;
@@ -296,9 +298,9 @@ namespace CosmoWhisper.Managers
                 var outputResult = await _audioGraph.CreateFileOutputNodeAsync(storageFile, profile).AsTask();
                 if (outputResult.Status != AudioFileNodeCreationStatus.Success)
                     throw new Exception($"File Output Error: {outputResult.Status}");
-                
+
                 _fileOutputNode = outputResult.FileOutputNode;
-                _deviceInputNode.AddOutgoingConnection(_fileOutputNode); 
+                _deviceInputNode.AddOutgoingConnection(_fileOutputNode);
 
                 // ITEM 5: Inject Pre-roll frames into the file output
                 var frameInputResult = _audioGraph.CreateFrameInputNode();
@@ -335,7 +337,7 @@ namespace CosmoWhisper.Managers
                 if (_fileOutputNode != null)
                 {
                     try { _deviceInputNode?.RemoveOutgoingConnection(_fileOutputNode); } catch { }
-                    
+
                     // This is where "ObjectDisposed" usually happens if CleanupGraph runs
                     await _fileOutputNode.FinalizeAsync().AsTask();
                     _fileOutputNode.Dispose();
@@ -356,7 +358,7 @@ namespace CosmoWhisper.Managers
                     _ = LicenseManager.Shared.ReportUsageAsync(durationSeconds);
                 }
             }
-            catch (ObjectDisposedException) 
+            catch (ObjectDisposedException)
             {
                 // Graph was disposed by StopMonitoring race - this is expected/safe.
             }
@@ -367,12 +369,12 @@ namespace CosmoWhisper.Managers
             }
             finally
             {
-                 // Always attempt to process the file, even if graph crashed
-                 if (!string.IsNullOrEmpty(_currentFilePath))
-                 {
-                     await ProcessAudioFile(_currentFilePath);
-                     _currentFilePath = null;
-                 }
+                // Always attempt to process the file, even if graph crashed
+                if (!string.IsNullOrEmpty(_currentFilePath))
+                {
+                    await ProcessAudioFile(_currentFilePath);
+                    _currentFilePath = null;
+                }
             }
         }
 
@@ -381,7 +383,7 @@ namespace CosmoWhisper.Managers
             lock (_cleanupLock)
             {
                 if (_audioGraph == null) return;
-                try 
+                try
                 {
                     _audioGraph.Stop();
                     _audioGraph.QuantumStarted -= AudioGraph_QuantumStarted;
@@ -408,12 +410,35 @@ namespace CosmoWhisper.Managers
 
 
 
+        private void CleanupTempFiles()
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    var tempPath = Path.GetTempPath();
+                    var files = Directory.GetFiles(tempPath, "cosmo_*.m4a");
+                    foreach (var f in files)
+                    {
+                        try 
+                        { 
+                            var fi = new FileInfo(f);
+                            if (fi.CreationTime < DateTime.Now.AddMinutes(-10)) // Only delete old files
+                                File.Delete(f); 
+                        } 
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
+
         private async Task ProcessAudioFile(string filePath)
         {
             var info = new FileInfo(filePath);
             LogDebug($"Processing file: {filePath} ({info.Length} bytes)");
 
-            if (info.Length < 1000) 
+            if (info.Length < 1000)
             {
                 LogDebug("File too small (<1KB), deleting.");
                 try { File.Delete(filePath); } catch { }
@@ -422,10 +447,10 @@ namespace CosmoWhisper.Managers
 
             try
             {
-                TranscriptionReceived?.Invoke($"Thinking ({info.Length/1024}KB)...");
+                TranscriptionReceived?.Invoke($"Thinking ({info.Length / 1024}KB)...");
                 string text = await AIService.Shared.Transcribe(filePath);
                 LogDebug($"API Response: '{text}'");
-                
+
                 if (text.StartsWith("Error:"))
                 {
                     LogDebug("API Error detected.");
@@ -433,10 +458,10 @@ namespace CosmoWhisper.Managers
                 }
                 else
                 {
-                    string cleaned = CleanText(text);
+                    string cleaned = TextProcessor.CleanText(text);
                     LogDebug($"Cleaned Text: '{cleaned}'");
-                    
-                    if (!IsGarbage(cleaned))
+
+                    if (!TextProcessor.IsGarbage(cleaned))
                     {
                         // Apply Regional Spelling & Custom Corrections
                         string regionFixed = RegionalSpellingManager.Shared.Apply(cleaned);
@@ -448,15 +473,29 @@ namespace CosmoWhisper.Managers
                         {
                             TranscriptionReceived?.Invoke(corrected);
                             var prefs = PreferenceManager.Shared.Preferences;
-                            
+
+                            // Centralized Performance Stats Tracking
+                            int wordCount = corrected.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+                            if (wordCount > 0)
+                            {
+                                prefs.TotalWords += wordCount;
+                                prefs.TotalTranscriptions += 1;
+                                // Heuristic: Speaking is ~3x faster than typing. Saves ~1 min per 65 words.
+                                prefs.TotalTimeSavedMinutes += (wordCount / 65.0);
+                                PreferenceManager.Shared.Save();
+                                LogDebug($"[STATS] Updated: {wordCount} words. New Total: {prefs.TotalWords}");
+                            }
+
                             if (prefs.AutoCopy)
                             {
-                                try 
-                                { 
-                                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                                try
+                                {
+                                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                                    {
                                         System.Windows.Clipboard.SetText(corrected);
                                     });
-                                } catch { }
+                                }
+                                catch { }
                             }
 
                             await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
@@ -485,57 +524,15 @@ namespace CosmoWhisper.Managers
             return devices.ToList();
         }
 
-        private void LogDebug(string msg) 
+        private void LogDebug(string msg)
         {
-            try 
+            try
             {
-                File.AppendAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cosmo_debug.txt"), $"{DateTime.Now}: {msg}\n");
-            } 
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                Directory.CreateDirectory(logPath);
+                File.AppendAllText(Path.Combine(logPath, "audio_debug.txt"), $"{DateTime.Now}: {msg}\n");
+            }
             catch { }
-        }
-
-        private string CleanText(string input)
-        {
-            string text = input ?? "";
-            text = Regex.Replace(text, @"\s+$", "");
-            text = text.Trim();
-            string low = text.ToLower();
-
-            if (Regex.IsMatch(text, @"^(new|next) paragraph\s*", RegexOptions.IgnoreCase))
-            {
-                 text = Regex.Replace(text, @"^(new|next) paragraph\s*", "", RegexOptions.IgnoreCase);
-                 text = "\n\n" + text;
-            }
-
-            if (Regex.IsMatch(text, @"^(new|next) line\s*", RegexOptions.IgnoreCase))
-            {
-                text = Regex.Replace(text, @"^(new|next) line\s*", "", RegexOptions.IgnoreCase);
-                text = "\n" + text;
-            }
-
-            if (low.Contains("comma")) text = Regex.Replace(text, @"\bcomma\b", ",", RegexOptions.IgnoreCase);
-            if (low.Contains("full stop") || low.Contains("period")) text = Regex.Replace(text, @"\b(full stop|period)\b", ".", RegexOptions.IgnoreCase);
-
-            int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-            if (wordCount < 6) text = Regex.Replace(text, @"[\.\?!…]+[\s]*$", "");
-
-            return text;
-        }
-
-        private bool IsGarbage(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return true;
-            var shortHallucinations = new[] { "yes", "good", "just", "the", "ok", "okay", "you", "thanks", "thank you", "the.", "bye", "is", "a", "this", "l", "u", "po", "sti", "come", "wi", "st", "you.", "and", "but", "me", "it", "so", "thank you." };
-            var phraseHallucinations = new[] { "mbc", " дякую", "дякую!", "subtitles", "subtitle by", "watched by", "mbc news", "translated by", "amara.org", "ted.com", "copyright", "all rights reserved", "the end.", "bye bye.", "thanks for watching", "thank you for watching", "thank you." };
-            string low = text.ToLower().Trim();
-            if (low.Length <= 2) return true;
-            // if (low.Length < 15 && low.Split(' ').Length < 3) return true; // Disabled: Too aggressive 
-            if (shortHallucinations.Contains(low)) return true;
-            if (phraseHallucinations.Any(h => low.Contains(h))) return true;
-            if (low.Contains("subtitle") || low.Contains("this is the end of the video")) return true;
-            if (text.Split("Bye").Length > 3) return true;
-            if (text.Length < 3 && !text.Any(char.IsDigit)) return true;
-            return false;
         }
     }
 }

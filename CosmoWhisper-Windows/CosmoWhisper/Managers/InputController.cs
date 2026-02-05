@@ -29,13 +29,15 @@ namespace CosmoWhisper.Managers
             if (restoreClipboard)
             {
                 // Must be on UI thread for System.Windows.Clipboard access
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
                     if (System.Windows.Clipboard.ContainsText())
                         oldText = System.Windows.Clipboard.GetText();
                 });
             }
 
-            System.Windows.Application.Current.Dispatcher.Invoke(() => {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
                 System.Windows.Clipboard.SetText(text);
             });
 
@@ -58,7 +60,8 @@ namespace CosmoWhisper.Managers
             if (restoreClipboard && oldText != null)
             {
                 await Task.Delay(500);
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
                     System.Windows.Clipboard.SetText(oldText);
                 });
             }
@@ -70,21 +73,21 @@ namespace CosmoWhisper.Managers
             foreach (char c in text)
             {
                 INPUT[] inputs = new INPUT[2];
-                
+
                 // Key Down
                 inputs[0].type = INPUT_KEYBOARD;
                 inputs[0].ki.wVk = 0;
                 inputs[0].ki.wScan = (ushort)c;
                 inputs[0].ki.dwFlags = 0x0004; // KEYEVENTF_UNICODE
-                
+
                 // Key Up
                 inputs[1].type = INPUT_KEYBOARD;
                 inputs[1].ki.wVk = 0;
                 inputs[1].ki.wScan = (ushort)c;
                 inputs[1].ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-                
+
                 SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
-                
+
                 // Small delay to simulate natural typing if needed, 
                 // but usually instant is fine for "Direct Typing" mode
                 // await Task.Delay(1); 

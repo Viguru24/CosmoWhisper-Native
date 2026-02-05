@@ -8,11 +8,34 @@
         <FontFamily x:Key="MainFont">Inter, Segoe UI, Roboto, sans-serif</FontFamily>
         <FontFamily x:Key="DisplayFont">Outfit, Inter, Segoe UI semibold</FontFamily>
         
+        <!-- DYNAMIC THEME TOKENS -->
+        <Color x:Key="ThemeAccentColor">#4f46e5</Color>
+        <SolidColorBrush x:Key="ThemeAccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
+        
+        <Color x:Key="ThemeGlowColor">#3b82f6</Color>
+        <SolidColorBrush x:Key="ThemeGlowBrush" Color="{DynamicResource ThemeGlowColor}"/>
+
+        <Color x:Key="ThemeSecondaryColor">#22d3ee</Color>
+        <SolidColorBrush x:Key="ThemeSecondaryBrush" Color="{DynamicResource ThemeSecondaryColor}"/>
+
+        <Color x:Key="ThemeSurfaceColor">#1e293b</Color>
+        <SolidColorBrush x:Key="ThemeSurfaceBrush" Color="{DynamicResource ThemeSurfaceColor}" Opacity="0.6"/>
+
+        <Color x:Key="ThemeBgStartColor">#020617</Color>
+        <Color x:Key="ThemeBgMidColor">#0a0f1d</Color>
+        <Color x:Key="ThemeBgEndColor">#050A14</Color>
+
+        <LinearGradientBrush x:Key="ThemeBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource ThemeBgStartColor}" Offset="0"/>
+            <GradientStop Color="{DynamicResource ThemeBgMidColor}" Offset="0.5"/>
+            <GradientStop Color="{DynamicResource ThemeBgEndColor}" Offset="1"/>
+        </LinearGradientBrush>
+
         <Color x:Key="AccentColor">#007AFF</Color>
-        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
         
         <Color x:Key="GlassColor">#050505</Color>
-        <SolidColorBrush x:Key="GlassBrush" Color="{StaticResource GlassColor}" Opacity="0.1"/>
+        <SolidColorBrush x:Key="GlassBrush" Color="{DynamicResource ThemeBgStartColor}" Opacity="0.8"/>
 
         <!-- GLOBAL STYLES -->
         <Style TargetType="TextBlock">

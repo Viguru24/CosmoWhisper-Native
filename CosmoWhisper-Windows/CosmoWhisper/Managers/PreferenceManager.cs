@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace CosmoWhisper.Managers
 {
     public enum InsertionMethod { FastPaste, DirectTyping }
-    
+
     public class UserPreferences : System.ComponentModel.INotifyPropertyChanged
     {
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -13,7 +13,7 @@ namespace CosmoWhisper.Managers
 
         private string _activationKey = "F8";
         public string ActivationKey { get => _activationKey; set { _activationKey = value; OnPropertyChanged(nameof(ActivationKey)); } }
-        
+
         private uint _virtualKey = 0x77;
         public uint VirtualKey { get => _virtualKey; set { _virtualKey = value; OnPropertyChanged(nameof(VirtualKey)); } }
         public string MouseButton { get; set; } = "None"; // "Left", "Right", "Middle", "XButton1", "XButton2"
@@ -21,7 +21,7 @@ namespace CosmoWhisper.Managers
         public bool RestoreClipboard { get; set; } = true;
         public bool AutoSubmit { get; set; } = true;
         public string BackupDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
-        
+
         // Voice Studio: Speed, Pitch & Selection
         public double VoiceSpeed { get; set; } = 1.0;
         public double VoicePitch { get; set; } = 1.0;
@@ -70,15 +70,15 @@ namespace CosmoWhisper.Managers
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
         public int UsageLimitMinutes { get; set; } = 20; // Corrected 20 minute monthly limit
-        
+
         // Cumulative Stats
         public long TotalWords { get; set; } = 23797; // Using current placeholder as initial
         public int TotalTranscriptions { get; set; } = 1987; // Using current placeholder as initial
         public double TotalTimeSavedMinutes { get; set; } = 360; // 6h = 360m
-        
+
         // Startup Settings
         public bool LaunchOnStartup { get; set; } = false;
-        
+
         public bool InteractionSoundsEnabled { get; set; } = true;
     }
 
@@ -93,16 +93,16 @@ namespace CosmoWhisper.Managers
 
         public PreferenceManager()
         {
-            try 
+            try
             {
                 _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
                 Directory.CreateDirectory(_appDataFolder);
                 _settingsPath = Path.Combine(_appDataFolder, "settings.json");
                 Load();
             }
-            catch 
-            { 
-                 Preferences = new UserPreferences(); 
+            catch
+            {
+                Preferences = new UserPreferences();
             }
         }
 
@@ -110,11 +110,13 @@ namespace CosmoWhisper.Managers
         {
             if (File.Exists(_settingsPath))
             {
-                try {
+                try
+                {
                     string json = File.ReadAllText(_settingsPath);
                     Preferences = JsonSerializer.Deserialize<UserPreferences>(json) ?? new UserPreferences();
                     PreferencesUpdated?.Invoke();
-                } catch { Preferences = new UserPreferences(); }
+                }
+                catch { Preferences = new UserPreferences(); }
             }
             else
             {
@@ -124,11 +126,13 @@ namespace CosmoWhisper.Managers
 
         public void Save()
         {
-            try {
+            try
+            {
                 string json = JsonSerializer.Serialize(Preferences, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_settingsPath, json);
                 PreferencesUpdated?.Invoke();
-            } catch { } // logging?
+            }
+            catch { } // logging?
         }
 
         public void Restore(string backupFolderPath)

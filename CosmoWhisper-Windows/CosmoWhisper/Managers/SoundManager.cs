@@ -16,15 +16,19 @@ namespace CosmoWhisper.Managers
 
         private SoundManager()
         {
-            try {
+            try
+            {
                 // Ensure Cosmo keeps its volume at 100% across all devices
-                _ = Task.Run(async () => {
-                    while(true) {
+                _ = Task.Run(async () =>
+                {
+                    while (true)
+                    {
                         try { ForceProcessVolumeMax(); } catch { }
                         await Task.Delay(5000);
                     }
                 });
-            } catch { }
+            }
+            catch { }
         }
 
         public void ForceProcessVolumeMax()
@@ -71,7 +75,8 @@ namespace CosmoWhisper.Managers
 
         private void PlayDictationChime(bool isStart)
         {
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 lock (_playLock)
                 {
                     try
@@ -82,24 +87,25 @@ namespace CosmoWhisper.Managers
                         // These are the official Windows sounds specifically designed for 
                         // "Microphone On" and "Microphone Off" interactions.
                         // They are melodic, professional, and have 'air' (not tinny).
-                        string path = isStart 
-                            ? @"C:\Windows\Media\Speech On.wav" 
+                        string path = isStart
+                            ? @"C:\Windows\Media\Speech On.wav"
                             : @"C:\Windows\Media\Speech Off.wav";
 
                         if (!File.Exists(path)) path = @"C:\Windows\Media\Windows Notify.wav";
-                        if (!File.Exists(path)) {
-                             System.Media.SystemSounds.Exclamation.Play();
-                             return;
+                        if (!File.Exists(path))
+                        {
+                            System.Media.SystemSounds.Exclamation.Play();
+                            return;
                         }
 
                         // Use WaveOutEvent with DeviceNumber = -1 (Dynamic Mapping)
                         using (var reader = new AudioFileReader(path))
                         using (var output = new WaveOutEvent())
                         {
-                            output.DeviceNumber = -1; 
+                            output.DeviceNumber = -1;
                             output.Init(reader);
                             output.Play();
-                            
+
                             // We play the full duration (usually ~1s) because these are 
                             // professionally mastered melodic chirps that shouldn't be cut off.
                             while (output.PlaybackState == PlaybackState.Playing)
