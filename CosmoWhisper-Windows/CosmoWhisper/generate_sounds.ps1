@@ -1,5 +1,5 @@
 
-$assetsDir = "c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\Assets"
+$assetsDir = Join-Path $PSScriptRoot "Assets"
 if (!(Test-Path $assetsDir)) { New-Item -ItemType Directory $assetsDir }
 
 # Start Sound

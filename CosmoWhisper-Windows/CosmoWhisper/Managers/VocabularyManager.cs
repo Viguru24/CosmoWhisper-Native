@@ -33,10 +33,12 @@ namespace CosmoWhisper.Managers
         {
             TranscriptionHints = "Batman, Arkham, Wayne Enterprises, Gotham City, Alfred Pennyworth";
             Replacements["my address"] = "1007 Mountain Drive, Gotham City, NJ";
-            Replacements["my email"] = "bruce.wayne@wayne-enterprises.com";
+            Replacements["my email"] = "LouisDeSouza@gmail.com";
             Replacements["my phone"] = "+1 555-010-1939";
             Replacements["batman"] = "I am Vengeance. I am the Night. I am Batman.";
             Replacements["alfred"] = "At your service, Master Wayne.";
+            Replacements["at"] = "@";
+            Replacements["dot"] = ".";
             Save();
         }
 
@@ -120,6 +122,14 @@ namespace CosmoWhisper.Managers
                 string pattern = Regex.Escape(kvp.Key);
                 processed = Regex.Replace(processed, $@"\b{pattern}\b", kvp.Value, RegexOptions.IgnoreCase);
             }
+
+            // Fallback for 'at' specifically if not in Replacements or to ensure it always snaps
+            processed = Regex.Replace(processed, @"\s+at\s+", " @ ", RegexOptions.IgnoreCase);
+
+            // Clean up email-like spacing (e.g., "user @ gmail . com" -> "user@gmail.com")
+            // This now handles multiple cases and more aggressive snapping
+            processed = Regex.Replace(processed, @"\s*([@.])\s*", "$1");
+
             return processed;
         }
     }

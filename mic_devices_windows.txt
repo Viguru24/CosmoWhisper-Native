@@ -1,2 +1,0 @@
-SteelSeries Sonar - Microphone (SteelSeries Sonar Virtual Audio Device) | ID: \\?\SWD#MMDEVAPI#{0.0.1.00000000}.{c7f08ba9-c89e-462f-91d0-83d0b2a9cadd}#{2eef81be-33fa-4800-9670-1cd474972c3f}
-Microphone (Arctis Nova Pro Wireless) | ID: \\?\SWD#MMDEVAPI#{0.0.1.00000000}.{47a8a368-6a55-48b4-b080-1759681678c9}#{2eef81be-33fa-4800-9670-1cd474972c3f}

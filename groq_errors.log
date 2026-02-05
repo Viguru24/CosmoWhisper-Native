@@ -1,4 +1,0 @@
-2026-01-30 17:37:48 - Groq API BadRequest: {"error":{"message":"unsupported language: en-GB\nLanguage must be one of: [hr kn gl be my mk so uz ht tk nn bo yue da hu no mi br sn yo tt fr ps lb ba su en nl bs sq yi ha jv fi el ur bn ne mn pa lo de tr uk sk eu es pl ar hi he te kk zh pt ca id ro hy ka ru cs th et sw fo vi fa sr az gu mt tl ja ms bg sl sd am sa mg lv mr oc haw sv lt cy si it ta la ml tg ln ko is km af as]","type":"invalid_request_error"}}
-
-2026-01-30 17:37:49 - Groq API BadRequest: {"error":{"message":"unsupported language: en-GB\nLanguage must be one of: [en nl bs sq yi ha jv fi el ur bn ne mn pa lo de tr uk sk eu es pl ar hi he te kk zh pt ca id ro hy ka ru cs th et sw fo vi fa sr az gu mt tl ja ms bg sl sd am sa mg lv mr oc haw sv lt cy si it ta la ml tg ln ko is km af as hr kn gl be my mk so uz ht tk nn bo yue da hu no mi br sn yo tt fr ps lb ba su]","type":"invalid_request_error"}}
-
