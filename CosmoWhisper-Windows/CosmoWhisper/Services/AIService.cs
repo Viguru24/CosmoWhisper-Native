@@ -58,12 +58,15 @@ namespace CosmoWhisper.Services
 
                 // Add prompt for regional spelling, technical terms, and Focused App Context
                 string appContext = Managers.AudioRecorder.Shared.GetCurrentFocusedApp();
-                string basePrompt = $"Transcribe verbatim. Do not repeat. Do not hallucinate. Context: The user is currently using {appContext}.";
+                string hints = Managers.VocabularyManager.Shared.TranscriptionHints;
+                string hintsText = string.IsNullOrWhiteSpace(hints) ? "" : $" Vocabulary Hints: {hints}.";
+
+                string basePrompt = $"Transcribe verbatim. Do not repeat. Do not hallucinate. Context: The user is currently using {appContext}.{hintsText}";
 
                 if (langCode == "en")
                 {
                     string variant = p.InterfaceLanguage == "en-GB" ? "British English (e.g., colour, organise)" : "American English (e.g., color, organize)";
-                    basePrompt = $"Transcribe verbatim in {variant}. Do not repeat. Do not hallucinate. Context: The user is using {appContext}.";
+                    basePrompt = $"Transcribe verbatim in {variant}. Do not repeat. Do not hallucinate. Context: The user is using {appContext}.{hintsText}";
                 }
 
                 form.Add(new StringContent(basePrompt), "prompt");

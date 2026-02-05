@@ -83,15 +83,19 @@ namespace CosmoWhisper.Managers
                     {
                         if (!PreferenceManager.Shared.Preferences.InteractionSoundsEnabled) return;
 
-                        // UPGRADING TO "NATIVE DICTATION" SOUNDS
-                        // These are the official Windows sounds specifically designed for 
-                        // "Microphone On" and "Microphone Off" interactions.
-                        // They are melodic, professional, and have 'air' (not tinny).
-                        string path = isStart
-                            ? @"C:\Windows\Media\Speech On.wav"
-                            : @"C:\Windows\Media\Speech Off.wav";
+                        // 1. Try local bundled professional sounds (F9 on/off)
+                        string assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", isStart ? "chime_on.wav" : "chime_off.wav");
+                        string path = assetsPath;
 
+                        // 2. Fallback to Windows official dictation sounds
+                        if (!File.Exists(path))
+                        {
+                            path = isStart ? @"C:\Windows\Media\Speech On.wav" : @"C:\Windows\Media\Speech Off.wav";
+                        }
+
+                        // 3. Fallback to generic notify sound
                         if (!File.Exists(path)) path = @"C:\Windows\Media\Windows Notify.wav";
+
                         if (!File.Exists(path))
                         {
                             System.Media.SystemSounds.Exclamation.Play();
