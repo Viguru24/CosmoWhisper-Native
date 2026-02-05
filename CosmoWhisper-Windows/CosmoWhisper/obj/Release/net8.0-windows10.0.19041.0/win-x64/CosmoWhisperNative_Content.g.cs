@@ -7,8 +7,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("app.ico")]
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("sidebar_logo.png")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("assets/mic_start.wav")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("assets/mic_stop.wav")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("uninstall.ps1")]

@@ -12,11 +12,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("CosmoWhisperNative")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("2.2.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.2.0+e237e5af3cb2ce8ae099c0ce6895741f8b1811b6")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("2.2.3.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.2.3+68ed008b5b7c615dcc203a5f5afce3ec2fc503c3")]
 [assembly: System.Reflection.AssemblyProductAttribute("CosmoWhisperNative")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CosmoWhisperNative")]
-[assembly: System.Reflection.AssemblyVersionAttribute("2.2.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("2.2.3.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows10.0.19041.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows10.0.19041.0")]
 

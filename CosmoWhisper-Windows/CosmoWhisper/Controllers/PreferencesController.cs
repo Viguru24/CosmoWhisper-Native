@@ -289,12 +289,15 @@ namespace CosmoWhisper.Controllers
 
                     using (var archive = System.IO.Compression.ZipFile.Open(tempZip, System.IO.Compression.ZipArchiveMode.Create))
                     {
-                        // Backup all files and folders in AppData/CosmoWhisper
-                        foreach (string file in Directory.GetFiles(sourceFolder, "*.*", SearchOption.AllDirectories))
+                        // STRICTLY backup only the app's core data files
+                        string[] targetFiles = { "settings.json", "vocabulary.json", "stats.json" };
+                        foreach (var fileName in targetFiles)
                         {
-                            // Relative path for zip
-                            string relativePath = Path.GetRelativePath(sourceFolder, file);
-                            archive.CreateEntryFromFile(file, relativePath);
+                            string fullPath = Path.Combine(sourceFolder, fileName);
+                            if (File.Exists(fullPath))
+                            {
+                                archive.CreateEntryFromFile(fullPath, fileName);
+                            }
                         }
                     }
 
@@ -316,7 +319,7 @@ namespace CosmoWhisper.Controllers
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Backup failed: {ex.Message}");
+                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "❌");
                 btn.Content = "❌ Failed";
             }
             finally
@@ -407,12 +410,14 @@ namespace CosmoWhisper.Controllers
                         }
                     }
 
-                    // 3. Reload
+                    // 3. Reload Managers
                     PreferenceManager.Shared.Load();
                     VocabularyManager.Shared.Load();
-                    Initialize(); // Re-initialize UI
+                    
+                    // 4. Force UI refresh for ALL modules
+                    Window.InitializeAll(); 
 
-                    await Window.ShowDialogAsync("Vault Decrypted", "Universal Restore Successful! Environment reloaded and decrypted.", "🔓");
+                    await Window.ShowDialogAsync("Vault Decrypted", "Universal Restore Successful!\n\nEnvironment reloaded and decrypted.", "🔓");
                 }
                 catch (Exception ex)
                 {
@@ -425,7 +430,7 @@ namespace CosmoWhisper.Controllers
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Error", $"Restore process failed: {ex.Message}", "❌");
+                await Window.ShowDialogAsync("Restore Error", $"An unexpected error occurred: {ex.Message}", "❌");
             }
         }
 

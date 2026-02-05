@@ -4,15 +4,15 @@
 winexe
 C#
 .cs
-c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\obj\Debug\net8.0-windows10.0.19041.0\
 CosmoWhisper
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\App.xaml
+C:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows\CosmoWhisper\App.xaml
 5-864642941
-41175220420
-28-1015951361
+51854667124
+401305808156
 216-1293679699
 DashboardWindow.xaml;MainWindow.xaml;Views\MicrophoneView.xaml;Views\ScriptsView.xaml;WidgetWindow.xaml;
 

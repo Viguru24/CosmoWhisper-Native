@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj": {}
+    "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj": {}
   },
   "projects": {
-    "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj": {
-      "version": "1.0.0",
+    "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj": {
+      "version": "2.2.3",
       "restore": {
-        "projectUniqueName": "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
+        "projectUniqueName": "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
         "projectName": "CosmoWhisperNative",
-        "projectPath": "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
+        "projectPath": "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\CosmoWhisper.csproj",
         "packagesPath": "C:\\Users\\louis\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\obj\\",
+        "outputPath": "C:\\Users\\louis\\OneDrive\\Documents\\GitHub\\CosmoWhisper-Native\\CosmoWhisper-Windows\\CosmoWhisper\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\louis\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -43,6 +43,12 @@
         "net8.0-windows10.0.19041": {
           "targetAlias": "net8.0-windows10.0.19041.0",
           "dependencies": {
+            "Microsoft.NET.ILLink.Tasks": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.23, )",
+              "autoReferenced": true
+            },
             "NAudio": {
               "target": "Package",
               "version": "[2.2.1, )"
@@ -61,8 +67,20 @@
           "warn": true,
           "downloadDependencies": [
             {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
               "name": "Microsoft.Windows.SDK.NET.Ref",
               "version": "[10.0.19041.56, 10.0.19041.56]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+              "version": "[8.0.23, 8.0.23]"
             }
           ],
           "frameworkReferences": {
@@ -77,6 +95,11 @@
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

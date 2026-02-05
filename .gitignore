@@ -34,3 +34,22 @@ CosmoWhisper/CosmoWhisper_BACKUP_STABLE/
 .agent/
 .gemini/
 .anthropic/
+
+# .NET
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Publish Folders
+Publish/
+Publish_*/
+*.zip
+*.log
+*.txt
+!README.md
+!SMART_COMMANDS.md

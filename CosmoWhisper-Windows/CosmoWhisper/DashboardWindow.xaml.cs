@@ -161,8 +161,7 @@ namespace CosmoWhisper
             try
             {
                 BlurManager.ApplyMica(this);
-                _prefs.Initialize();
-                _vocabulary.Initialize();
+                InitializeAll();
                 await _dashboard.CheckAuthStatus();
                 AudioRecorder.Shared.StartMonitoring();
 
@@ -243,7 +242,21 @@ namespace CosmoWhisper
             }
         }
 
-        // --- Narration Logic ---
+        public void InitializeAll()
+        {
+            try
+            {
+                _prefs?.Initialize();
+                _vocabulary?.Initialize();
+                _intelligence?.Initialize();
+                _narration?.Initialize();
+                // We don't re-init mic here as it might disrupt recording
+            }
+            catch (Exception ex)
+            {
+                LogCrash($"InitializeAll Error: {ex.Message}");
+            }
+        }
 
         private void SldSpeed_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.SpeedChanged(e.NewValue);
         private void SldVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.VolumeChanged(e.NewValue);
