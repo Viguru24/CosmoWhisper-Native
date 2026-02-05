@@ -11,10 +11,10 @@ namespace CosmoWhisper.Managers
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
 
-        private string _activationKey = "F8";
+        private string _activationKey = "F9";
         public string ActivationKey { get => _activationKey; set { _activationKey = value; OnPropertyChanged(nameof(ActivationKey)); } }
 
-        private uint _virtualKey = 0x77;
+        private uint _virtualKey = 0x78; // F9
         public uint VirtualKey { get => _virtualKey; set { _virtualKey = value; OnPropertyChanged(nameof(VirtualKey)); } }
         public string MouseButton { get; set; } = "None"; // "Left", "Right", "Middle", "XButton1", "XButton2"
         public InsertionMethod InsertionMode { get; set; } = InsertionMethod.FastPaste;
@@ -41,8 +41,10 @@ namespace CosmoWhisper.Managers
         public double MicSensitivity { get; set; } = 0.5;
 
         // Agent Settings
-        public bool EnableManusAgent { get; set; } = true;
-        public bool ManusNarrationEnabled { get; set; } = true;
+        private bool _enableManusAgent = true;
+        public bool EnableManusAgent { get => _enableManusAgent; set { _enableManusAgent = value; OnPropertyChanged(nameof(EnableManusAgent)); } }
+        private bool _manusNarrationEnabled = true;
+        public bool ManusNarrationEnabled { get => _manusNarrationEnabled; set { _manusNarrationEnabled = value; OnPropertyChanged(nameof(ManusNarrationEnabled)); } }
         public string AIPersonality { get; set; } = "Balanced";
 
         // Window States
@@ -73,9 +75,9 @@ namespace CosmoWhisper.Managers
         public int UsageLimitMinutes { get; set; } = 20; // Corrected 20 minute monthly limit
 
         // Cumulative Stats
-        public long TotalWords { get; set; } = 23797; // Using current placeholder as initial
-        public int TotalTranscriptions { get; set; } = 1987; // Using current placeholder as initial
-        public double TotalTimeSavedMinutes { get; set; } = 360; // 6h = 360m
+        public long TotalWords { get; set; } = 0;
+        public int TotalTranscriptions { get; set; } = 0;
+        public double TotalTimeSavedMinutes { get; set; } = 0;
 
         // Startup Settings
         public bool LaunchOnStartup { get; set; } = false;
@@ -83,10 +85,23 @@ namespace CosmoWhisper.Managers
         public bool InteractionSoundsEnabled { get; set; } = true;
     }
 
-    public class PreferenceManager
+    public class PreferenceManager : System.ComponentModel.INotifyPropertyChanged
     {
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+
         public static PreferenceManager Shared { get; } = new PreferenceManager();
-        public UserPreferences Preferences { get; private set; }
+        
+        private UserPreferences _preferences;
+        public UserPreferences Preferences 
+        { 
+            get => _preferences; 
+            private set 
+            {
+                _preferences = value;
+                OnPropertyChanged(nameof(Preferences));
+            }
+        }
         private readonly string _settingsPath;
         private readonly string _appDataFolder;
 

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace CosmoWhisper.Controllers
 {
     public class PreferencesController : BaseViewController
     {
+        public bool IsCapturingHotkey => _isCapturingHotkey;
         private bool _isCapturingHotkey = false;
 
         public PreferencesController(DashboardWindow window) : base(window)
@@ -211,36 +213,6 @@ namespace CosmoWhisper.Controllers
             Window.BtnDirectType.BorderBrush = !isFast ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF")) : Brushes.Transparent;
         }
 
-        public void UpdateUIScale(double value)
-        {
-            var scale = value / 100.0;
-            var p = PreferenceManager.Shared.Preferences;
-            p.UIScale = scale;
-            if (Window.TxtUIScaleValue != null) Window.TxtUIScaleValue.Text = $"{(int)value}%";
-            PreferenceManager.Shared.Save();
-
-            ApplyUIScale(scale);
-        }
-
-        public void ApplyUIScale(double scale)
-        {
-            try
-            {
-                if (scale < 0.5 || scale > 3.0) scale = 1.0;
-
-                if (Window.Content is FrameworkElement content)
-                {
-                    content.LayoutTransform = new ScaleTransform(scale, scale);
-                }
-
-                if (Window.TxtUIScaleValue != null)
-                    Window.TxtUIScaleValue.Text = $"{(int)(scale * 100)}%";
-            }
-            catch (Exception ex)
-            {
-                DashboardWindow.LogCrash($"ApplyUIScale Error: {ex.Message}");
-            }
-        }
 
         public void UpdateWidgetOpacity(double value)
         {
@@ -255,6 +227,7 @@ namespace CosmoWhisper.Controllers
             widget?.ApplyWidgetTransparency();
         }
 
+
         public async void BackupNow(Button? btn = null)
         {
             if (btn == null) btn = Window.BtnBackupNow; // Fallback
@@ -264,8 +237,8 @@ namespace CosmoWhisper.Controllers
 
             try
             {
-                // Ask for password
-                string? password = await Window.GetVaultPasswordAsync();
+                // Ask for password and name
+                var (password, name) = await Window.GetVaultPasswordAsync();
                 if (string.IsNullOrEmpty(password)) return;
 
                 btn.Content = "Securing Vault...";
@@ -275,8 +248,9 @@ namespace CosmoWhisper.Controllers
                 string destDir = p.BackupDirectory;
                 Directory.CreateDirectory(destDir);
 
-                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string finalVaultPath = Path.Combine(destDir, $"CosmoVault_{timestamp}.vault");
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
+                string safeName = string.IsNullOrWhiteSpace(name) ? "CosmoVault" : string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+                string finalVaultPath = Path.Combine(destDir, $"{safeName}_{timestamp}.vault");
 
                 // 1. Create temporary zip in memory or temp file
                 string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -289,13 +263,13 @@ namespace CosmoWhisper.Controllers
 
                     using (var archive = System.IO.Compression.ZipFile.Open(tempZip, System.IO.Compression.ZipArchiveMode.Create))
                     {
-                        // STRICTLY backup only the app's core data files
-                        string[] targetFiles = { "settings.json", "vocabulary.json", "stats.json" };
-                        foreach (var fileName in targetFiles)
+                        // Backup all JSON data files in the root folder
+                        if (Directory.Exists(sourceFolder))
                         {
-                            string fullPath = Path.Combine(sourceFolder, fileName);
-                            if (File.Exists(fullPath))
+                            var dataFiles = Directory.GetFiles(sourceFolder, "*.json");
+                            foreach (var fullPath in dataFiles)
                             {
+                                string fileName = Path.GetFileName(fullPath);
                                 archive.CreateEntryFromFile(fullPath, fileName);
                             }
                         }
@@ -313,9 +287,20 @@ namespace CosmoWhisper.Controllers
 
                 btn.Content = "✅ Vault Secured";
                 long size = new FileInfo(finalVaultPath).Length;
-                double sizeInMb = size / (1024.0 * 1024.0);
+                
+                string sizeDisplay;
+                if (size < 1024 * 1024)
+                {
+                    double sizeInKb = size / 1024.0;
+                    sizeDisplay = $"{sizeInKb:F1} KB";
+                }
+                else
+                {
+                    double sizeInMb = size / (1024.0 * 1024.0);
+                    sizeDisplay = $"{sizeInMb:F2} MB";
+                }
 
-                await Window.ShowDialogAsync("Vault Created", $"Universal Encryption Successful!\n\nFile: CosmoVault_{timestamp}.vault\nSize: {sizeInMb:F2} MB\n\nYour environment is now secured with 256-bit AES.", "🛡️");
+                await Window.ShowDialogAsync("Vault Created", $"Universal Encryption Successful!\n\nFile: CosmoVault_{timestamp}.vault\nSize: {sizeDisplay}\n\nYour environment is now secured with 256-bit AES.", "🛡️");
             }
             catch (Exception ex)
             {
@@ -380,7 +365,7 @@ namespace CosmoWhisper.Controllers
                 string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
 
                 // Ask for password
-                string? password = await Window.GetVaultPasswordAsync();
+                var (password, _) = await Window.GetVaultPasswordAsync();
                 if (string.IsNullOrEmpty(password)) return;
 
                 // 1. Decrypt to temporary zip
@@ -399,13 +384,32 @@ namespace CosmoWhisper.Controllers
                     {
                         foreach (var entry in archive.Entries)
                         {
+                            if (string.IsNullOrEmpty(entry.Name)) continue;
+
                             string fullPath = Path.Combine(appDataFolder, entry.FullName);
                             string? directory = Path.GetDirectoryName(fullPath);
                             if (directory != null) Directory.CreateDirectory(directory);
                             
-                            if (!string.IsNullOrEmpty(entry.Name)) // Don't try to extract directory-only entries
+                            // Retry logic for locked files (like settings.json being written to)
+                            int retries = 3;
+                            bool success = false;
+                            while (retries > 0 && !success)
                             {
-                                entry.ExtractToFile(fullPath, true);
+                                try
+                                {
+                                    entry.ExtractToFile(fullPath, true);
+                                    success = true;
+                                }
+                                catch (IOException ex) when (retries > 1)
+                                {
+                                    retries--;
+                                    await System.Threading.Tasks.Task.Delay(500);
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Error extracting {entry.Name}: {ex.Message}");
+                                    throw; // Re-throw to be caught by the outer catch
+                                }
                             }
                         }
                     }
@@ -414,14 +418,20 @@ namespace CosmoWhisper.Controllers
                     PreferenceManager.Shared.Load();
                     VocabularyManager.Shared.Load();
                     
-                    // 4. Force UI refresh for ALL modules
+                    // 4. Force UI refresh
                     Window.InitializeAll(); 
-
-                    await Window.ShowDialogAsync("Vault Decrypted", "Universal Restore Successful!\n\nEnvironment reloaded and decrypted.", "🔓");
+                    
+                    await Window.ShowDialogAsync("Restore Successful", "Your settings and vocabulary have been restored successfully.", "✨");
+                }
+                catch (CryptographicException)
+                {
+                    await Window.ShowDialogAsync("Restore Failed", "Incorrect vault password. Please try again.", "❌");
                 }
                 catch (Exception ex)
                 {
-                    await Window.ShowDialogAsync("Decryption Error", $"Restore failed (Wrong password?): {ex.Message}", "❌");
+                    var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cosmo_errors.log");
+                    try { File.AppendAllText(logPath, $"{DateTime.Now}: Restore Error: {ex}\n"); } catch { }
+                    await Window.ShowDialogAsync("Restore Failed", $"Restore failed: {ex.Message}", "❌");
                 }
                 finally
                 {
@@ -441,11 +451,31 @@ namespace CosmoWhisper.Controllers
             Window.KeyDown += HandleHotkeyCapture;
         }
 
+        public void StopHotkeyCapture()
+        {
+            _isCapturingHotkey = false;
+            Window.KeyDown -= HandleHotkeyCapture;
+            if (Window.TxtHotkey != null)
+            {
+                var p = PreferenceManager.Shared.Preferences;
+                Window.TxtHotkey.Text = p.ActivationKey;
+            }
+        }
+
         internal void HandleHotkeyCapture(object sender, KeyEventArgs e)
         {
             if (!_isCapturingHotkey) return;
 
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
+            
+            // If Escape is pressed, stop capture without saving
+            if (key == Key.Escape)
+            {
+                StopHotkeyCapture();
+                e.Handled = true;
+                return;
+            }
+
             uint vk = (uint)KeyInterop.VirtualKeyFromKey(key);
 
             var p = PreferenceManager.Shared.Preferences;

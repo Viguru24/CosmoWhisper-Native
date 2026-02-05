@@ -38,7 +38,20 @@ namespace CosmoWhisper.Controllers
             // Load hints
             if (Window.TxtVocabHints != null)
             {
-                Window.TxtVocabHints.Text = PreferenceManager.Shared.Preferences.TranscriptionHints;
+                Window.TxtVocabHints.Text = VocabularyManager.Shared.TranscriptionHints;
+                
+                // If empty, try migrating from Preferences (Migration logic)
+                if (string.IsNullOrEmpty(VocabularyManager.Shared.TranscriptionHints) && 
+                    !string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.TranscriptionHints))
+                {
+                    VocabularyManager.Shared.TranscriptionHints = PreferenceManager.Shared.Preferences.TranscriptionHints;
+                    Window.TxtVocabHints.Text = VocabularyManager.Shared.TranscriptionHints;
+                    VocabularyManager.Shared.Save();
+                }
+
+                // Initial placeholder state
+                UpdateHintsPlaceholder(Window.TxtVocabHints);
+
                 Window.TxtVocabHints.TextChanged -= TxtVocabHints_TextChanged;
                 Window.TxtVocabHints.TextChanged += TxtVocabHints_TextChanged;
             }
@@ -48,8 +61,17 @@ namespace CosmoWhisper.Controllers
         {
             if (sender is TextBox tb)
             {
-                PreferenceManager.Shared.Preferences.TranscriptionHints = tb.Text;
-                PreferenceManager.Shared.Save();
+                VocabularyManager.Shared.TranscriptionHints = tb.Text;
+                VocabularyManager.Shared.Save();
+                UpdateHintsPlaceholder(tb);
+            }
+        }
+
+        private void UpdateHintsPlaceholder(TextBox tb)
+        {
+            if (Window.PlaceholderVocabHints != null)
+            {
+                Window.PlaceholderVocabHints.Visibility = string.IsNullOrEmpty(tb.Text) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -168,16 +190,24 @@ namespace CosmoWhisper.Controllers
         {
             // Clear everything
             VocabularyManager.Shared.Replacements.Clear();
+            VocabularyManager.Shared.TranscriptionHints = "";
             VocabularyManager.Shared.Save();
             VocabularyItems.Clear();
 
             if (Window.TxtVocabHints != null)
                 Window.TxtVocabHints.Text = "";
             
+            // Also clear legacy prefs just in case
             PreferenceManager.Shared.Preferences.TranscriptionHints = "";
             PreferenceManager.Shared.Save();
 
             ToggleSecureMode(false);
+        }
+
+        public void LoadExamples()
+        {
+            VocabularyManager.Shared.LoadDefaults();
+            Initialize(); // Refresh list
         }
 
         public void UpdatePlaceholderVisibility(TextBox txt)

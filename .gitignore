@@ -53,3 +53,8 @@ Publish_*/
 *.txt
 !README.md
 !SMART_COMMANDS.md
+
+# Large Binary Outputs
+CosmoWhisper-Windows/CosmoWhisper/publish_output/
+CosmoWhisper-Windows/CosmoSetup/bin/
+CosmoWhisper-Windows/CosmoWhisper/bin/

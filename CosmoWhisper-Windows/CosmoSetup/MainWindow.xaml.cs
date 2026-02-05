@@ -40,7 +40,13 @@ namespace CosmoSetup
                 await Task.Delay(1000);
                 
                 // Launch the app
-                Process.Start(new ProcessStartInfo(Path.Combine(InstallPath, ExeName)) { UseShellExecute = true });
+                string appPath = Path.Combine(InstallPath, ExeName);
+                if (!File.Exists(appPath))
+                {
+                   throw new FileNotFoundException($"App executable not found at: {appPath}");
+                }
+
+                Process.Start(new ProcessStartInfo(appPath) { UseShellExecute = false, WorkingDirectory = InstallPath });
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
@@ -53,18 +59,50 @@ namespace CosmoSetup
 
         private void PerformInstallation()
         {
-            // 1. Kill old processes
+            // 1. Kill old processes with retry and wait
             UpdateStatus("Stopping old versions...", 10);
-            foreach (var process in Process.GetProcessesByName("CosmoWhisperNative").Concat(Process.GetProcessesByName("CosmoWhisper")))
-            {
-                try { process.Kill(); } catch { }
-            }
+            var processes = Process.GetProcessesByName("CosmoWhisperNative")
+                .Concat(Process.GetProcessesByName("CosmoWhisper"))
+                .Concat(Process.GetProcessesByName("CosmoSetup")); // Be careful not to kill self if named same, but valid since we operate as CosmoSetup
 
-            // 2. Prepare directory
+            foreach (var process in processes)
+            {
+                try 
+                {
+                    if (process.Id == Process.GetCurrentProcess().Id) continue;
+                    
+                    process.Kill();
+                    process.WaitForExit(3000); // Wait up to 3 seconds
+                } 
+                catch { }
+            }
+            
+            // Wait a bit more to ensure file locks are released
+            System.Threading.Thread.Sleep(1000);
+
+            // 2. Prepare directory - Retry logic for locked files
             UpdateStatus("Preparing folders...", 20);
             if (Directory.Exists(InstallPath))
             {
-                try { Directory.Delete(InstallPath, true); } catch { }
+                int retries = 3;
+                while (retries > 0)
+                {
+                    try 
+                    { 
+                        Directory.Delete(InstallPath, true); 
+                        break; // Success
+                    } 
+                    catch (IOException) 
+                    { 
+                        retries--;
+                        System.Threading.Thread.Sleep(500); // Wait and retry
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                         retries--;
+                         System.Threading.Thread.Sleep(500);
+                    }
+                }
             }
             Directory.CreateDirectory(InstallPath);
 

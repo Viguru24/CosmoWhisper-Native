@@ -162,6 +162,20 @@ namespace CosmoWhisper
             {
                 BlurManager.ApplyMica(this);
                 InitializeAll();
+
+            // Initialize UI Scale
+            _needsScaleInit = true;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+               if (_needsScaleInit && SldUIScale != null)
+               {
+                   var savedScale = Managers.PreferenceManager.Shared.Preferences.UIScale * 100.0;
+                   if (savedScale < 80) savedScale = 100;
+                   SldUIScale.Value = savedScale;
+                   ApplyGlobalScale(savedScale);
+                   _needsScaleInit = false;
+               }
+            }));
                 await _dashboard.CheckAuthStatus();
                 AudioRecorder.Shared.StartMonitoring();
 
@@ -172,6 +186,13 @@ namespace CosmoWhisper
             {
                 LogCrash($"InitPrefs Loaded Error: {ex.Message}");
             }
+        }
+
+
+
+        private void LoadExamples_Click(object sender, RoutedEventArgs e)
+        {
+             _vocabulary.LoadExamples();
         }
 
         private void Dashboard_Click(object sender, RoutedEventArgs e)
@@ -263,6 +284,47 @@ namespace CosmoWhisper
         private void SldPitch_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.PitchChanged(e.NewValue);
         private async void BtnPlaySample_Click(object sender, RoutedEventArgs e) => await _narration.PlaySample();
         private void SldWidgetOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _prefs?.UpdateWidgetOpacity(e.NewValue);
+        private bool _needsScaleInit = true;
+
+        private void SldUIScale_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+             ApplyGlobalScale(e.NewValue);
+             
+             // Save preference (throttle if needed, but simple save is fine for now)
+             var prefs = Managers.PreferenceManager.Shared.Preferences;
+             if (prefs != null)
+             {
+                 prefs.UIScale = e.NewValue / 100.0;
+                 Managers.PreferenceManager.Shared.Save();
+             }
+        }
+
+        private void ApplyGlobalScale(double sliderValue)
+        {
+            try
+            {
+                // Target the outermost visual container for best results
+                if (RootContentBorder == null) return;
+
+                double scale = sliderValue / 100.0;
+                if (scale < 0.5) scale = 0.5;
+                if (scale > 3.0) scale = 3.0;
+
+                // Direct Transform Application
+                var transform = new ScaleTransform(scale, scale);
+                RootContentBorder.LayoutTransform = transform;
+
+                // Update Text
+                if (TxtUIScaleValue != null)
+                {
+                    TxtUIScaleValue.Text = $"{(int)sliderValue}%";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Scale Error: {ex.Message}");
+            }
+        }
 
 
         private void Intelligence_Click(object sender, RoutedEventArgs e) => _navigation.ShowIntelligence();
@@ -284,6 +346,7 @@ namespace CosmoWhisper
         private void Preferences_Click(object sender, RoutedEventArgs e) => _navigation.ShowPreferences();
 
         private void Language_Click(object sender, RoutedEventArgs e) => _navigation.ShowLanguage();
+        private void TxtVocabHints_TextChanged(object sender, TextChangedEventArgs e) { } // Handled manually in Controller, but needed for XAML compatibility
 
 
 
@@ -297,26 +360,27 @@ namespace CosmoWhisper
         private void BtnChangeBackup_Click(object sender, RoutedEventArgs e) => _prefs.ChangeBackupPath();
         private void BtnBackupNow_Click(object sender, RoutedEventArgs e) => _prefs.BackupNow(sender as System.Windows.Controls.Button);
 
-        private TaskCompletionSource<string?>? _vaultTask;
-        public async Task<string?> GetVaultPasswordAsync()
+        private TaskCompletionSource<(string? password, string? name)>? _vaultTask;
+        public async Task<(string? password, string? name)> GetVaultPasswordAsync()
         {
-            _vaultTask = new TaskCompletionSource<string?>();
+            _vaultTask = new TaskCompletionSource<(string? password, string? name)>();
+            TxtVaultName.Text = "";
             TxtVaultPassword.Password = "";
             VaultPasswordOverlay.Visibility = Visibility.Visible;
-            TxtVaultPassword.Focus();
+            TxtVaultName.Focus();
             return await _vaultTask.Task;
         }
 
         private void ConfirmVault_Click(object sender, RoutedEventArgs e)
         {
             VaultPasswordOverlay.Visibility = Visibility.Collapsed;
-            _vaultTask?.SetResult(TxtVaultPassword.Password);
+            _vaultTask?.SetResult((TxtVaultPassword.Password, TxtVaultName.Text));
         }
 
         private void CancelVault_Click(object sender, RoutedEventArgs e)
         {
             VaultPasswordOverlay.Visibility = Visibility.Collapsed;
-            _vaultTask?.SetResult(null);
+            _vaultTask?.SetResult((null, null));
         }
 
         private TaskCompletionSource<bool>? _dialogTask;
@@ -499,7 +563,7 @@ namespace CosmoWhisper
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://cosmowhisper.com/features",
+                FileName = "https://cosmowhisper.com/library",
                 UseShellExecute = true
             });
         }
@@ -539,6 +603,94 @@ namespace CosmoWhisper
         private void Personality_Click(object sender, RoutedEventArgs e) => _intelligence?.Personality_Click(((System.Windows.Controls.Button)sender).Tag?.ToString());
         private void UpdateDashboardStats() => _dashboard?.UpdateDashboardStats();
         public async Task CheckAuthStatus() => await _dashboard.CheckAuthStatus();
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // 1. Priority: Hotkey Capture Mode Override
+            if (_prefs.IsCapturingHotkey)
+            {
+                // Escape cancels hotkey capture
+                if (e.Key == Key.Escape)
+                {
+                    _prefs.StopHotkeyCapture();
+                    e.Handled = true;
+                }
+                return; // Let HandleHotkeyCapture deal with other keys via KeyDown
+            }
+
+            // 2. Handle Escape Key (Cancel/Close Actions)
+            if (e.Key == Key.Escape)
+            {
+                if (OverlayConfirmDelete.Visibility == Visibility.Visible)
+                {
+                    CancelDelete_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (OverlaySecureMode.Visibility == Visibility.Visible)
+                {
+                    CancelSecureMode_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (VaultPasswordOverlay.Visibility == Visibility.Visible)
+                {
+                    CancelVault_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (UniversalDialog.Visibility == Visibility.Visible)
+                {
+                    DialogCancel_Click(null, null);
+                    e.Handled = true;
+                }
+            }
+            // 3. Handle Enter Key (Confirm/Submit Actions)
+            else if (e.Key == Key.Enter)
+            {
+                if (OverlayConfirmDelete.Visibility == Visibility.Visible)
+                {
+                    ConfirmDelete_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (OverlaySecureMode.Visibility == Visibility.Visible)
+                {
+                    ConfirmSecureMode_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (VaultPasswordOverlay.Visibility == Visibility.Visible)
+                {
+                    ConfirmVault_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (UniversalDialog.Visibility == Visibility.Visible)
+                {
+                    DialogConfirm_Click(null, null);
+                    e.Handled = true;
+                }
+                else if (LoginView.Visibility == Visibility.Visible)
+                {
+                    if (TxtLoginEmail.IsFocused || TxtLoginPassword.IsFocused)
+                    {
+                        PerformLogin_Click(null, null);
+                        e.Handled = true;
+                    }
+                }
+                else if (AccountView.Visibility == Visibility.Visible)
+                {
+                    if (TxtLicense.IsFocused)
+                    {
+                        ActivateLicense_Click(null, null);
+                        e.Handled = true;
+                    }
+                }
+                else if (VocabularyView.Visibility == Visibility.Visible)
+                {
+                    if (TxtNewKey.IsFocused || TxtNewValue.IsFocused)
+                    {
+                        AddVocabulary_Click(null, null);
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
     }
 
     public static class CosmoMessage
