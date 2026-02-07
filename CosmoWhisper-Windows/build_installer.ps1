@@ -46,12 +46,20 @@ if (-not $success) {
     Write-Error "Failed to create payload.zip after multiple attempts."
 }
 
-Write-Host "4. Building Installer..." -ForegroundColor Cyan
-dotnet build "$setupRoot\CosmoSetup.csproj" -c Release
+Write-Host "4. Building Installer (Single File)..." -ForegroundColor Cyan
+dotnet publish "$setupRoot\CosmoSetup.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "$setupRoot\publish"
 
 Write-Host "5. Done! Installer is at:" -ForegroundColor Green
-$installerPath = Join-Path $setupRoot "bin\Release\net8.0-windows\CosmoSetup.exe"
+$installerPath = Join-Path $setupRoot "publish\CosmoSetup.exe"
 Write-Host $installerPath
 
-Write-Host "6. Launching Installer..." -ForegroundColor Green
-Start-Process $installerPath
+# --- Deploy Archiving ---
+$version = "2.2.11"
+$deployDir = Join-Path $scriptPath "Deploy"
+if (-not (Test-Path $deployDir)) { New-Item $deployDir -ItemType Directory }
+$versionedInstaller = Join-Path $deployDir "CosmoWhisper_Installer_v$version.exe"
+Copy-Item $installerPath $versionedInstaller -Force
+Write-Host "6. Archived to Deploy: $versionedInstaller" -ForegroundColor Cyan
+
+Write-Host "7. Launching Installer..." -ForegroundColor Green
+Start-Process $versionedInstaller

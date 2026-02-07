@@ -180,7 +180,7 @@ namespace CosmoSetup
                 key.SetValue("UninstallString", "powershell.exe -ExecutionPolicy Bypass -File \"" + Path.Combine(InstallPath, "Uninstall.ps1") + "\"");
                 key.SetValue("DisplayIcon", Path.Combine(InstallPath, "app.ico"));
                 key.SetValue("Publisher", "Cosmo");
-                key.SetValue("DisplayVersion", "2.2.0");
+                key.SetValue("DisplayVersion", "2.2.11");
             }
         }
 
