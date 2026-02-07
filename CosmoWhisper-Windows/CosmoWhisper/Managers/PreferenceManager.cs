@@ -83,6 +83,9 @@ namespace CosmoWhisper.Managers
         public bool LaunchOnStartup { get; set; } = false;
 
         public bool InteractionSoundsEnabled { get; set; } = true;
+
+        // Vocabulary Settings
+        public bool EnableSmartEmailCorrections { get; set; } = true; // Auto-format emails, domains, etc.
     }
 
     public class PreferenceManager : System.ComponentModel.INotifyPropertyChanged

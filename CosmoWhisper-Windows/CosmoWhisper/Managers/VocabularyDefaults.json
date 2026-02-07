@@ -1,0 +1,23 @@
+{
+    "TranscriptionHints": "Wayne Enterprises, Gotham City, Batcave, Alfred Pennyworth, Commissioner Gordon",
+    "Replacements": {
+        "my address": "1007 Mountain Drive, Gotham City, NJ 07001",
+        "my email": "bruce.wayne@wayneenterprises.com",
+        "my phone": "555-BATMAN",
+        "my office": "Wayne Tower, 47th Floor, Gotham Financial District",
+        "my assistant": "Alfred Pennyworth",
+        "my company": "Wayne Enterprises",
+        "my headquarters": "The Batcave, beneath Wayne Manor",
+        "my vehicle": "Tumbler (Batmobile Mark VI)",
+        "my partner": "Robin (Dick Grayson)",
+        "my city": "Gotham City",
+        "my nemesis": "The Joker",
+        "my mentor": "Ra's al Ghul",
+        "my tech guy": "Lucius Fox",
+        "my ally": "Commissioner James Gordon",
+        "my butler": "Alfred Pennyworth - The World's Greatest Butler",
+        "emergency contact": "Oracle (Barbara Gordon) - 555-BIRDS",
+        "backup location": "Wayne Manor East Wing Safe Room",
+        "secure line": "Encrypted Bat-Signal Frequency 7.62"
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "TranscriptionHints": "ExampleName, example.com, company.com, specific_term",
+    "Replacements": {
+        "my address": "123 Example Street, City, Country",
+        "my email": "user@example.com",
+        "company name": "Example Corp"
+    }
+}

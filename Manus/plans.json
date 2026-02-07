@@ -1,1 +1,59 @@
-{}
+{
+    "ui_regression_fix": {
+        "title": "Fix UI Regression \u0026 Data Persistence",
+        "id": "ui_regression_fix",
+        "steps": [
+            {
+                "title": "Analyze XAML and Code-Behind",
+                "status": "completed",
+                "notes": "Verified XAML contains the button code."
+            },
+            {
+                "title": "Check Persistence Logic",
+                "status": "completed",
+                "notes": "Persistence logic seems fine, issue is likely deployment/build."
+            },
+            {
+                "title": "Implement Regression Prevention Strategy",
+                "status": "completed",
+                "notes": "Performed deep clean and rebuild of installer v2.2.10"
+            },
+            {
+                "title": "Rebuild and Verify",
+                "status": "completed",
+                "notes": "Verified installer launch"
+            }
+        ]
+    },
+    "batman_vocabulary_and_ui_polish": {
+        "title": "Batman Vocabulary & UI Polish",
+        "id": "batman_vocabulary_and_ui_polish",
+        "steps": [
+            {
+                "title": "Fix Button Icons & Font Sizes",
+                "status": "completed",
+                "notes": "Changed ? to lightbulb icon, increased fonts in hints section."
+            },
+            {
+                "title": "Create Batman Vocabulary Dataset",
+                "status": "completed",
+                "notes": "Created VocabularyExamples_Batman.json with 18 fun entries."
+            },
+            {
+                "title": "Fix Whisper Hallucinations",
+                "status": "completed",
+                "notes": "Added filtering for 'subtracting', 'help me' in TextProcessor."
+            },
+            {
+                "title": "Improve Vocabulary List UI",
+                "status": "in-progress",
+                "notes": "Increasing list font sizes and replacing symbol placeholders with proper icons."
+            },
+            {
+                "title": "Project Documentation",
+                "status": "completed",
+                "notes": "Created VOCABULARY_SYSTEM_DOCUMENTATION.md."
+            }
+        ]
+    }
+}

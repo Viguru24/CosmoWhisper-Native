@@ -284,6 +284,7 @@ namespace CosmoWhisper.Managers
             try { SoundManager.Shared.PlayStartSound(); } catch { }
 
             await EnsureGraphInitialized();
+            if (_audioGraph == null) return;
 
             try
             {

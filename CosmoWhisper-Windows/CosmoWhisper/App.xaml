@@ -41,10 +41,12 @@
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource MainFont}"/>
             <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
         </Style>
         
         <Style TargetType="Window">
             <Setter Property="FontFamily" Value="{StaticResource MainFont}"/>
+            <Setter Property="FontSize" Value="14"/>
         </Style>
 
         <!-- ELASTIC BUTTON (ITEM 3) -->

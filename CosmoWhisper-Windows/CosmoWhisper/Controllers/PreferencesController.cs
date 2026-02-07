@@ -44,9 +44,8 @@ namespace CosmoWhisper.Controllers
             if (Window.ToggleClipboard != null) UpdateToggle(Window.ToggleClipboard, p.RestoreClipboard);
             if (Window.ToggleAutoSubmit != null) UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
             if (Window.ToggleAutoCopy != null) UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
-            if (Window.ToggleMouseButton != null) UpdateToggle(Window.ToggleMouseButton, p.MouseButton != "None");
             if (Window.TxtBackupPath != null) Window.TxtBackupPath.Text = p.BackupDirectory;
-            if (Window.TxtHotkey != null) Window.TxtHotkey.Text = p.ActivationKey;
+            if (Window.TxtHotkey != null) UpdateActivationUI();
 
             // Intelligence View Manus Agent (grouped here for simple preference sync)
             if (Window.ToggleManusAgent != null) UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
@@ -71,7 +70,7 @@ namespace CosmoWhisper.Controllers
                 // but we could also move it here.
             }
 
-            UpdateMouseConfigUI();
+
 
             // Language Settings
             if (Window.ToggleRegionalSpelling != null) UpdateToggle(Window.ToggleRegionalSpelling, p.EnableRegionalSpelling);
@@ -447,34 +446,48 @@ namespace CosmoWhisper.Controllers
             }
         }
 
-        public void StartHotkeyCapture()
+        public void UpdateActivationUI()
+        {
+            if (Window.TxtHotkey == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            
+            if (p.MouseButton != "None") Window.TxtHotkey.Text = p.MouseButton;
+            else Window.TxtHotkey.Text = p.ActivationKey;
+        }
+
+        public void StartActivationCapture()
         {
             _isCapturingHotkey = true;
-            if (Window.TxtHotkey != null) Window.TxtHotkey.Text = "PRESS ANY KEY...";
-            Window.KeyDown += HandleHotkeyCapture;
+            if (Window.TxtHotkey != null) Window.TxtHotkey.Visibility = Visibility.Collapsed;
+            if (Window.TxtListeningPrompt != null) Window.TxtListeningPrompt.Visibility = Visibility.Visible;
+            
+            Window.KeyDown += HandleUniversalCapture;
+            Window.PreviewMouseDown += HandleUniversalCaptureMouse;
         }
 
-        public void StopHotkeyCapture()
+        public void StopActivationCapture()
         {
             _isCapturingHotkey = false;
-            Window.KeyDown -= HandleHotkeyCapture;
-            if (Window.TxtHotkey != null)
+            Window.KeyDown -= HandleUniversalCapture;
+            Window.PreviewMouseDown -= HandleUniversalCaptureMouse;
+            
+            if (Window.TxtHotkey != null) 
             {
-                var p = PreferenceManager.Shared.Preferences;
-                Window.TxtHotkey.Text = p.ActivationKey;
+                Window.TxtHotkey.Visibility = Visibility.Visible;
+                UpdateActivationUI();
             }
+            if (Window.TxtListeningPrompt != null) Window.TxtListeningPrompt.Visibility = Visibility.Collapsed;
         }
 
-        internal void HandleHotkeyCapture(object sender, KeyEventArgs e)
+        private void HandleUniversalCapture(object sender, KeyEventArgs e)
         {
             if (!_isCapturingHotkey) return;
-
+            
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
             
-            // If Escape is pressed, stop capture without saving
             if (key == Key.Escape)
             {
-                StopHotkeyCapture();
+                StopActivationCapture();
                 e.Handled = true;
                 return;
             }
@@ -484,12 +497,30 @@ namespace CosmoWhisper.Controllers
             var p = PreferenceManager.Shared.Preferences;
             p.ActivationKey = key.ToString();
             p.VirtualKey = vk;
+            p.MouseButton = "None";
             PreferenceManager.Shared.Save();
 
-            if (Window.TxtHotkey != null) Window.TxtHotkey.Text = p.ActivationKey;
+            StopActivationCapture();
+            e.Handled = true;
+        }
 
-            _isCapturingHotkey = false;
-            Window.KeyDown -= HandleHotkeyCapture;
+        private void HandleUniversalCaptureMouse(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isCapturingHotkey) return;
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                StopActivationCapture();
+                e.Handled = true;
+                return;
+            }
+
+            var p = PreferenceManager.Shared.Preferences;
+            p.MouseButton = e.ChangedButton.ToString();
+            p.ActivationKey = "NONE";
+            p.VirtualKey = 0;
+            PreferenceManager.Shared.Save();
+
+            StopActivationCapture();
             e.Handled = true;
         }
 
@@ -498,8 +529,9 @@ namespace CosmoWhisper.Controllers
             var p = PreferenceManager.Shared.Preferences;
             p.ActivationKey = "NONE";
             p.VirtualKey = 0;
+            p.MouseButton = "None";
             PreferenceManager.Shared.Save();
-            if (Window.TxtHotkey != null) Window.TxtHotkey.Text = "NONE";
+            UpdateActivationUI();
         }
 
         public void ChangeBackupPath()
@@ -526,72 +558,7 @@ namespace CosmoWhisper.Controllers
             }
         }
 
-        public void ToggleMouseButton()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            if (p.MouseButton == "None") p.MouseButton = "Middle";
-            else p.MouseButton = "None";
-            PreferenceManager.Shared.Save();
-            UpdateToggle(Window.ToggleMouseButton, p.MouseButton != "None");
-        }
 
-        public void UpdateMouseConfigUI()
-        {
-            if (Window.TxtMouseConfig == null) return;
-
-            var p = PreferenceManager.Shared.Preferences;
-            if (string.IsNullOrEmpty(p.MouseButton) || p.MouseButton == "None")
-            {
-                Window.TxtMouseConfig.Text = "Click to configure...";
-                Window.TxtMouseConfig.Foreground = new SolidColorBrush(Colors.White) { Opacity = 0.6 };
-            }
-            else
-            {
-                Window.TxtMouseConfig.Text = $"{p.MouseButton} Button Configured";
-                Window.TxtMouseConfig.Foreground = Brushes.White;
-            }
-        }
-
-        public void StartMouseCapture()
-        {
-            if (Window.TxtMouseConfig == null) return;
-
-            Window.TxtMouseConfig.Text = "Press any mouse button...";
-            Window.TxtMouseConfig.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF453A"));
-
-            Window.PreviewMouseDown += CaptureMouseButton;
-        }
-
-        internal void CaptureMouseButton(object sender, MouseButtonEventArgs e)
-        {
-            Window.PreviewMouseDown -= CaptureMouseButton;
-
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                Window.TxtMouseConfig.Text = PreferenceManager.Shared.Preferences.MouseButton;
-                Window.TxtMouseConfig.Foreground = Brushes.White;
-                return;
-            }
-
-            string buttonName = e.ChangedButton.ToString();
-
-            var p = PreferenceManager.Shared.Preferences;
-            p.MouseButton = buttonName;
-            PreferenceManager.Shared.Save();
-
-            UpdateMouseConfigUI();
-            e.Handled = true;
-        }
-
-        public void ClearMouseConfig()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.MouseButton = "None";
-            PreferenceManager.Shared.Save();
-
-            UpdateMouseConfigUI();
-            UpdateToggle(Window.ToggleMouseButton, false);
-        }
 
         public void ToggleRegionalSpelling()
         {

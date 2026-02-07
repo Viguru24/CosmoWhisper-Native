@@ -24,6 +24,15 @@ namespace CosmoWhisper.Controllers
         public async Task Initialize()
         {
             UpdateInteractionSoundsUI();
+
+            // Sync sensitivity UI
+            var p = PreferenceManager.Shared.Preferences;
+            if (Window.SldSensitivity != null)
+            {
+                Window.SldSensitivity.Value = p.MicSensitivity * 100;
+                if (Window.TxtSensitivityValue != null) Window.TxtSensitivityValue.Text = $"{(int)(p.MicSensitivity * 100)}%";
+            }
+
             await InitializeMicrophones();
         }
 
@@ -76,6 +85,16 @@ namespace CosmoWhisper.Controllers
         {
             if (AudioRecorder.Shared != null)
                 AudioRecorder.Shared.Sensitivity = value / 100.0;
+
+            // Save to preferences
+            var p = PreferenceManager.Shared.Preferences;
+            p.MicSensitivity = value / 100.0;
+            PreferenceManager.Shared.Save();
+
+            if (Window.TxtSensitivityValue != null)
+            {
+                Window.TxtSensitivityValue.Text = $"{(int)value}%";
+            }
         }
 
         public void ToggleInteractionSounds()
