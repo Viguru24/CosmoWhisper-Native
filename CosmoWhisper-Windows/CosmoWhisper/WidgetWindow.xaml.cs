@@ -141,6 +141,11 @@ namespace CosmoWhisper
                 {
                     _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                     _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
+                    
+                    var p = PreferenceManager.Shared.Preferences;
+                    if (p.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {p.MouseButton}";
+                    else TxtHotkeyHint.Text = $"Hold {p.ActivationKey}";
+                    
                     ApplyWidgetTransparency();
                 });
             };
@@ -155,6 +160,14 @@ namespace CosmoWhisper
             this.LocationChanged += (s, e) => SavePosition();
 
             LoadPosition();
+
+#if DEBUG
+            GearIcon.Fill = Brushes.Orange;
+#endif
+            // Init hotkey hint
+            var pref = PreferenceManager.Shared.Preferences;
+            if (pref.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {pref.MouseButton}";
+            else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
         }
 
         private void LoadPosition()
@@ -180,6 +193,7 @@ namespace CosmoWhisper
                 {
                     // Show colorful sound wave, hide visualizer
                     VisualizerPanel.Visibility = Visibility.Collapsed;
+                    TxtHotkeyHint.Visibility = Visibility.Collapsed;
                     SoundWavePanel.Visibility = Visibility.Visible;
                     _soundWaveStoryboard.Begin();
                     SetTheme(Colors.LimeGreen, "");
@@ -190,6 +204,7 @@ namespace CosmoWhisper
                     _soundWaveStoryboard.Stop();
                     SoundWavePanel.Visibility = Visibility.Collapsed;
                     VisualizerPanel.Visibility = Visibility.Visible;
+                    TxtHotkeyHint.Visibility = Visibility.Visible;
                     SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
                     ResetBars();
                 }

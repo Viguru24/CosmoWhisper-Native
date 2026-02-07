@@ -20,7 +20,8 @@ namespace CosmoWhisper.Managers
             "mbc", " дякую", "дякую!", "subtitles", "subtitle by", "watched by", "mbc news", 
             "translated by", "amara.org", "ted.com", "copyright", "all rights reserved", 
             "the end.", "bye bye.", "thanks for watching", "thank you for watching", "thank you.",
-            "subtitle", "this is the end of the video"
+            "subtitle", "this is the end of the video",
+            "subtracting", "help me", "subtracting help me", "subtracting, help me"
         };
 
 
@@ -30,6 +31,15 @@ namespace CosmoWhisper.Managers
             text = Regex.Replace(text, @"\s+$", "");
             text = text.Trim();
             string low = text.ToLower();
+
+            // Remove common Whisper hallucinations from the end of transcriptions
+            foreach (var hallucination in PhraseHallucinations)
+            {
+                if (low.EndsWith(hallucination.ToLower()))
+                {
+                    text = text.Substring(0, text.Length - hallucination.Length).TrimEnd(',', ' ', '.');
+                }
+            }
 
             // Command Processing: Paragraphs and New Lines
             if (Regex.IsMatch(text, @"^(new|next) paragraph\s*", RegexOptions.IgnoreCase))
@@ -50,7 +60,7 @@ namespace CosmoWhisper.Managers
 
             // Cleanup trailing punctuation if text is short segment
             int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-            if (wordCount < 6) text = Regex.Replace(text, @"[\.\?!…]+[\s]*$", "");
+            if (wordCount < 6) text = Regex.Replace(text, @"[\.\\?!…]+[\s]*$", "");
 
             return text;
         }

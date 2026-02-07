@@ -31,14 +31,40 @@ namespace CosmoWhisper.Managers
 
         public void LoadDefaults()
         {
-            TranscriptionHints = "Batman, Arkham, Wayne Enterprises, Gotham City, Alfred Pennyworth";
-            Replacements["my address"] = "1007 Mountain Drive, Gotham City, NJ";
-            Replacements["my email"] = "LouisDeSouza@gmail.com";
-            Replacements["my phone"] = "+1 555-010-1939";
-            Replacements["batman"] = "I am Vengeance. I am the Night. I am Batman.";
-            Replacements["alfred"] = "At your service, Master Wayne.";
-            Replacements["at"] = "@";
-            Replacements["dot"] = ".";
+            try
+            {
+                // Source of truth file that the user can check manually
+                string defaultsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Managers", "VocabularyDefaults.json");
+                
+                // Fallback for dev environment path
+                if (!File.Exists(defaultsPath))
+                {
+                    defaultsPath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName, "Managers", "VocabularyDefaults.json");
+                }
+
+                if (File.Exists(defaultsPath))
+                {
+                    string json = File.ReadAllText(defaultsPath);
+                    var data = JsonSerializer.Deserialize<VocabularyData>(json);
+                    
+                    if (data != null)
+                    {
+                        Replacements.Clear();
+                        foreach (var kvp in data.Replacements)
+                        {
+                            Replacements[kvp.Key] = kvp.Value;
+                        }
+                        TranscriptionHints = data.TranscriptionHints;
+                        Save();
+                        return;
+                    }
+                }
+            }
+            catch { }
+
+            // Emergency hardcoded fallback if file is missing
+            Replacements.Clear();
+            TranscriptionHints = "ExampleName, example.com";
             Save();
         }
 
@@ -117,18 +143,52 @@ namespace CosmoWhisper.Managers
             if (string.IsNullOrWhiteSpace(text)) return text;
 
             string processed = text;
-            foreach (var kvp in Replacements)
+
+            // STEP 1: Apply smart email/domain corrections FIRST (if enabled)
+            // This way, natural speech like "user at gmail dot com" gets formatted properly
+            if (PreferenceManager.Shared.Preferences.EnableSmartEmailCorrections)
             {
-                string pattern = Regex.Escape(kvp.Key);
-                processed = Regex.Replace(processed, $@"\b{pattern}\b", kvp.Value, RegexOptions.IgnoreCase);
+                // 1. Smart "at" to "@" conversion (Only if it looks like an email)
+                // Matches [something] at [something].[domain]
+                processed = Regex.Replace(processed, @"(\S+)\s+at\s+([a-zA-Z0-9-]+\.[a-zA-Z]{2,})", "$1@$2", RegexOptions.IgnoreCase);
+
+                // 2. Clean up email-like spacing (e.g., "user @ gmail . com" -> "user@gmail.com")
+                // Snaps spaces around '@'
+                processed = Regex.Replace(processed, @"\s*@\s*", "@");
+                
+                // 3. Snap dots ONLY when they appear to be part of a domain/email (between two words)
+                processed = Regex.Replace(processed, @"(\w)\s*\.\s*(\w)", "$1.$2");
+
+                // 4. Lowercase email addresses
+                processed = Regex.Replace(processed, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", m => m.Value.ToLower());
             }
 
-            // Fallback for 'at' specifically if not in Replacements or to ensure it always snaps
-            processed = Regex.Replace(processed, @"\s+at\s+", " @ ", RegexOptions.IgnoreCase);
-
-            // Clean up email-like spacing (e.g., "user @ gmail . com" -> "user@gmail.com")
-            // This now handles multiple cases and more aggressive snapping
-            processed = Regex.Replace(processed, @"\s*([@.])\s*", "$1");
+            // STEP 2: Apply user-defined vocabulary replacements with intelligent matching
+            // Sort by key length (longest first) to handle overlapping matches correctly
+            var sortedReplacements = Replacements.OrderByDescending(kvp => kvp.Key.Length);
+            
+            foreach (var kvp in sortedReplacements)
+            {
+                string key = kvp.Key;
+                string value = kvp.Value;
+                
+                // Strategy 1: Exact word boundary match (most precise)
+                // Matches "my password" in "my password is great" -> replaces entire phrase
+                string pattern = $@"\b{Regex.Escape(key)}(?:\s+(?:is|was|are|were|be|been|being))?\b";
+                var match = Regex.Match(processed, pattern, RegexOptions.IgnoreCase);
+                
+                if (match.Success)
+                {
+                    // Replace the matched phrase (including trailing helper words) with the exact value
+                    processed = processed.Substring(0, match.Index) + value + processed.Substring(match.Index + match.Length);
+                }
+                else
+                {
+                    // Strategy 2: Standard word boundary match (fallback)
+                    pattern = $@"\b{Regex.Escape(key)}\b";
+                    processed = Regex.Replace(processed, pattern, value, RegexOptions.IgnoreCase);
+                }
+            }
 
             return processed;
         }

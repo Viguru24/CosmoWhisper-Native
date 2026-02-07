@@ -221,23 +221,53 @@ namespace CosmoWhisper.Managers
             return false;
         }
 
+        private async Task<string> CaptureSelectionRobust()
+        {
+            // 1. Send Ctrl+C to try to update clipboard with current selection
+            InputController.Shared.ExecuteKeystroke("c", ctrl: true);
+            
+            // 2. Wait for clipboard to update (progressive checks)
+            for (int i = 0; i < 4; i++)
+            {
+                await Task.Delay(250); // Checks at 250, 500, 750, 1000ms
+                
+                string current = "";
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try { if (System.Windows.Clipboard.ContainsText()) current = System.Windows.Clipboard.GetText(); } catch { }
+                });
+
+                // If we found text, great! But is it new?
+                // We can't easily know if it's new or old without clearing, 
+                // but clearing breaks the "Manual Copy -> Summarize" workflow.
+                // So we'll accept whatever is there, assuming the user's intent 
+                // matches the clipboard state (either auto-copied or manually copied).
+                if (!string.IsNullOrWhiteSpace(current)) return current;
+            }
+
+            // Fallback: Check one last time without waiting
+            string finalCheck = "";
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                try { if (System.Windows.Clipboard.ContainsText()) finalCheck = System.Windows.Clipboard.GetText(); } catch { }
+            });
+            
+            return finalCheck;
+        }
+
         private async Task ReadSelection()
         {
             try
             {
-                // 1. Copy selection
-                InputController.Shared.ExecuteKeystroke("c", ctrl: true);
-                await Task.Delay(350);
+                string selection = await CaptureSelectionRobust();
 
-                string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                if (string.IsNullOrWhiteSpace(selection))
                 {
-                    if (System.Windows.Clipboard.ContainsText()) selection = System.Windows.Clipboard.GetText();
-                });
+                    await NarrationManager.Shared.SpeakAsync("I didn't see any text selected. Please highlight the text and try again.");
+                    return;
+                }
 
-                if (string.IsNullOrWhiteSpace(selection)) return;
-
-                // 2. Speak
+                // Speak
                 await NarrationManager.Shared.SpeakAsync(selection);
             }
             catch (Exception ex)
@@ -252,37 +282,29 @@ namespace CosmoWhisper.Managers
             {
                 LogToFile("SummarizeAndRead started.");
 
-                // 1. Copy selection
-                InputController.Shared.ExecuteKeystroke("c", ctrl: true);
-                await Task.Delay(350);
-
-                string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (System.Windows.Clipboard.ContainsText()) selection = System.Windows.Clipboard.GetText();
-                });
+                string selection = await CaptureSelectionRobust();
 
                 if (string.IsNullOrWhiteSpace(selection))
                 {
                     LogToFile("SummarizeAndRead: No selection found.");
+                    await NarrationManager.Shared.SpeakAsync("I couldn't find any selected text. Please select the text you want me to summarize.");
                     return;
                 }
 
-                // 2. AI Summarize
-                string prompt = "Summarize the following text into 2-3 concise sentences.";
+                await NarrationManager.Shared.SpeakAsync("Summarizing selection...");
+
+                // AI Summarize
+                string prompt = "Provide an extremely brief summary. Maximum 2 short sentences. Focus only on the core meaning.";
                 string summary = await AIService.Shared.ProcessCommand(prompt, selection);
 
                 if (summary.StartsWith("Error:"))
                 {
                     LogToFile($"SummarizeAndRead AI Error: {summary}");
+                    await NarrationManager.Shared.SpeakAsync("I encountered an error trying to summarize the text.");
                     return;
                 }
 
                 LogToFile($"SummarizeAndRead: Summary generated ({summary.Length} chars). Reading aloud.");
-
-                // 3. Optional: Paste summary back? 
-                // User didn't explicitly ask to replace text, just to "read it to you".
-                // Let's just read it.
                 await NarrationManager.Shared.SpeakAsync(summary);
             }
             catch (Exception ex)
@@ -352,35 +374,20 @@ namespace CosmoWhisper.Managers
             {
                 LogToFile($"ProcessAIOnSelection started with prompt: {prompt}");
 
-                // 1. Copy selection
-                InputController.Shared.ExecuteKeystroke("c", ctrl: true);
-                await Task.Delay(350); // Increased delay for clipboard sync
-
-                string selection = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (System.Windows.Clipboard.ContainsText())
-                    {
-                        selection = System.Windows.Clipboard.GetText();
-                        LogToFile($"Selection captured: {selection.Length} chars");
-                    }
-                    else
-                    {
-                        LogToFile("Clipboard empty after copy attempt.");
-                    }
-                });
+                string selection = await CaptureSelectionRobust();
 
                 if (string.IsNullOrWhiteSpace(selection))
                 {
                     LogToFile("No selection found. Aborting.");
+                    await NarrationManager.Shared.SpeakAsync("Please select some text first.");
                     return;
                 }
 
-                // 2. Process
+                // Process
                 string result = await AIService.Shared.ProcessCommand(prompt, selection);
                 LogToFile($"AI Result received: {result.Length} chars");
 
-                // 3. Paste back
+                // Paste back
                 if (!result.StartsWith("Error:"))
                 {
                     await InputController.Shared.PasteText(result, false, false);

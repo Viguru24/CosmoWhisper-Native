@@ -1,4 +1,4 @@
-﻿<Window x:Class="CosmoWhisper.DashboardWindow"
+<Window x:Class="CosmoWhisper.DashboardWindow"
 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 
@@ -28,7 +28,7 @@
 
             <Setter Property="Foreground" Value="White"/>
 
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="16"/>
 
             <Setter Property="Height" Value="50"/>
 
@@ -536,7 +536,7 @@
 
                                     <StackPanel Orientation="Horizontal">
 
-                                        <TextBlock Text="Cosmo" FontSize="18" FontWeight="ExtraBold" Foreground="#00F7FF">
+                                        <TextBlock Text="Cosmo" FontSize="22" FontWeight="ExtraBold" Foreground="#00F7FF">
 
                                             <TextBlock.Effect>
 
@@ -546,7 +546,7 @@
 
                                         </TextBlock>
 
-                                        <TextBlock Text="Whisper" FontSize="18" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
+                                        <TextBlock Text="Whisper" FontSize="22" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
 
                                             <TextBlock.Effect>
 
@@ -674,123 +674,7 @@
 
 
 
-                                    <!-- Themes (Appearance) - Moved here per request -->
-
-                                    <StackPanel Orientation="Horizontal" Margin="42,5,10,15">
-
-                                        <Button Width="26" Height="26" Margin="3" ToolTip="Ocean Blue" Click="ThemeOcean_Click">
-
-                                            <Button.Template>
-
-                                                <ControlTemplate TargetType="Button">
-
-                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                        <Ellipse Fill="#3b82f6" Margin="4"/>
-
-                                                    </Border>
-
-                                                    <ControlTemplate.Triggers>
-
-                                                        <Trigger Property="IsMouseOver" Value="True">
-
-                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                        </Trigger>
-
-                                                    </ControlTemplate.Triggers>
-
-                                                </ControlTemplate>
-
-                                            </Button.Template>
-
-                                        </Button>
-
-                                        <Button Width="26" Height="26" Margin="3" ToolTip="Sunset Glow" Click="ThemeSunset_Click">
-
-                                            <Button.Template>
-
-                                                <ControlTemplate TargetType="Button">
-
-                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                        <Ellipse Fill="#ec4899" Margin="4"/>
-
-                                                    </Border>
-
-                                                    <ControlTemplate.Triggers>
-
-                                                        <Trigger Property="IsMouseOver" Value="True">
-
-                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                        </Trigger>
-
-                                                    </ControlTemplate.Triggers>
-
-                                                </ControlTemplate>
-
-                                            </Button.Template>
-
-                                        </Button>
-
-                                        <Button Width="26" Height="26" Margin="3" ToolTip="Forest Night" Click="ThemeForest_Click">
-
-                                            <Button.Template>
-
-                                                <ControlTemplate TargetType="Button">
-
-                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                        <Ellipse Fill="#10b981" Margin="4"/>
-
-                                                    </Border>
-
-                                                    <ControlTemplate.Triggers>
-
-                                                        <Trigger Property="IsMouseOver" Value="True">
-
-                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                        </Trigger>
-
-                                                    </ControlTemplate.Triggers>
-
-                                                </ControlTemplate>
-
-                                            </Button.Template>
-
-                                        </Button>
-
-                                        <Button Width="26" Height="26" Margin="3" ToolTip="Purple Dream" Click="ThemePurple_Click">
-
-                                            <Button.Template>
-
-                                                <ControlTemplate TargetType="Button">
-
-                                                    <Border CornerRadius="13" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                        <Ellipse Fill="#9333ea" Margin="4"/>
-
-                                                    </Border>
-
-                                                    <ControlTemplate.Triggers>
-
-                                                        <Trigger Property="IsMouseOver" Value="True">
-
-                                                            <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                        </Trigger>
-
-                                                    </ControlTemplate.Triggers>
-
-                                                </ControlTemplate>
-
-                                            </Button.Template>
-
-                                        </Button>
-
-                                    </StackPanel>
+                                    
 
 
 
@@ -841,6 +725,122 @@
                             <StackPanel Grid.Row="2" Margin="10,0,20,30">
 
                                 <Separator Background="#10FFFFFF" Margin="20,0,20,15" Height="1"/>
+
+                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+
+                                     <Button Width="24" Height="24" Margin="4" ToolTip="Ocean Blue" Click="ThemeOcean_Click">
+
+                                         <Button.Template>
+
+                                             <ControlTemplate TargetType="Button">
+
+                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
+
+                                                     <Ellipse Fill="#3b82f6" Margin="4"/>
+
+                                                 </Border>
+
+                                                 <ControlTemplate.Triggers>
+
+                                                     <Trigger Property="IsMouseOver" Value="True">
+
+                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+
+                                                     </Trigger>
+
+                                                 </ControlTemplate.Triggers>
+
+                                             </ControlTemplate>
+
+                                         </Button.Template>
+
+                                     </Button>
+
+                                     <Button Width="24" Height="24" Margin="4" ToolTip="Sunset Glow" Click="ThemeSunset_Click">
+
+                                         <Button.Template>
+
+                                             <ControlTemplate TargetType="Button">
+
+                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
+
+                                                     <Ellipse Fill="#ec4899" Margin="4"/>
+
+                                                 </Border>
+
+                                                 <ControlTemplate.Triggers>
+
+                                                     <Trigger Property="IsMouseOver" Value="True">
+
+                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+
+                                                     </Trigger>
+
+                                                 </ControlTemplate.Triggers>
+
+                                             </ControlTemplate>
+
+                                         </Button.Template>
+
+                                     </Button>
+
+                                     <Button Width="24" Height="24" Margin="4" ToolTip="Forest Night" Click="ThemeForest_Click">
+
+                                         <Button.Template>
+
+                                             <ControlTemplate TargetType="Button">
+
+                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
+
+                                                     <Ellipse Fill="#10b981" Margin="4"/>
+
+                                                 </Border>
+
+                                                 <ControlTemplate.Triggers>
+
+                                                     <Trigger Property="IsMouseOver" Value="True">
+
+                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+
+                                                     </Trigger>
+
+                                                 </ControlTemplate.Triggers>
+
+                                             </ControlTemplate>
+
+                                         </Button.Template>
+
+                                     </Button>
+
+                                     <Button Width="24" Height="24" Margin="4" ToolTip="Purple Dream" Click="ThemePurple_Click">
+
+                                         <Button.Template>
+
+                                             <ControlTemplate TargetType="Button">
+
+                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
+
+                                                     <Ellipse Fill="#9333ea" Margin="4"/>
+
+                                                 </Border>
+
+                                                 <ControlTemplate.Triggers>
+
+                                                     <Trigger Property="IsMouseOver" Value="True">
+
+                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
+
+                                                     </Trigger>
+
+                                                 </ControlTemplate.Triggers>
+
+                                             </ControlTemplate>
+
+                                         </Button.Template>
+
+                                     </Button>
+
+                                 </StackPanel>
 
                                 <Button Style="{StaticResource SidebarButton}" Click="Exit_Click">
 
@@ -1000,9 +1000,9 @@
 
                             <StackPanel x:Name="MicrophoneHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Audio Input" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Audio Input" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Manage your recording hardware." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Manage your recording hardware." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1012,9 +1012,9 @@
 
                             <StackPanel x:Name="VocabularyHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Personal Dictionary" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Personal Dictionary" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1024,9 +1024,9 @@
 
                             <StackPanel x:Name="NarrationHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Voice &amp; Narration" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Voice &amp; Narration" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Fine-tune how AI reads text back to you." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Fine-tune how AI reads text back to you." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1034,9 +1034,9 @@
 
                             <StackPanel x:Name="IntelligenceHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Intelligence" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Intelligence" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Configure your AI Provider and Personality." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Configure your AI Provider and Personality." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1046,9 +1046,9 @@
 
                             <StackPanel x:Name="PreferencesHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Preferences" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Preferences" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1058,9 +1058,9 @@
 
                             <StackPanel x:Name="LanguageHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Language" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Language" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Choose your preferred interface language." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Choose your preferred interface language." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1070,9 +1070,9 @@
 
                             <StackPanel x:Name="AccountHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Account" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Account" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Manage your subscription and profile." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Manage your subscription and profile." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1082,9 +1082,9 @@
 
                             <StackPanel x:Name="LoginHeader" Visibility="Collapsed">
 
-                                <TextBlock Text="Welcome Back" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <TextBlock Text="Welcome Back" Foreground="White" FontSize="36" FontWeight="Bold"/>
 
-                                <TextBlock Text="Sign in to access your pro features." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="Sign in to access your pro features." Foreground="White" Opacity="0.6" FontSize="16"/>
 
                             </StackPanel>
 
@@ -1306,7 +1306,7 @@
 
                                 <Grid Margin="0,0,0,20">
 
-                                    <TextBlock Text="&#x1F4DD; Spellbook" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                    <TextBlock Text="&#x1F4DD; Spellbook" Foreground="White" FontSize="32" FontWeight="Bold"/>
 
                                     <Button HorizontalAlignment="Right" Content="&#x1F310; Open Cloud Library" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold" Click="OpenLibraryWeb_Click">
 
@@ -1332,7 +1332,7 @@
 
                                 <!-- Text Sorcery Section -->
 
-                                <TextBlock Text="&#x2728; Text Sorcery" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                <TextBlock Text="&#x2728; Text Sorcery" Foreground="White" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
                                 <WrapPanel Margin="0,0,0,30">
 
@@ -1354,11 +1354,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="World Eater" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="World Eater" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Select All'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Select All'" Foreground="White" Opacity="0.8" FontSize="13" Margin="0,4,0,0" FontStyle="Italic"/>
 
-                                            <TextBlock Text="Consume every character in the field. Leave nothing behind." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Consume every character in the field. Leave nothing behind." Foreground="White" Opacity="0.9" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1384,11 +1384,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="Apocalypse" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Apocalypse" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Delete All'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Delete All'" Foreground="White" Opacity="0.8" FontSize="13" Margin="0,4,0,0" FontStyle="Italic"/>
 
-                                            <TextBlock Text="Nuke the field. Start fresh. No regrets." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Nuke the field. Start fresh. No regrets." Foreground="White" Opacity="0.9" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1414,11 +1414,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="The Cloner" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="The Cloner" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Copy That'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Copy That'" Foreground="White" Opacity="0.8" FontSize="13" Margin="0,4,0,0" FontStyle="Italic"/>
 
-                                            <TextBlock Text="Steal it. Stash it. It's yours now." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Steal it. Stash it. It's yours now." Foreground="White" Opacity="0.9" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1444,11 +1444,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="Manifest" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="Manifest" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Paste That'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Paste That'" Foreground="White" Opacity="0.8" FontSize="13" Margin="0,4,0,0" FontStyle="Italic"/>
 
-                                            <TextBlock Text="Dump the payload. Bring it into reality." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Dump the payload. Bring it into reality." Foreground="White" Opacity="0.9" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1512,37 +1512,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="The Writer" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="The Writer" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Open Word'" Foreground="#60A5FA" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Trigger: 'Open Word'" Foreground="#60A5FA" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
 
-                                            <TextBlock Text="Summon the blank page. Let the words flow." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
-
-                                        </StackPanel>
-
-                                    </Border>
-
-                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
-
-                                        <Border.Background>
-
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-
-                                                <GradientStop Color="#FF374151" Offset="0"/>
-
-                                                <GradientStop Color="#FF1F2937" Offset="1"/>
-
-                                            </LinearGradientBrush>
-
-                                        </Border.Background>
-
-                                        <StackPanel Margin="15" VerticalAlignment="Center">
-
-                                            <TextBlock Text="The Grid" Foreground="White" FontSize="18" FontWeight="Bold"/>
-
-                                            <TextBlock Text="Trigger: 'Open Excel'" Foreground="#4ADE80" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
-
-                                            <TextBlock Text="Crunch the numbers. calculate the infinite." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Summon the blank page. Let the words flow." Foreground="White" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1564,11 +1538,11 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="The Net" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="The Grid" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Open Chrome'" Foreground="#F87171" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Trigger: 'Open Excel'" Foreground="#4ADE80" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
 
-                                            <TextBlock Text="Access the hive mind. Surf the chaos." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Crunch the numbers. calculate the infinite." Foreground="White" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -1590,11 +1564,37 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="The Vibes" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="The Net" Foreground="White" FontSize="20" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Open Spotify'" Foreground="#4ADE80" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Trigger: 'Open Chrome'" Foreground="#F87171" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
 
-                                            <TextBlock Text="Drop the needle. Set the mood." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Access the hive mind. Surf the chaos." Foreground="White" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                                        </StackPanel>
+
+                                    </Border>
+
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                        <Border.Background>
+
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+
+                                                <GradientStop Color="#FF374151" Offset="0"/>
+
+                                                <GradientStop Color="#FF1F2937" Offset="1"/>
+
+                                            </LinearGradientBrush>
+
+                                        </Border.Background>
+
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+
+                                            <TextBlock Text="The Vibes" Foreground="White" FontSize="20" FontWeight="Bold"/>
+
+                                            <TextBlock Text="Trigger: 'Open Spotify'" Foreground="#4ADE80" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
+
+                                            <TextBlock Text="Drop the needle. Set the mood." Foreground="White" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -2102,9 +2102,9 @@
 
                                     <Grid Margin="0,0,0,10">
 
-                                        <TextBlock Text="Microphone Sensitivity" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                        <TextBlock Text="Whisper Sensitivity (Noise Gate)" Foreground="White" FontWeight="Bold" FontSize="14"/>
 
-                                        <TextBlock Text="2%" HorizontalAlignment="Right" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" FontSize="14"/>
+                                        <TextBlock x:Name="TxtSensitivityValue" Text="2%" HorizontalAlignment="Right" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" FontSize="14"/>
 
                                     </Grid>
 
@@ -2112,7 +2112,7 @@
 
                                     
 
-                                    <Slider x:Name="SldSensitivity" Maximum="100" Value="2" Margin="0,0,0,5" ValueChanged="SldSensitivity_ValueChanged"/> 
+                                    <Slider x:Name="SldSensitivity" Maximum="100"  Margin="0,0,0,5" ValueChanged="SldSensitivity_ValueChanged"/> 
 
                                     <!-- Note: Default slider style might not match perfectly without custom template, using standard for now but styled logic would go here -->
 
@@ -2270,9 +2270,9 @@
 
                                             <StackPanel Grid.Column="1">
 
-                                                <TextBlock Text="PRO TIP: High-Quality Free &amp; Paid Voices" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
+                                                <TextBlock Text="PRO TIP: High-Quality Free &amp; Paid Voices" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
 
-                                                <TextBlock Text="Use Premier (&#x2728;) for the best free local voices or use an API key for Neural (&#x1F310;) paid cloud voices." Foreground="White" Opacity="0.7" FontSize="12" TextWrapping="Wrap"/>
+                                                <TextBlock Text="Use Premier (&#x2728;) for the best free local voices or use an API key for Neural (&#x1F310;) paid cloud voices." Foreground="White" Opacity="0.7" FontSize="14" TextWrapping="Wrap"/>
 
                                             </StackPanel>
 
@@ -2284,11 +2284,11 @@
 
                                     <!-- Voice Selection -->
 
-                                    <TextBlock Text="&#x1F50A; Voice Selection" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                                    <TextBlock Text="&#x1F50A; Voice Selection" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
                                     <Border Background="#10FFFFFF" CornerRadius="10" Padding="5" Margin="0,0,0,25">
 
-                                        <ComboBox x:Name="ComboVoice" Foreground="White" BorderThickness="0" FontSize="14" Padding="10" SelectionChanged="ComboVoice_SelectionChanged">
+                                        <ComboBox x:Name="ComboVoice" Foreground="White" BorderThickness="0" FontSize="16" Padding="10" SelectionChanged="ComboVoice_SelectionChanged">
 
                                             <!-- Dynamic Voices Loaded in Code Behind -->
 
@@ -2302,7 +2302,7 @@
 
                                     <StackPanel Margin="0,0,0,25">
 
-                                        <TextBlock Text="? OpenAI API Key (Required for Paid Neural Voices)" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                                        <TextBlock Text="&#x1F511; OpenAI API Key (Required for Paid Neural Voices)" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
                                         <Grid>
 
@@ -2316,7 +2316,7 @@
 
                                             <Border Background="#15FFFFFF" CornerRadius="8" Padding="15,10">
 
-                                                <PasswordBox x:Name="TxtApiKey" PasswordChar="*" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14"/>
+                                                <PasswordBox x:Name="TxtApiKey" PasswordChar="*" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="16"/>
 
                                             </Border>
 
@@ -2466,7 +2466,7 @@
 
                                                     </Grid.ColumnDefinitions>
 
-                                                    <Button x:Name="BtnPlaySample" Content="&#x25B7; Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,10" FontWeight="SemiBold" Click="BtnPlaySample_Click">
+                                                    <Button x:Name="BtnPlaySample" Content="&#x25B6; Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,12" FontSize="16" FontWeight="Bold" Click="BtnPlaySample_Click">
 
                                                         <Button.Template>
 
@@ -2596,7 +2596,7 @@
 
                                             <StackPanel x:Name="PanelOpenAIKey" Visibility="Collapsed">
 
-                                                <TextBlock Text="?? OpenAI API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <TextBlock Text="&#x1F511; OpenAI API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
 
                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
 
@@ -2800,9 +2800,9 @@
 
                                     <Grid Margin="0,0,0,5">
 
-                                        <TextBlock Text="Transcription Hints" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Transcription Hints" Foreground="White" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
 
-                                        <Button Content="? Load Examples" Click="LoadExamples_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="11">
+                                        <Button Content="&#x1F4A1; Load Examples" Click="LoadExamples_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="11">
 
                                             <Button.Resources>
 
@@ -2818,17 +2818,17 @@
 
                                     </Grid>
 
-                                    <TextBlock Text="List names, acronyms, or brands often mistranscribed. Separate with commas." Foreground="White" Opacity="0.5" FontSize="12" Margin="0,0,0,15"/>
+                                    <TextBlock Text="List names, acronyms, or brands often mistranscribed. Separate with commas." Foreground="White" Opacity="0.5" FontSize="15" Margin="0,0,0,20"/>
 
                                     
 
-                                    <Border Background="#10FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,30">
+                                    <Border Background="#10FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,40">
 
                                          <Grid>
 
-                                             <TextBox x:Name="TxtVocabHints" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto" Panel.ZIndex="2" TextChanged="TxtVocabHints_TextChanged"/>
+                                             <TextBox x:Name="TxtVocabHints" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto" Panel.ZIndex="2" TextChanged="TxtVocabHints_TextChanged" FontSize="16"/>
 
-                                             <TextBlock x:Name="PlaceholderVocabHints" Text="Example: Batman, Arkham, Wayne Enterprises..." Foreground="White" Opacity="0.4" IsHitTestVisible="False" Panel.ZIndex="1" Margin="2,0,0,0"/>
+                                             <TextBlock x:Name="PlaceholderVocabHints" Text="Example: Name, company.com, technical_term..." Foreground="White" Opacity="0.4" IsHitTestVisible="False" Panel.ZIndex="1" Margin="2,0,0,0" FontSize="16"/>
 
                                          </Grid>
 
@@ -2838,29 +2838,33 @@
 
                                     <!-- Corrections Header -->
 
-                                    <Grid Margin="0,0,0,15">
+                                    <Grid Margin="0,0,0,25">
 
                                         <StackPanel>
 
-                                            <TextBlock Text="Instant Corrections" Foreground="White" FontWeight="Bold"/>
+                                            <TextBlock Text="Instant Corrections" Foreground="White" FontWeight="Bold" FontSize="18"/>
 
-                                            <TextBlock Text="Force specific words to always be changed after transcription." Foreground="White" Opacity="0.5" FontSize="12"/>
+                                            <TextBlock Text="Force specific words to always be changed after transcription." Foreground="White" Opacity="0.5" FontSize="15"/>
 
                                         </StackPanel>
 
-                                        <Button Content="&#x1F6E1; Secure Mode" Click="SecureMode_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                            <Button Content="&#x21BA; Defaults" Click="LoadExamples_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12" Margin="0,0,10,0" ToolTip="Reset to default examples">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="15"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
 
-                                            <Button.Resources>
-
-                                                <Style TargetType="Border">
-
-                                                    <Setter Property="CornerRadius" Value="15"/>
-
-                                                </Style>
-
-                                            </Button.Resources>
-
-                                        </Button>
+                                            <Button Content="&#x1F6E1; Secure Mode" Click="SecureMode_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="15"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
+                                        </StackPanel>
 
                                     </Grid>
 
@@ -2868,7 +2872,7 @@
 
                                     <!-- Input Row -->
 
-                                    <Border Background="#10FFFFFF" CornerRadius="25" Padding="5" Margin="0,0,0,20">
+                                    <Border Background="#10FFFFFF" CornerRadius="25" Padding="5" Margin="0,0,0,30">
 
                                         <Grid>
 
@@ -2890,9 +2894,9 @@
 
                                             <Grid Grid.Column="0" Margin="15,0,0,0">
 
-                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
+                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
 
-                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" Panel.ZIndex="1" IsHitTestVisible="False"/>
+                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False"/>
 
                                             </Grid>
 
@@ -2908,9 +2912,9 @@
 
                                             <Grid Grid.Column="2">
 
-                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
+                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
 
-                                                <TextBlock x:Name="PlaceholderValue" Text="Type this..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" Panel.ZIndex="1" IsHitTestVisible="False"/>
+                                                <TextBlock x:Name="PlaceholderValue" Text="Type this..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False"/>
 
                                             </Grid>
 
@@ -2967,12 +2971,10 @@
                                                         <!-- READ MODE -->
 
                                                         <TextBlock Grid.Column="0" Text="{Binding Key}" Visibility="{Binding ReadModeVisibility}"
-
-                                                                   Foreground="White" Opacity="0.7" VerticalAlignment="Center"/>
+                                                                    Foreground="White" Opacity="0.7" FontSize="17" VerticalAlignment="Center"/>
 
                                                         <TextBlock Grid.Column="2" Text="{Binding Value}" Visibility="{Binding ReadModeVisibility}"
-
-                                                                   Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                    Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center"/>
 
 
 
@@ -2980,7 +2982,7 @@
 
                                                             <Button Click="EditVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Edit">
 
-                                                                <TextBlock Text="?" Foreground="White" Opacity="0.6" FontSize="14"/>
+                                                                <TextBlock Text="&#x270E;" Foreground="White" Opacity="0.6" FontSize="14"/>
 
                                                             </Button>
 
@@ -3020,13 +3022,13 @@
 
                                                             <Button Click="SaveVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Save">
 
-                                                                <TextBlock Text="?" Foreground="#4ADE80" FontSize="16" FontWeight="Bold"/>
+                                                                <TextBlock Text="&#x2713;" Foreground="#4ADE80" FontSize="16" FontWeight="Bold"/>
 
                                                             </Button>
 
                                                             <Button Click="CancelVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Cancel">
 
-                                                                <TextBlock Text="?" Foreground="#F87171" FontSize="16" FontWeight="Bold"/>
+                                                                <TextBlock Text="&#x2715;" Foreground="#F87171" FontSize="16" FontWeight="Bold"/>
 
                                                             </Button>
 
@@ -3059,86 +3061,47 @@
                                 <StackPanel>
 
                                     <!-- Activation Methods -->
+                                     <TextBlock Text="Activation Methods" Foreground="White" FontWeight="Bold" Margin="0,40,0,15"/>
 
-                                    <TextBlock Text="Activation Methods" Foreground="White" FontWeight="Bold" Margin="0,0,0,15"/>
-
-                                    <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
-
+                                     <Border Background="#15FFFFFF" CornerRadius="15" Padding="25" Margin="0,0,0,30" BorderBrush="#20FFFFFF" BorderThickness="1">
                                          <StackPanel>
-
                                              <Grid>
-
-                                                 <StackPanel>
-
-                                                     <TextBlock Text="Activation Shortcut" Foreground="White" FontWeight="SemiBold"/>
-
-                                                     <TextBlock Text="Hold or press this key to record your voice." Foreground="White" Opacity="0.5" FontSize="12"/>
-
+                                                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                     <TextBlock Text="Activation Trigger" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+                                                     <TextBlock Text="Set your global shortcut. Hold any key or mouse button to configure." Foreground="White" Opacity="0.5" FontSize="13" Margin="0,5,0,0"/>
                                                  </StackPanel>
 
-                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-
-                                                     <Border Background="#15FFFFFF" CornerRadius="5" Padding="20,8">
-
-                                                         <TextBlock x:Name="TxtHotkey" Text="F9" Foreground="White" FontWeight="Bold"/>
-
+                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                     <Border x:Name="BorderActivationTrigger" 
+                                                             Background="#20FFFFFF" 
+                                                             CornerRadius="12" 
+                                                             Padding="30,15" 
+                                                             BorderBrush="#30FFFFFF" 
+                                                             BorderThickness="1"
+                                                             Cursor="Hand"
+                                                             MouseLeftButtonDown="BorderActivationTrigger_Click">
+                                                         <Grid>
+                                                             <TextBlock x:Name="TxtHotkey" Text="F9" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                             <TextBlock x:Name="TxtListeningPrompt" Text="LISTENING..." Foreground="#007AFF" FontSize="16" FontWeight="Bold" Visibility="Collapsed"/>
+                                                         </Grid>
                                                      </Border>
 
-                                                     <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-
-                                                         <TextBlock Text="EDIT CODE" MouseLeftButtonDown="BtnEditHotkey_Click" Foreground="#FF453A" FontSize="10" FontWeight="Bold" Cursor="Hand"/>
-
-                                                         <TextBlock Text="CLEAR" MouseLeftButtonDown="BtnClearHotkey_Click" Foreground="#FF453A" FontSize="10" FontWeight="Bold" Cursor="Hand" Margin="0,2,0,0"/>
-
-                                                     </StackPanel>
-
+                                                     <TextBlock Text="RESET" 
+                                                                MouseLeftButtonDown="BtnClearHotkey_Click" 
+                                                                Foreground="#FF453A" 
+                                                                FontSize="11" 
+                                                                FontWeight="Bold" 
+                                                                Cursor="Hand" 
+                                                                VerticalAlignment="Center" 
+                                                                Margin="20,0,0,0"
+                                                                Opacity="0.7"/>
                                                  </StackPanel>
-
                                              </Grid>
 
-                                             <Separator Opacity="0.1" Margin="0,15"/>
-
-                                             <!-- Mouse Button -->
-
-                                             <Grid>
-
-                                                 <StackPanel>
-
-                                                     <TextBlock Text="Mouse Button Activation" Foreground="White" FontWeight="SemiBold"/>
-
-                                                     <TextBlock Text="Use any mouse button (Middle, Side, etc) to record." Foreground="White" Opacity="0.5" FontSize="12"/>
-
-                                                 </StackPanel>
-
-                                                 <Border x:Name="ToggleMouseButton" MouseLeftButtonDown="ToggleMouseButton_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
-
-                                                    <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
-
-                                                 </Border>
-
-                                             </Grid>
-
-                                             <!-- Mouse Configuration -->
-
-                                             <TextBlock Text="Mouse Button Configuration" Foreground="White" FontWeight="SemiBold" Margin="0,15,0,5"/>
-
-                                             <Border x:Name="MouseConfigBorder" Background="#10000000" CornerRadius="5" Padding="10" BorderBrush="#20FFFFFF" BorderThickness="1" Cursor="Hand" MouseLeftButtonDown="MouseConfigBorder_Click">
-
-                                                  <Grid>
-
-                                                      <TextBlock x:Name="TxtMouseConfig" Text="Click to configure..." Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
-
-                                                      <TextBlock Text="CLEAR" MouseLeftButtonDown="BtnClearMouse_Click" Foreground="#FF453A" FontSize="10" FontWeight="Bold" Cursor="Hand" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-
-                                                  </Grid>
-
-                                             </Border>
-
-                                             <TextBlock Text="Click the box above, then press any mouse button. The app will automatically detect and save it." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,5,0,0"/>
-
+                                             <TextBlock Text="Cosmo works system-wide. Hold your trigger to speak, release to transcribe." 
+                                                        Foreground="White" Opacity="0.3" FontSize="12" Margin="0,20,0,0"/>
                                          </StackPanel>
-
-                                    </Border>
+                                     </Border>
 
 
 
@@ -3360,7 +3323,7 @@
 
                                                       <Border Background="#20FFFFFF" CornerRadius="6" Width="30" Height="30" Margin="0,0,15,0">
 
-                                                          <TextBlock Text="&#x1F4BE;�" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                          <TextBlock Text="&#x1F4BE;?" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                                                       </Border>
 
@@ -4544,51 +4507,47 @@
                             
 
                             <Button x:Name="BtnDialogCancel" Content="Cancel" Click="DialogCancel_Click" Grid.Column="0" Margin="0,0,12,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Height="50" Visibility="Collapsed" Cursor="Hand">
-
                                 <Button.Template>
-
                                     <ControlTemplate TargetType="Button">
-
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="14">
-
+                                        <Border x:Name="CancelBorder" Background="{TemplateBinding Background}" CornerRadius="14" BorderBrush="Transparent" BorderThickness="1">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
                                         </Border>
-
-                                    </ControlTemplate>
-
-                                </Button.Template>
-
-                            </Button>
-
-                            
-
-                            <Button x:Name="BtnDialogConfirm" Content="Confirm" Click="DialogConfirm_Click" Grid.Column="1" Grid.ColumnSpan="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="50" Cursor="Hand">
-
-                                <Button.Template>
-
-                                    <ControlTemplate TargetType="Button">
-
-                                        <Border x:Name="ConfirmBorder" Background="{TemplateBinding Background}" CornerRadius="14">
-
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                                        </Border>
-
                                         <ControlTemplate.Triggers>
-
                                             <Trigger Property="IsMouseOver" Value="True">
-
-                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="0.9"/>
-
+                                                <Setter TargetName="CancelBorder" Property="Background" Value="#30FFFFFF"/>
+                                                <Setter TargetName="CancelBorder" Property="BorderBrush" Value="#50FFFFFF"/>
                                             </Trigger>
-
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="CancelBorder" Property="Background" Value="#10FFFFFF"/>
+                                                <Setter TargetName="CancelBorder" Property="Opacity" Value="0.8"/>
+                                            </Trigger>
                                         </ControlTemplate.Triggers>
-
                                     </ControlTemplate>
-
                                 </Button.Template>
-
+                            </Button>
+                            
+                            <Button x:Name="BtnDialogConfirm" Content="Confirm" Click="DialogConfirm_Click" Grid.Column="1" Grid.ColumnSpan="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="50" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="ConfirmBorder" Background="{TemplateBinding Background}" CornerRadius="14" BorderBrush="Transparent" BorderThickness="1">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="1.0"/>
+                                                <Setter TargetName="ConfirmBorder" Property="BorderBrush" Value="{DynamicResource ThemeGlowBrush}"/>
+                                                <Setter TargetName="ConfirmBorder" Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="{Binding Color, Source={StaticResource ThemeGlowBrush}}" BlurRadius="15" Opacity="0.6" ShadowDepth="0"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="0.8"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
                             </Button>
 
                         </Grid>
@@ -4604,6 +4563,10 @@
     </Grid>
 
 </Window>
+
+
+
+
 
 
 

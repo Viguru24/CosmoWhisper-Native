@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using CosmoWhisper.Models;
 using System.Windows;
@@ -350,11 +350,8 @@ namespace CosmoWhisper
 
 
 
-        private bool _isCapturingHotkey = false;
-        private void BtnEditHotkey_Click(object sender, MouseButtonEventArgs e) => _prefs.StartHotkeyCapture();
-
-        private void DashboardWindow_CaptureKeyDown(object sender, System.Windows.Input.KeyEventArgs e) => _prefs.HandleHotkeyCapture(sender, e);
-
+        
+        private void BorderActivationTrigger_Click(object sender, MouseButtonEventArgs e) => _prefs.StartActivationCapture();
         private void BtnClearHotkey_Click(object sender, MouseButtonEventArgs e) => _prefs.ClearHotkey();
 
         private void BtnChangeBackup_Click(object sender, RoutedEventArgs e) => _prefs.ChangeBackupPath();
@@ -368,7 +365,7 @@ namespace CosmoWhisper
             TxtVaultPassword.Password = "";
             
             // Dynamic UI
-            TxtVaultTitle.Text = isRestore ? "🔓 Unlock Your Vault" : "🔐 Secure Your Vault";
+            TxtVaultTitle.Text = isRestore ? "ðŸ”“ Unlock Your Vault" : "ðŸ” Secure Your Vault";
             LblVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
             TxtVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
             
@@ -395,7 +392,7 @@ namespace CosmoWhisper
         private TaskCompletionSource<bool>? _dialogTask;
         private TaskCompletionSource<string?>? _listDialogTask;
 
-        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "📂")
+        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "ðŸ“‚")
         {
             _listDialogTask = new TaskCompletionSource<string?>();
             TxtDialogTitle.Text = title;
@@ -439,7 +436,7 @@ namespace CosmoWhisper
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
         }
 
-        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "✨", bool showCancel = false)
+        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "âœ¨", bool showCancel = false)
         {
             _dialogTask = new TaskCompletionSource<bool>();
             TxtDialogTitle.Text = title;
@@ -505,7 +502,7 @@ namespace CosmoWhisper
             e.Handled = true; // Prevent clicking through the backdrop
         }
 
-        internal void ShowToast(string message, string icon = "✨")
+        internal void ShowToast(string message, string icon = "âœ¨")
         {
             if (ToastContainer == null || TxtToastMessage == null || TxtToastIcon == null) return;
 
@@ -530,9 +527,7 @@ namespace CosmoWhisper
             timer.Start();
         }
 
-        private void CaptureMouseButton(object sender, MouseButtonEventArgs e) => _prefs.CaptureMouseButton(sender, e);
 
-        private void UpdateMouseConfigUI() => _prefs.UpdateMouseConfigUI();
 
         private void ToggleRegionalSpelling_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleRegionalSpelling();
 
@@ -561,9 +556,6 @@ namespace CosmoWhisper
         private void ToggleAutoCopy_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleAutoCopy();
         private void FastPaste_Click(object sender, MouseButtonEventArgs e) => _prefs.SetInsertionMode(InsertionMethod.FastPaste);
         private void DirectType_Click(object sender, MouseButtonEventArgs e) => _prefs.SetInsertionMode(InsertionMethod.DirectTyping);
-        private void ToggleMouseButton_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleMouseButton();
-        private void MouseConfigBorder_Click(object sender, MouseButtonEventArgs e) => _prefs.StartMouseCapture();
-        private void BtnClearMouse_Click(object sender, MouseButtonEventArgs e) => _prefs.ClearMouseConfig();
         private void BtnRestore_Click(object sender, RoutedEventArgs e) => _prefs.RestoreBackup();
         private void ToggleManusAgent_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleManusAgent();
         private void ToggleManusNarration_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleManusNarration();
@@ -621,10 +613,10 @@ namespace CosmoWhisper
                 // Escape cancels hotkey capture
                 if (e.Key == Key.Escape)
                 {
-                    _prefs.StopHotkeyCapture();
+                    _prefs.StopActivationCapture();
                     e.Handled = true;
                 }
-                return; // Let HandleHotkeyCapture deal with other keys via KeyDown
+                return; // Let HandleUniversalCapture deal with other keys via KeyDown
             }
 
             // 2. Handle Escape Key (Cancel/Close Actions)
@@ -704,7 +696,7 @@ namespace CosmoWhisper
 
     public static class CosmoMessage
     {
-        public static async Task<bool> Show(string title, string message, string icon = "✨", bool showCancel = false)
+        public static async Task<bool> Show(string title, string message, string icon = "âœ¨", bool showCancel = false)
         {
             if (DashboardWindow.Instance != null)
             {
