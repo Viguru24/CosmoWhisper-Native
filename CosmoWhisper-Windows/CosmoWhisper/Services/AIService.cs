@@ -27,11 +27,24 @@ namespace CosmoWhisper.Services
         private void RefreshConfig()
         {
             var p = PreferenceManager.Shared.Preferences;
-            string key = string.IsNullOrWhiteSpace(p.GroqApiKey)
-                ? "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" // Default fallback
-                : p.GroqApiKey;
+            string defaultKey = "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";
+            
+            // STRICT LOGIC:
+            // 1. If Locked -> Use DEFAULT key.
+            // 2. If Unlocked -> Use CUSTOM key directly. NO BACKUP.
+            //    If the user enters a bad key or empty string, it will fail (as requested).
+            
+            string key = !p.IsAIUnlocked ? defaultKey : p.GroqApiKey;
 
+            // If unlocked and key is empty, this will result in an unauthorized request, which is desired behavior.
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            
+            // Debug Log
+            string maskedKey = !string.IsNullOrEmpty(key) && key.Length > 10 
+                ? $"{key.Substring(0, 4)}...{key.Substring(key.Length - 4)}" 
+                : (string.IsNullOrEmpty(key) ? "EMPTY" : "SHORT_KEY");
+                
+            System.Diagnostics.Debug.WriteLine($"[AIService] Config Refreshed. Using Key: {maskedKey} (Unlocked: {p.IsAIUnlocked})");
         }
 
         public async Task<string> Transcribe(string filePath)
@@ -156,7 +169,8 @@ namespace CosmoWhisper.Services
             {
                 var p = PreferenceManager.Shared.Preferences;
                 string langHint = GetLanguageHint(p.InterfaceLanguage);
-                string finalPrompt = prompt + langHint;
+                string personalityHint = GetPersonalityHint(p.AIPersonality);
+                string finalPrompt = prompt + langHint + personalityHint;
 
                 // ITEM 4: Dual-Track Inference (Fast-track for short commands)
                 // Use a smaller, faster model if the prompt or context is short
@@ -194,6 +208,32 @@ namespace CosmoWhisper.Services
             {
                 return $"Error processing command: {ex.Message}";
             }
+        }
+
+        private string GetPersonalityHint(string personality)
+        {
+            string prompt = "";
+
+            // 1. Personality
+            switch (personality)
+            {
+                case "Professional": prompt += " [SYSTEM: Tone: Formal, objective, business-like.]"; break;
+                case "Friendly": prompt += " [SYSTEM: Tone: Warm, casual, helpful, use emojis.]"; break;
+                case "Sassy": prompt += " [SYSTEM: Tone: Witty, playful, sarcastic, have attitude.]"; break;
+                case "Guru": prompt += " [SYSTEM: Tone: Wise, philosophical, profound, metaphorical.]"; break;
+                case "Pirate": prompt += " [SYSTEM: Tone: Pirate speech, nautical slang.]"; break;
+            }
+
+            // 2. Verbosity
+            var verbosity = PreferenceManager.Shared.Preferences.AIVerbosity;
+            switch (verbosity)
+            {
+                case "Concise": prompt += " [SYSTEM: Length: Extremely brief, bullet points, minimal words.]"; break;
+                case "Detailed": prompt += " [SYSTEM: Length: Comprehensive, in-depth, cover nuances.]"; break;
+                case "Balanced": prompt += " [SYSTEM: Length: Balanced, moderate detail.]"; break;
+            }
+
+            return prompt;
         }
 
         private string GetLanguageHint(string langCode)

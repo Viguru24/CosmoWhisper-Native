@@ -51,7 +51,7 @@ struct LibraryView: View {
             }
             
             Button(action: {
-                if let url = URL(string: "https://cosmowhisper.com/smart-commands") {
+                if let url = URL(string: "https://cosmowhisper-app.web.app/features") {
                     NSWorkspace.shared.open(url)
                 }
             }) {
@@ -77,7 +77,7 @@ struct LibraryView: View {
     
     private var quickLinks: some View {
         HStack(spacing: 20) {
-            LinkCard(icon: "doc.text.fill", title: "User Manual", desc: "How to use Cosmo", url: "https://cosmowhisper.com/docs")
+            LinkCard(icon: "doc.text.fill", title: "User Manual", desc: "How to use Cosmo", url: "https://cosmowhisper-app.web.app/faq")
             LinkCard(icon: "terminal.fill", title: "Open Source", desc: "View on GitHub", url: "https://github.com/Viguru24/CosmoWhisper-Native")
         }
     }

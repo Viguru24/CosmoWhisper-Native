@@ -1,4 +1,4 @@
-﻿<Window x:Class="CosmoWhisper.DashboardWindow"
+<Window x:Class="CosmoWhisper.DashboardWindow"
 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 
@@ -2534,39 +2534,13 @@
 
                                         <StackPanel>
 
-                                            <TextBlock Text="AI Service Provider" Foreground="White" Opacity="0.6" Margin="0,0,0,10" FontWeight="SemiBold"/>
+                                            <!-- Header -->
+                                            <TextBlock Text="🔌 Bring Your Own Intelligence" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,0,5"/>
+                                            <TextBlock Text="Enter an API Key (Groq recommended) for enhanced processing." Foreground="White" Opacity="0.6" FontSize="12" Margin="0,0,0,20" TextWrapping="Wrap"/>
 
-                                            <ComboBox x:Name="ComboAIProvider" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboAIProvider_SelectionChanged">
-
-                                                 <ComboBoxItem Content="Groq (Free &amp; Fast)" Tag="Groq" IsSelected="True"/>
-
-                                                 <ComboBoxItem Content="OpenAI (Premium)" Tag="OpenAI"/>
-
-                                                 <ComboBoxItem Content="Anthropic Claude" Tag="Anthropic"/>
-
-                                            </ComboBox>
-
-
-
-                                            <TextBlock Text="Model Name" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
-
-                                            <ComboBox x:Name="ComboAIModel" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0">
-
-                                                 <ComboBoxItem Content="llama-3.3-70b-versatile" IsSelected="True"/>
-
-                                                 <ComboBoxItem Content="mixtral-8x7b-32768"/>
-
-                                                 <ComboBoxItem Content="gemma-7b-it"/>
-
-                                            </ComboBox>
-
-
-
-                                            <!-- Groq Key -->
-
+                                            <!-- API Key Input -->
                                             <StackPanel x:Name="PanelGroqKey">
-
-                                                <TextBlock Text="?? Groq API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <TextBlock Text="🔑 API Key" Foreground="White" Opacity="0.8" Margin="0,0,0,10" FontWeight="SemiBold"/>
 
                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
 
@@ -2582,7 +2556,7 @@
 
                                                          <PasswordBox x:Name="TxtGroqApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
 
-                                                         <TextBlock Grid.Column="1" Text="??" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
                                                     </Grid>
 
@@ -2612,7 +2586,7 @@
 
                                                          <PasswordBox x:Name="TxtOpenAIApiKey_Int" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
 
-                                                         <TextBlock Grid.Column="1" Text="??" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
                                                     </Grid>
 
@@ -2626,7 +2600,7 @@
 
                                             <StackPanel x:Name="PanelAnthropicKey" Visibility="Collapsed">
 
-                                                <TextBlock Text="?? Anthropic API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <TextBlock Text="🔑 Anthropic API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
 
                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
 
@@ -2642,7 +2616,7 @@
 
                                                          <PasswordBox x:Name="TxtAnthropicApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
 
-                                                         <TextBlock Grid.Column="1" Text="??" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
                                                     </Grid>
 
@@ -2694,7 +2668,18 @@
 
                                              
 
-                                             <TextBlock x:Name="TxtGroqSuccess" Text="? Groq Premium Access Enabled" Foreground="#2ECC71" FontSize="11" Margin="0,2,0,0" Visibility="Collapsed"/>
+                                             <TextBlock x:Name="TxtGroqSuccess" Text="✅ Groq Premium Access Enabled" Foreground="#2ECC71" FontSize="11" Margin="0,2,0,0" Visibility="Collapsed"/>
+
+                                             <!-- Toggle Button (appears when unlocked) -->
+                                             <Grid x:Name="ToggleAccessPanel" Margin="0,10,0,0" Visibility="Collapsed">
+                                                 <StackPanel>
+                                                     <TextBlock Text="Enable/Disable Premium Access" Foreground="White" FontSize="14"/>
+                                                     <TextBlock Text="Toggle custom API key access on or off" Foreground="White" Opacity="0.6" FontSize="11"/>
+                                                 </StackPanel>
+                                                 <Border x:Name="TogglePremiumAccess" HorizontalAlignment="Right" Width="40" Height="24" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="12" MouseLeftButtonDown="TogglePremiumAccess_Click" Cursor="Hand">
+                                                     <Ellipse Width="18" Height="18" Fill="White" HorizontalAlignment="Right" Margin="3"/>
+                                                 </Border>
+                                             </Grid>
 
                                         </StackPanel>
 
@@ -2758,26 +2743,35 @@
 
                                         <StackPanel>
 
-                                            <TextBlock Text="&#x1F5E8; AI Personality / Verbosity" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                            <TextBlock Text="&#x1F5E8; AI Personality" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
                                             <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="10"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
 
-                                                 <Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                     <TextBlock Text="Character" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,0,0,5"/>
+                                                     <ComboBox x:Name="ComboPersonality" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboPersonality_SelectionChanged">
+                                                         <ComboBoxItem Content="Default (None)" Tag="None" IsSelected="True"/>
+                                                         <ComboBoxItem Content="Professional" Tag="Professional"/>
+                                                         <ComboBoxItem Content="Friendly" Tag="Friendly"/>
+                                                         <ComboBoxItem Content="Sassy" Tag="Sassy"/>
+                                                         <ComboBoxItem Content="Guru" Tag="Guru"/>
+                                                         <ComboBoxItem Content="Pirate" Tag="Pirate"/>
+                                                     </ComboBox>
+                                                </StackPanel>
 
-                                                     <ColumnDefinition Width="*"/>
-
-                                                     <ColumnDefinition Width="*"/>
-
-                                                     <ColumnDefinition Width="*"/>
-
-                                                 </Grid.ColumnDefinitions>
-
-                                                  <Button x:Name="BtnConcise" Grid.Column="0" Content="Concise" Margin="0,0,5,0" Background="#10FFFFFF" Foreground="White" BorderThickness="0" Height="40" Click="Personality_Click" Tag="Concise"/>
-
-                                                  <Button x:Name="BtnBalanced" Grid.Column="1" Content="Balanced" Margin="5,0,5,0" Background="#60A060" Foreground="White" BorderThickness="0" Height="40" Click="Personality_Click" Tag="Balanced"/>
-
-                                                  <Button x:Name="BtnDetailed" Grid.Column="2" Content="Detailed" Margin="5,0,0,0" Background="#10FFFFFF" Foreground="White" BorderThickness="0" Height="40" Click="Personality_Click" Tag="Detailed"/>
-
+                                                <StackPanel Grid.Column="2">
+                                                     <TextBlock Text="Verbosity" Foreground="White" Opacity="0.6" FontSize="11" Margin="0,0,0,5"/>
+                                                     <ComboBox x:Name="ComboVerbosity" SelectedIndex="1" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboVerbosity_SelectionChanged">
+                                                         <ComboBoxItem Content="Concise" Tag="Concise"/>
+                                                         <ComboBoxItem Content="Balanced" Tag="Balanced" IsSelected="True"/>
+                                                         <ComboBoxItem Content="Detailed" Tag="Detailed"/>
+                                                     </ComboBox>
+                                                </StackPanel>
                                             </Grid>
 
                                         </StackPanel>

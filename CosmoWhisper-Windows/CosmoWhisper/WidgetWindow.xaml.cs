@@ -430,8 +430,17 @@ namespace CosmoWhisper
 
         private void Gear_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Right click logic: Close App
-            System.Windows.Application.Current.Shutdown();
+            // Right click logic: Open Confirm Exit Dialog
+            e.Handled = true; 
+
+            var exitWindow = new Views.ConfirmExitWindow();
+            exitWindow.Owner = this; // Optional: keeps it related to widget
+            exitWindow.ShowDialog();
+
+            if (exitWindow.ConfirmedExit)
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
         }
     }
 }

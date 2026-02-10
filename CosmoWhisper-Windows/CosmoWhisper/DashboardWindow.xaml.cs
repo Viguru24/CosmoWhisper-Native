@@ -612,7 +612,7 @@ namespace CosmoWhisper
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://cosmowhisper.com/library",
+                FileName = "https://cosmowhisper-app.web.app/features",
                 UseShellExecute = true
             });
         }
@@ -621,7 +621,7 @@ namespace CosmoWhisper
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://cosmowhisper.com/faq",
+                FileName = "https://cosmowhisper-app.web.app/faq",
                 UseShellExecute = true
             });
         }
@@ -642,14 +642,31 @@ namespace CosmoWhisper
         private void ActivateLicense_Click(object sender, RoutedEventArgs e) => _dashboard.ActivateLicense(TxtLicense.Text);
         private void SignOut_Click(object sender, RoutedEventArgs e) => _dashboard.SignOut();
 
-        private void SignUp_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper.com/signup", UseShellExecute = true });
+        private void SignUp_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/register", UseShellExecute = true });
 
-        private void ComboAIProvider_SelectionChanged(object sender, SelectionChangedEventArgs e) => _intelligence?.ProviderChanged(((ComboBoxItem)ComboAIProvider.SelectedItem)?.Tag?.ToString());
+        // Removed Provider logic
+        
         private void TxtUnlockCode_TextChanged(object sender, TextChangedEventArgs e) => _intelligence?.HandleUnlockCode(TxtUnlockCode.Text);
         private void BtnToggleLock_Click(object sender, RoutedEventArgs e) => _intelligence?.ToggleLock();
         private void UpdateGroqStatusUI() => _intelligence?.UpdateGroqStatusUI();
         private void UpdatePersonalityUI() => _intelligence?.UpdatePersonalityUI();
-        private void Personality_Click(object sender, RoutedEventArgs e) => _intelligence?.Personality_Click(((System.Windows.Controls.Button)sender).Tag?.ToString());
+        
+        private void ComboPersonality_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboPersonality?.SelectedItem is ComboBoxItem item)
+            {
+                _intelligence?.PersonalityChanged(item.Tag?.ToString() ?? "None");
+            }
+        }
+
+        private void ComboVerbosity_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboVerbosity?.SelectedItem is ComboBoxItem item)
+            {
+                _intelligence?.VerbosityChanged(item.Tag?.ToString() ?? "Balanced");
+            }
+        }
+        private void TogglePremiumAccess_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => _intelligence?.TogglePremiumAccess();
         private void UpdateDashboardStats() => _dashboard?.UpdateDashboardStats();
         public async Task CheckAuthStatus() => await _dashboard.CheckAuthStatus();
 

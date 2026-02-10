@@ -1,0 +1,69 @@
+﻿<Window x:Class="CosmoSetup.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CosmoWhisper Installer" Height="400" Width="600"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen">
+    <Border Background="#121420" CornerRadius="20" BorderBrush="#30FFFFFF" BorderThickness="1" MouseDown="Window_MouseDown">
+        <Grid>
+            <!-- Background Glow -->
+            <Ellipse Fill="#40007AFF" Width="300" Height="300" Margin="-150,-150,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Ellipse.Effect>
+                    <BlurEffect Radius="100"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Ellipse Fill="#40FF00D4" Width="300" Height="300" Margin="0,0,-150,-150" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Ellipse.Effect>
+                    <BlurEffect Radius="100"/>
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <StackPanel Margin="40">
+                <TextBlock Text="COSMOWHISPER" Foreground="White" FontSize="28" FontWeight="ExtraBold" HorizontalAlignment="Center" Margin="0,20,0,5">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="#00D4FF" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock Text="NATIVE AI ASSISTANT INSTALLER" Foreground="White" Opacity="0.5" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,40"/>
+
+                <TextBlock x:Name="StatusText" Text="Ready to upgrade your workflow..." Foreground="White" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                
+                <Grid Height="10" Width="400" Margin="0,0,0,30">
+                    <ProgressBar x:Name="InstallProgress" Minimum="0" Maximum="100" Value="0" Background="#20FFFFFF" BorderThickness="0">
+                        <ProgressBar.Template>
+                            <ControlTemplate TargetType="ProgressBar">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                    <Border HorizontalAlignment="Left" Width="{TemplateBinding Value}" Background="#007AFF" CornerRadius="5">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#007AFF" BlurRadius="10" ShadowDepth="0"/>
+                                        </Border.Effect>
+                                    </Border>
+                                </Border>
+                            </ControlTemplate>
+                        </ProgressBar.Template>
+                    </ProgressBar>
+                </Grid>
+
+                <Button x:Name="InstallButton" Content="Install &amp; Launch" Width="200" Height="50" Click="InstallButton_Click" Background="#007AFF" Foreground="White" FontWeight="Bold" FontSize="16">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="25">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#008AFF"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                
+                <Button Content="Exit" Margin="0,20,0,0" Background="Transparent" BorderThickness="0" Foreground="White" Opacity="0.5" Click="Exit_Click"/>
+            </StackPanel>
+
+            <!-- Logo Placeholder/Decoration -->
+            <TextBlock Text="&#x2728;" FontSize="40" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="20"/>
+        </Grid>
+    </Border>
+</Window>

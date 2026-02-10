@@ -182,7 +182,10 @@ namespace CosmoWhisper.Managers
                 { "amazon", "https://amazon.com" },
                 { "gmail", "https://mail.google.com" },
                 { "outlook", "https://outlook.live.com" },
-                { "whatsapp", "https://web.whatsapp.com" }
+                { "whatsapp", "https://web.whatsapp.com" },
+                { "cosmowhisper", "https://cosmowhisper-app.web.app" },
+                { "library", "https://cosmowhisper-app.web.app/features" },
+                { "commands", "https://cosmowhisper-app.web.app/features" }
             };
 
             if (shortcuts.TryGetValue(site, out var url))
