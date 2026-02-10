@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.IO;
@@ -32,6 +32,7 @@ namespace CosmoWhisper.Controllers
     {
         public bool IsCapturingHotkey => _isCapturingHotkey;
         private bool _isCapturingHotkey = false;
+        private bool _isRestoreInProgress = false;
 
         public PreferencesController(DashboardWindow window) : base(window)
         {
@@ -87,16 +88,31 @@ namespace CosmoWhisper.Controllers
                 }
             }
 
-            // DateTime Formatting
-            if (Window.ComboDateTime != null)
+            // Date Formatting
+            if (Window.ComboDateFormat != null)
             {
                 if (string.IsNullOrEmpty(p.SelectedDateFormat)) p.SelectedDateFormat = "dd/MM/yyyy";
 
-                foreach (ComboBoxItem item in Window.ComboDateTime.Items)
+                foreach (ComboBoxItem item in Window.ComboDateFormat.Items)
                 {
                     if (item.Tag?.ToString() == p.SelectedDateFormat)
                     {
-                        Window.ComboDateTime.SelectedItem = item;
+                        Window.ComboDateFormat.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+
+            // Time Formatting
+            if (Window.ComboTimeFormat != null)
+            {
+                if (string.IsNullOrEmpty(p.SelectedTimeFormat)) p.SelectedTimeFormat = "HH:mm";
+
+                foreach (ComboBoxItem item in Window.ComboTimeFormat.Items)
+                {
+                    if (item.Tag?.ToString() == p.SelectedTimeFormat)
+                    {
+                        Window.ComboTimeFormat.SelectedItem = item;
                         break;
                     }
                 }
@@ -179,7 +195,7 @@ namespace CosmoWhisper.Controllers
             p.AutoSubmit = !p.AutoSubmit;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
-            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "⚡");
+            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "\u26A1");
         }
 
         public void ToggleAutoCopy()
@@ -188,7 +204,7 @@ namespace CosmoWhisper.Controllers
             p.AutoCopy = !p.AutoCopy;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
-            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "📋");
+            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uD83D\uDCCB");
         }
 
         public void SetInsertionMode(InsertionMethod method)
@@ -229,82 +245,39 @@ namespace CosmoWhisper.Controllers
 
         public async void BackupNow(Button? btn = null)
         {
-            if (btn == null) btn = Window.BtnBackupNow; // Fallback
+            if (btn == null) btn = Window.BtnBackupNow;
             if (btn == null) return;
 
             string originalContent = btn.Content?.ToString() ?? "Backup Now";
 
             try
             {
-                // Ask for password and name
                 var (password, name) = await Window.GetVaultPasswordAsync();
                 if (string.IsNullOrEmpty(password)) return;
 
-                btn.Content = "Securing Vault...";
+                btn.Content = "🛡️ Securing Vault...";
                 btn.IsEnabled = false;
 
                 var p = PreferenceManager.Shared.Preferences;
                 string destDir = p.BackupDirectory;
                 Directory.CreateDirectory(destDir);
 
-                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
-                string safeName = string.IsNullOrWhiteSpace(name) ? "CosmoVault" : string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
-                string finalVaultPath = Path.Combine(destDir, $"{safeName}_{timestamp}.vault");
-
-                // 1. Create temporary zip in memory or temp file
-                string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                Directory.CreateDirectory(tempDir);
+                string vaultPath = await VaultManager.Shared.CreateVaultAsync(name, password, destDir);
                 
-                try
-                {
-                    string sourceFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-                    string tempZip = Path.Combine(tempDir, "data.zip");
-
-                    using (var archive = System.IO.Compression.ZipFile.Open(tempZip, System.IO.Compression.ZipArchiveMode.Create))
-                    {
-                        // Backup all JSON data files in the root folder
-                        if (Directory.Exists(sourceFolder))
-                        {
-                            var dataFiles = Directory.GetFiles(sourceFolder, "*.json");
-                            foreach (var fullPath in dataFiles)
-                            {
-                                string fileName = Path.GetFileName(fullPath);
-                                archive.CreateEntryFromFile(fullPath, fileName);
-                            }
-                        }
-                    }
-
-                    // 2. Encrypt the zip file
-                    SecurityManager.EncryptFile(tempZip, finalVaultPath, password);
-                }
-                finally
-                {
-                    if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-                }
-
                 await System.Threading.Tasks.Task.Delay(1000);
 
                 btn.Content = "✅ Vault Secured";
-                long size = new FileInfo(finalVaultPath).Length;
-                
-                string sizeDisplay;
-                if (size < 1024 * 1024)
-                {
-                    double sizeInKb = size / 1024.0;
-                    sizeDisplay = $"{sizeInKb:F1} KB";
-                }
-                else
-                {
-                    double sizeInMb = size / (1024.0 * 1024.0);
-                    sizeDisplay = $"{sizeInMb:F2} MB";
-                }
+                long size = new FileInfo(vaultPath).Length;
+                string sizeDisplay = size < 1024 * 1024 ? $"{(size / 1024.0):F1} KB" : $"{(size / (1024.0 * 1024.0)):F2} MB";
 
-                await Window.ShowDialogAsync("Vault Created", $"Universal Encryption Successful!\n\nFile: CosmoVault_{timestamp}.vault\nSize: {sizeDisplay}\n\nYour environment is now secured with 256-bit AES.", "🛡️");
+                await Window.ShowDialogAsync("Vault Created", 
+                    $"Universal Encryption Successful!\n\nVault: {Path.GetFileName(vaultPath)}\nSize: {sizeDisplay}\n\nYour environment is now secured with 256-bit AES.", 
+                    "\uD83D\uDEE1");
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "❌");
-                btn.Content = "❌ Failed";
+                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "\u274C");
+                btn.Content = "\u274C Failed";
             }
             finally
             {
@@ -316,6 +289,9 @@ namespace CosmoWhisper.Controllers
 
         public async void RestoreBackup()
         {
+            // Force reset to prevent lockouts, relying on modal UI to prevent re-entry
+            _isRestoreInProgress = true; 
+
             try
             {
                 var p = PreferenceManager.Shared.Preferences;
@@ -323,126 +299,96 @@ namespace CosmoWhisper.Controllers
 
                 if (!Directory.Exists(destDir))
                 {
-                await Window.ShowDialogAsync("No Backups", "No backup directory found.", "📁");
+                    await Window.ShowDialogAsync("No Backups", "No backup directory found.", "\uD83D\uDCC2");
                     return;
                 }
 
-                var vaults = Directory.GetFiles(destDir, "*.vault")
-                    .OrderByDescending(f => f)
-                    .ToList();
-
+                var vaults = VaultManager.Shared.GetAvailableVaults(destDir);
                 if (vaults.Count == 0)
                 {
-                    // Fallback search
-                    var legacyDirs = Directory.GetDirectories(destDir, "CosmoVault_*")
-                        .OrderByDescending(d => d)
-                        .ToList();
-
-                    if (legacyDirs.Count > 0)
-                    {
-                        var res = await Window.ShowDialogAsync("Legacy Backup", $"Found {legacyDirs.Count} unencrypted legacy backup(s). Restore the most recent one?", "⚠️", true);
-                        if (res)
-                        {
-                            PreferenceManager.Shared.Restore(legacyDirs[0]);
-                            Initialize();
-                            await Window.ShowDialogAsync("Success", "Legacy restore successful.", "✅");
-                        }
-                    }
-                    else
-                    {
-                        await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found in the backup folder.", "🔍");
-                    }
+                    await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found.", "\uD83D\uDD0D");
                     return;
                 }
 
-                // Show selection list
-                var vaultNames = vaults.Select(v => Path.GetFileName(v)).ToList();
-                string? selectedVaultName = await Window.ShowListDialogAsync("Select Vault", "Choose a restore point from your secure history:", vaultNames, "🛡️");
-
+                string? selectedVaultName = await Window.ShowListDialogAsync("Select Vault", "Choose a restore point:", vaults, "\uD83D\uDEE1");
                 if (string.IsNullOrEmpty(selectedVaultName)) return;
 
                 string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
 
-                // Wait for dialog to fully close before showing password overlay
-                await System.Threading.Tasks.Task.Delay(400);
-
-                // Ask for password
                 var (password, _) = await Window.GetVaultPasswordAsync(true);
                 if (string.IsNullOrEmpty(password)) return;
 
-                // 1. Decrypt to temporary zip
-                string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                Directory.CreateDirectory(tempDir);
-
-                try
+                // 1. Verify Password First
+                var (isValid, verifyMsg) = await VaultManager.Shared.VerifyVault(selectedVaultPath, password);
+                if (!isValid)
                 {
-                    string tempZip = Path.Combine(tempDir, "data.zip");
-                    SecurityManager.DecryptFile(selectedVaultPath, tempZip, password);
+                    await Window.ShowDialogAsync("Verification Failed", verifyMsg, "\u274C");
+                    return;
+                }
 
-                    // 2. Unzip to AppData
-                    string appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-                    
-                    using (var archive = System.IO.Compression.ZipFile.OpenRead(tempZip))
-                    {
-                        foreach (var entry in archive.Entries)
-                        {
-                            if (string.IsNullOrEmpty(entry.Name)) continue;
+                // 2. Warn User about Restart
+                bool confirm = await Window.ShowDialogAsync("Restart Required", 
+                    "To ensure a safe restore, CosmoWhisper must restart.\n\nThe app will close, apply settings, and reopen automatically.", 
+                    "\u26A0\uFE0F", true); // Warning Icon
+                
+                if (!confirm) return;
 
-                            string fullPath = Path.Combine(appDataFolder, entry.FullName);
-                            string? directory = Path.GetDirectoryName(fullPath);
-                            if (directory != null) Directory.CreateDirectory(directory);
-                            
-                            // Retry logic for locked files (like settings.json being written to)
-                            int retries = 3;
-                            bool success = false;
-                            while (retries > 0 && !success)
-                            {
-                                try
-                                {
-                                    entry.ExtractToFile(fullPath, true);
-                                    success = true;
-                                }
-                                catch (IOException ex) when (retries > 1)
-                                {
-                                    retries--;
-                                    await System.Threading.Tasks.Task.Delay(500);
-                                }
-                                catch (Exception ex)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"Error extracting {entry.Name}: {ex.Message}");
-                                    throw; // Re-throw to be caught by the outer catch
-                                }
-                            }
-                        }
-                    }
+                // 3. Extract to Staging
+                string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedVaultPath, password);
+                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
 
-                    // 3. Reload Managers
-                    PreferenceManager.Shared.Load();
-                    VocabularyManager.Shared.Load();
-                    
-                    // 4. Force UI refresh
-                    Window.InitializeAll(); 
-                    
-                    await Window.ShowDialogAsync("Restore Successful", "Your settings and vocabulary have been restored successfully.", "✨");
-                }
-                catch (CryptographicException)
+                // 4. Create & Run PowerShell Helper Script
+                string scriptPath = Path.Combine(Path.GetTempPath(), "cosmo_restore_restart.ps1");
+                string logPath = Path.Combine(Path.GetTempPath(), "CosmoRestoreLog.txt");
+                
+                string scriptContent = $@"
+try {{
+    ""[$(Get-Date)] Starting Restore Process..."" | Out-File '{logPath}'
+    ""[$(Get-Date)] Staging: {stagingPath}"" | Out-File '{logPath}' -Append
+    ""[$(Get-Date)] AppData: {appDataPath}"" | Out-File '{logPath}' -Append
+
+    Start-Sleep -Seconds 2
+    
+    if (Test-Path '{stagingPath}') {{
+        ""[$(Get-Date)] Copying files..."" | Out-File '{logPath}' -Append
+        Copy-Item -Path '{stagingPath}\*' -Destination '{appDataPath}' -Recurse -Force -ErrorAction Stop
+        ""[$(Get-Date)] Copy Complete."" | Out-File '{logPath}' -Append
+    }} else {{
+        ""[$(Get-Date)] ERROR: Staging path not found!"" | Out-File '{logPath}' -Append
+    }}
+
+    ""[$(Get-Date)] Restarting App: {exePath}"" | Out-File '{logPath}' -Append
+    Start-Process '{exePath}'
+}} catch {{
+    ""[$(Get-Date)] FATAL ERROR: $_"" | Out-File '{logPath}' -Append
+    [System.Windows.Forms.MessageBox]::Show(""Restore Error: $_"", ""CosmoWhisper Restore"")
+}}
+";
+                File.WriteAllText(scriptPath, scriptContent);
+
+                // Run visible for now to debug, but non-blocking
+                var psi = new ProcessStartInfo
                 {
-                    await Window.ShowDialogAsync("Restore Failed", "Incorrect vault password. Please try again.", "❌");
-                }
-                catch (Exception ex)
-                {
-                    var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cosmo_errors.log");
-                    try { File.AppendAllText(logPath, $"{DateTime.Now}: Restore Error: {ex}\n"); } catch { }
-                    await Window.ShowDialogAsync("Restore Failed", $"Restore failed: {ex.Message}", "❌");
-                }
-                finally
-                {
-                    if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-                }
+                    FileName = "powershell.exe",
+                    Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden, // Keep hidden but log
+                    CreateNoWindow = true
+                };
+
+                Process.Start(psi);
+
+                // 5. Shutdown App
+                Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Restore Error", $"An unexpected error occurred: {ex.Message}", "❌");
+                await Window.ShowDialogAsync("Restore Error", ex.Message, "\u274C");
+            }
+            finally
+            {
+                _isRestoreInProgress = false;
             }
         }
 
@@ -619,6 +565,16 @@ namespace CosmoWhisper.Controllers
             }
         }
 
+        public void SetTimeFormat(string format)
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            if (p.SelectedTimeFormat != format)
+            {
+                p.SelectedTimeFormat = format;
+                PreferenceManager.Shared.Save();
+            }
+        }
+
         public void ToggleManusAgent()
         {
             var p = PreferenceManager.Shared.Preferences;
@@ -636,3 +592,5 @@ namespace CosmoWhisper.Controllers
         }
     }
 }
+
+

@@ -30,6 +30,7 @@ namespace CosmoWhisper.Managers
         private LowLevelKeyboardProc? _proc;
         private IntPtr _hookID = IntPtr.Zero;
         private uint _currentVk = 0;
+        private bool _isKeyCurrentlyPressed = false; // Track key state to ignore repeats
 
         public event Action? KeyPressed;
         public event Action? KeyReleased;
@@ -40,6 +41,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 _currentVk = vkCode;
+                _isKeyCurrentlyPressed = false; // Reset state when changing keys
                 Debug.WriteLine($"[HotKey] Setting up for VK {vkCode}...");
 
                 if (_hookID != IntPtr.Zero)
@@ -80,8 +82,20 @@ namespace CosmoWhisper.Managers
 
                 if (vkCode == (int)_currentVk)
                 {
-                    if (wParam == (IntPtr)WM_KEYDOWN) KeyPressed?.Invoke();
-                    else if (wParam == (IntPtr)WM_KEYUP) KeyReleased?.Invoke();
+                    if (wParam == (IntPtr)WM_KEYDOWN)
+                    {
+                        // Only fire KeyPressed on the FIRST keydown (ignore repeats)
+                        if (!_isKeyCurrentlyPressed)
+                        {
+                            _isKeyCurrentlyPressed = true;
+                            KeyPressed?.Invoke();
+                        }
+                    }
+                    else if (wParam == (IntPtr)WM_KEYUP)
+                    {
+                        _isKeyCurrentlyPressed = false;
+                        KeyReleased?.Invoke();
+                    }
                 }
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);

@@ -138,59 +138,88 @@ namespace CosmoWhisper.Managers
             }
         }
 
+        private string _currentAppContext = "Global";
+        private Dictionary<string, string> _appReplacements = new(StringComparer.OrdinalIgnoreCase);
+        private string _appHints = "";
+
+        public void SetContext(string appName)
+        {
+            if (string.IsNullOrEmpty(appName)) appName = "Global";
+            if (_currentAppContext == appName) return;
+
+            _currentAppContext = appName;
+            LoadAppContext(appName);
+        }
+
+        private void LoadAppContext(string appName)
+        {
+            try
+            {
+                _appReplacements.Clear();
+                _appHints = "";
+
+                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "Contexts");
+                Directory.CreateDirectory(folder);
+                string path = Path.Combine(folder, $"{appName}.json");
+
+                if (File.Exists(path))
+                {
+                    string json = File.ReadAllText(path);
+                    var data = JsonSerializer.Deserialize<VocabularyData>(json);
+                    if (data != null)
+                    {
+                        _appReplacements = new Dictionary<string, string>(data.Replacements, StringComparer.OrdinalIgnoreCase);
+                        _appHints = data.TranscriptionHints ?? "";
+                    }
+                }
+            }
+            catch { }
+        }
+
         public string ApplyCorrections(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
             string processed = text;
 
+            // Blend App-Specific Replacements with Global ones (App takes precedence)
+            var blendedReplacements = new Dictionary<string, string>(Replacements, StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in _appReplacements) blendedReplacements[kvp.Key] = kvp.Value;
+
             // STEP 1: Apply smart email/domain corrections FIRST (if enabled)
-            // This way, natural speech like "user at gmail dot com" gets formatted properly
             if (PreferenceManager.Shared.Preferences.EnableSmartEmailCorrections)
             {
                 // 1. Smart "at" to "@" conversion (Only if it looks like an email)
-                // Matches [something] at [something].[domain]
                 processed = Regex.Replace(processed, @"(\S+)\s+at\s+([a-zA-Z0-9-]+\.[a-zA-Z]{2,})", "$1@$2", RegexOptions.IgnoreCase);
-
-                // 2. Clean up email-like spacing (e.g., "user @ gmail . com" -> "user@gmail.com")
-                // Snaps spaces around '@'
                 processed = Regex.Replace(processed, @"\s*@\s*", "@");
-                
-                // 3. Snap dots ONLY when they appear to be part of a domain/email (between two words)
-                processed = Regex.Replace(processed, @"(\w)\s*\.\s*(\w)", "$1.$2");
-
-                // 4. Lowercase email addresses
+                processed = Regex.Replace(processed, @"([a-zA-Z0-9@])\s*\.\s*([a-z0-9])", "$1.$2");
                 processed = Regex.Replace(processed, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", m => m.Value.ToLower());
             }
 
-            // STEP 2: Apply user-defined vocabulary replacements with intelligent matching
-            // Sort by key length (longest first) to handle overlapping matches correctly
-            var sortedReplacements = Replacements.OrderByDescending(kvp => kvp.Key.Length);
+            // STEP 2: Apply replacements (Blended)
+            var sortedReplacements = blendedReplacements.OrderByDescending(kvp => kvp.Key.Length);
             
             foreach (var kvp in sortedReplacements)
             {
                 string key = kvp.Key;
                 string value = kvp.Value;
                 
-                // Strategy 1: Exact word boundary match (most precise)
-                // Matches "my password" in "my password is great" -> replaces entire phrase
                 string pattern = $@"\b{Regex.Escape(key)}(?:\s+(?:is|was|are|were|be|been|being))?\b";
                 var match = Regex.Match(processed, pattern, RegexOptions.IgnoreCase);
                 
                 if (match.Success)
-                {
-                    // Replace the matched phrase (including trailing helper words) with the exact value
                     processed = processed.Substring(0, match.Index) + value + processed.Substring(match.Index + match.Length);
-                }
                 else
-                {
-                    // Strategy 2: Standard word boundary match (fallback)
-                    pattern = $@"\b{Regex.Escape(key)}\b";
-                    processed = Regex.Replace(processed, pattern, value, RegexOptions.IgnoreCase);
-                }
+                    processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
             }
 
             return processed;
+        }
+
+        // Expose hints for AI Prompt
+        public string GetActiveHints()
+        {
+            return string.IsNullOrWhiteSpace(_appHints) ? TranscriptionHints : $"{TranscriptionHints}, {_appHints}";
         }
     }
 }

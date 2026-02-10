@@ -1,4 +1,4 @@
-<Window x:Class="CosmoWhisper.DashboardWindow"
+﻿<Window x:Class="CosmoWhisper.DashboardWindow"
 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 
@@ -166,11 +166,11 @@
 
 
 
-        <!-- Premium ScrollBar Style -->
+        <!-- Nearly Invisible ScrollBar Style -->
 
         <Style TargetType="ScrollBar">
 
-            <Setter Property="Width" Value="8"/>
+            <Setter Property="Width" Value="2"/>
 
             <Setter Property="Background" Value="Transparent"/>
 
@@ -186,13 +186,13 @@
 
                                 <Track.Thumb>
 
-                                    <Thumb Background="#40FFFFFF" Opacity="0.5">
+                                    <Thumb Background="#10FFFFFF" Opacity="0.1">
 
                                         <Thumb.Template>
 
                                             <ControlTemplate TargetType="Thumb">
 
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Margin="1,0"/>
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="1" Margin="0"/>
 
                                             </ControlTemplate>
 
@@ -470,7 +470,7 @@
 
                     <Grid.ColumnDefinitions>
 
-                        <ColumnDefinition Width="240"/>
+                        <ColumnDefinition Width="260"/>
 
                         <ColumnDefinition Width="*"/>
 
@@ -592,7 +592,7 @@
 
                                             <TextBlock Text="&#x26A1;" Foreground="#FFD700" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
 
-                                            <TextBlock Text="Smart Commands" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Smart Command" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14"/>
 
                                         </StackPanel>
 
@@ -2793,263 +2793,178 @@
                             <!-- VIEW 6: VOCABULARY -->
 
                             <ScrollViewer x:Name="VocabularyView" VerticalScrollBarVisibility="Hidden" Visibility="Collapsed">
-
                                 <StackPanel>
-
                                     <!-- Hints -->
-
                                     <Grid Margin="0,0,0,5">
-
                                         <TextBlock Text="Transcription Hints" Foreground="White" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
-
-                                        <Button Content="&#x1F4A1; Load Examples" Click="LoadExamples_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="11">
-
+                                        <Button Content="&#x1F4A1; Load Examples" Click="LoadExamples_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="11" Cursor="Hand">
                                             <Button.Resources>
-
                                                 <Style TargetType="Border">
-
                                                     <Setter Property="CornerRadius" Value="12"/>
-
                                                 </Style>
-
                                             </Button.Resources>
-
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
                                         </Button>
-
                                     </Grid>
-
                                     <TextBlock Text="List names, acronyms, or brands often mistranscribed. Separate with commas." Foreground="White" Opacity="0.5" FontSize="15" Margin="0,0,0,20"/>
-
                                     
-
                                     <Border Background="#10FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,40">
-
                                          <Grid>
-
                                              <TextBox x:Name="TxtVocabHints" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto" Panel.ZIndex="2" TextChanged="TxtVocabHints_TextChanged" FontSize="16"/>
-
                                              <TextBlock x:Name="PlaceholderVocabHints" Text="Example: Name, company.com, technical_term..." Foreground="White" Opacity="0.4" IsHitTestVisible="False" Panel.ZIndex="1" Margin="2,0,0,0" FontSize="16"/>
-
                                          </Grid>
-
                                     </Border>
-
-
 
                                     <!-- Corrections Header -->
-
                                     <Grid Margin="0,0,0,25">
-
                                         <StackPanel>
-
                                             <TextBlock Text="Instant Corrections" Foreground="White" FontWeight="Bold" FontSize="18"/>
-
                                             <TextBlock Text="Force specific words to always be changed after transcription." Foreground="White" Opacity="0.5" FontSize="15"/>
-
                                         </StackPanel>
-
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                            <Button Content="&#x21BA; Defaults" Click="LoadExamples_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12" Margin="0,0,10,0" ToolTip="Reset to default examples">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="15"/>
-                                                    </Style>
-                                                </Button.Resources>
+                                            <Button Content="&#x21BA; Reset" Click="LoadExamples_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12" Margin="0,0,10,0" ToolTip="Reset to default examples" Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
                                             </Button>
 
-                                            <Button Content="&#x1F6E1; Secure Mode" Click="SecureMode_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="15"/>
-                                                    </Style>
-                                                </Button.Resources>
+                                            <Button Content="&#x1F6E1; Secure Mode" Click="SecureMode_Click" Background="#15FFFFFF" Foreground="White" Opacity="0.6" BorderThickness="0" Padding="10,5" FontSize="12" Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
                                             </Button>
                                         </StackPanel>
-
                                     </Grid>
-
                                     
-
                                     <!-- Input Row -->
-
-                                    <Border Background="#10FFFFFF" CornerRadius="25" Padding="5" Margin="0,0,0,30">
-
+                                    <Border Background="#15FFFFFF" CornerRadius="20" Padding="8" Margin="0,0,0,30">
                                         <Grid>
-
                                             <Grid.ColumnDefinitions>
-
                                                 <ColumnDefinition Width="*"/>
-
                                                 <ColumnDefinition Width="Auto"/>
-
                                                 <ColumnDefinition Width="*"/>
-
                                                 <ColumnDefinition Width="Auto"/>
-
                                             </Grid.ColumnDefinitions>
-
                                             
-
                                             <!-- New Input Left -->
-
-                                            <Grid Grid.Column="0" Margin="15,0,0,0">
-
-                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
-
-                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False"/>
-
+                                            <Grid Grid.Column="0" Margin="10,0,0,0">
+                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" Padding="5"/>
+                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,0,0,0"/>
                                             </Grid>
-
-
 
                                             <!-- Arrow -->
-
-                                            <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0" VerticalAlignment="Center" FontSize="20"/>
-
+                                            <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" Margin="15,0,15,0" VerticalAlignment="Center" FontSize="20"/>
                                             
-
                                             <!-- New Input Right -->
-
                                             <Grid Grid.Column="2">
-
-                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged"/>
-
-                                                <TextBlock x:Name="PlaceholderValue" Text="Type this..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False"/>
-
+                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" Padding="5"/>
+                                                <TextBlock x:Name="PlaceholderValue" Text="Replace with..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,0,0,0"/>
                                             </Grid>
 
-
-
                                             <!-- Add Button -->
-
-                                            <Button Grid.Column="3" Content="Add" Click="AddVocabulary_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Width="60" Height="34" Margin="5" FontWeight="SemiBold">
-
-                                                 <Button.Resources>
-
-                                                    <Style TargetType="Border">
-
-                                                        <Setter Property="CornerRadius" Value="17"/>
-
-                                                    </Style>
-
-                                                 </Button.Resources>
-
+                                            <Button Grid.Column="3" Click="AddVocabulary_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Width="40" Height="40" Margin="5" FontWeight="SemiBold" Cursor="Hand" ToolTip="Add Correction">
+                                                 <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="20">
+                                                            <TextBlock Text="+" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" Margin="0,-2,0,0"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
                                             </Button>
-
                                         </Grid>
-
                                     </Border>
 
-
-
                                     <!-- List -->
-
                                     <ItemsControl x:Name="VocabList">
-
                                         <ItemsControl.ItemTemplate>
-
                                             <DataTemplate>
-
-                                                <Border Background="#15FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,10">
-
+                                                <Border Background="#10FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,8">
                                                     <Grid>
-
                                                         <Grid.ColumnDefinitions>
-
-                                                            <ColumnDefinition Width="Auto" MinWidth="100"/>
-
+                                                            <ColumnDefinition Width="3*" MinWidth="100"/>
                                                             <ColumnDefinition Width="Auto"/>
-
-                                                            <ColumnDefinition Width="*"/>
-
+                                                            <ColumnDefinition Width="3*"/>
                                                             <ColumnDefinition Width="Auto"/>
-
                                                         </Grid.ColumnDefinitions>
-
                                                         
-
                                                         <!-- READ MODE -->
+                                                        <Border Grid.Column="0" Background="#15FFFFFF" CornerRadius="6" Padding="10,5" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                                            <TextBlock Text="{Binding Key}" Foreground="White" Opacity="0.8" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                                                        </Border>
 
-                                                        <TextBlock Grid.Column="0" Text="{Binding Key}" Visibility="{Binding ReadModeVisibility}"
-                                                                    Foreground="White" Opacity="0.7" FontSize="17" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="2" Background="{DynamicResource ThemeGlowBrush}" CornerRadius="6" Padding="10,5" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Center" HorizontalAlignment="Stretch" Opacity="0.2"/>
+                                                        <Border Grid.Column="2" CornerRadius="6" Padding="10,5" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                                            <TextBlock Text="{Binding Value}" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                                                        </Border>
 
-                                                        <TextBlock Grid.Column="2" Text="{Binding Value}" Visibility="{Binding ReadModeVisibility}"
-                                                                    Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center"/>
-
-
-
-                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding ReadModeVisibility}">
-
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding ReadModeVisibility}" Margin="10,0,0,0">
                                                             <Button Click="EditVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Edit">
-
-                                                                <TextBlock Text="&#x270E;" Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                                                            </Button>
-
-                                                            <Button Click="DeleteVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Delete">
-
-                                                                <Border Background="#20FF453A" CornerRadius="8" Width="24" Height="24">
-
-                                                                     <TextBlock Text="&#x2715;" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FF453A" FontSize="10" FontWeight="Bold"/>
-
+                                                                <Border Background="#15FFFFFF" CornerRadius="8" Width="32" Height="32">
+                                                                    <TextBlock Text="&#x270E;" Foreground="White" Opacity="0.8" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
                                                                 </Border>
-
                                                             </Button>
-
+                                                            <Button Click="DeleteVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Delete">
+                                                                <Border Background="#15FF453A" CornerRadius="8" Width="32" Height="32">
+                                                                     <TextBlock Text="&#x1F5D1;" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FF453A" FontSize="14"/>
+                                                                </Border>
+                                                            </Button>
                                                         </StackPanel>
-
-
 
                                                         <!-- EDIT MODE -->
-
                                                         <TextBox Grid.Column="0" Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
-
-                                                                 Background="#20000000" BorderBrush="#40FFFFFF" BorderThickness="1" Padding="2"
-
-                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center"/>
-
+                                                                 Background="#25FFFFFF" BorderThickness="0" Padding="8,5"
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center">
+                                                            <TextBox.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                                </Style>
+                                                            </TextBox.Resources>
+                                                        </TextBox>
                                                         
-
                                                         <TextBox Grid.Column="2" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
+                                                                 Background="#25FFFFFF" BorderThickness="0" Padding="8,5"
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center">
+                                                            <TextBox.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                                </Style>
+                                                            </TextBox.Resources>
+                                                        </TextBox>
 
-                                                                 Background="#20000000" BorderBrush="#40FFFFFF" BorderThickness="1" Padding="2"
-
-                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center"/>
-
-
-
-                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding EditModeVisibility}">
-
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding EditModeVisibility}" Margin="10,0,0,0">
                                                             <Button Click="SaveVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Save">
-
-                                                                <TextBlock Text="&#x2713;" Foreground="#4ADE80" FontSize="16" FontWeight="Bold"/>
-
+                                                                <Border Background="#204ADE80" CornerRadius="8" Width="32" Height="32">
+                                                                    <TextBlock Text="&#x2713;" Foreground="#4ADE80" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
                                                             </Button>
-
                                                             <Button Click="CancelVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Cancel">
-
-                                                                <TextBlock Text="&#x2715;" Foreground="#F87171" FontSize="16" FontWeight="Bold"/>
-
+                                                                <Border Background="#20FF453A" CornerRadius="8" Width="32" Height="32">
+                                                                    <TextBlock Text="&#x2715;" Foreground="#F87171" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
                                                             </Button>
-
                                                         </StackPanel>
 
-
-
-                                                        <TextBlock Grid.Column="1" Text="&#x203A;" Foreground="White" Opacity="0.3" Margin="10,0,10,0" VerticalAlignment="Center"/>
-
+                                                        <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" Margin="10,0,10,0" VerticalAlignment="Center"/>
                                                     </Grid>
-
                                                 </Border>
-
                                             </DataTemplate>
-
                                         </ItemsControl.ItemTemplate>
-
                                     </ItemsControl>
-
                                 </StackPanel>
-
                             </ScrollViewer>
 
 
@@ -3066,12 +2981,17 @@
                                      <Border Background="#15FFFFFF" CornerRadius="15" Padding="25" Margin="0,0,0,30" BorderBrush="#20FFFFFF" BorderThickness="1">
                                          <StackPanel>
                                              <Grid>
-                                                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                 <Grid.ColumnDefinitions>
+                                                     <ColumnDefinition Width="*"/>
+                                                     <ColumnDefinition Width="Auto"/>
+                                                 </Grid.ColumnDefinitions>
+                                                 
+                                                 <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                      <TextBlock Text="Activation Trigger" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
                                                      <TextBlock Text="Set your global shortcut. Hold any key or mouse button to configure." Foreground="White" Opacity="0.5" FontSize="13" Margin="0,5,0,0"/>
                                                  </StackPanel>
 
-                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                 <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0">
                                                      <Border x:Name="BorderActivationTrigger" 
                                                              Background="#20FFFFFF" 
                                                              CornerRadius="12" 
@@ -3092,9 +3012,9 @@
                                                                 FontSize="11" 
                                                                 FontWeight="Bold" 
                                                                 Cursor="Hand" 
-                                                                VerticalAlignment="Center" 
-                                                                Margin="20,0,0,0"
-                                                                Opacity="0.7"/>
+                                                                 HorizontalAlignment="Center" 
+                                                                 Margin="0,8,0,0"
+                                                                 Opacity="0.7"/>
                                                  </StackPanel>
                                              </Grid>
 
@@ -3133,7 +3053,7 @@
 
                                         </Border>
 
-                                        <Border x:Name="BtnDirectType" MouseLeftButtonDown="DirectType_Click" Grid.Column="2" Background="#10FFFFFF" CornerRadius="10" Padding="15" Cursor="Hand" Opacity="0.6">
+                                        <Border x:Name="BtnDirectType" MouseLeftButtonDown="DirectType_Click" Grid.Column="2" Background="#10FFFFFF" BorderThickness="2" CornerRadius="10" Padding="15" Cursor="Hand" Opacity="0.6">
 
                                              <StackPanel>
 
@@ -3263,9 +3183,9 @@
 
                                      <StackPanel Margin="0,0,0,20">
 
-                                         <TextBlock Text="&#x1F512; Security &amp; Backup" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                                         <TextBlock Text="&#x1F512; Security &amp; Backup" Foreground="White" FontWeight="Bold" FontSize="20" Margin="0,0,0,5"/>
 
-                                         <TextBlock Text="A 'Vault' is a total snapshot of your environment. We secure:" Foreground="White" Opacity="0.6" FontSize="12" Margin="0,0,0,15"/>
+                                         <TextBlock Text="A 'Vault' is a total snapshot of your environment. We secure:" Foreground="White" Opacity="0.7" FontSize="15" Margin="0,0,0,15"/>
 
                                          
 
@@ -3283,21 +3203,21 @@
 
                                               <StackPanel>
 
-                                                  <TextBlock Text="&#x2022; Voice Studio: Speed, Pitch &amp; Selection" Foreground="#00FF90" FontSize="11"/>
+                                                  <TextBlock Text="&#x2022; Voice Studio: Speed, Pitch &amp; Selection" Foreground="#00FF90" FontSize="15"/>
 
-                                                  <TextBlock Text="&#x2022; Intelligence: API Keys &amp; AI Models" Foreground="#00FF90" FontSize="11" Margin="0,5,0,0"/>
+                                                  <TextBlock Text="&#x2022; Intelligence: API Keys &amp; AI Models" Foreground="#00FF90" FontSize="15" Margin="0,8,0,0"/>
 
-                                                  <TextBlock Text="&#x2022; Setup: Mic ID &amp; Calibration" Foreground="#00FF90" FontSize="11" Margin="0,5,0,0"/>
+                                                  <TextBlock Text="&#x2022; Setup: Mic ID &amp; Calibration" Foreground="#00FF90" FontSize="15" Margin="0,8,0,0"/>
 
                                               </StackPanel>
 
                                                <StackPanel Grid.Column="1">
 
-                                                  <TextBlock Text="&#x2022; Shortcuts: Hotkeys &amp; Mouse Buttons" Foreground="#00FF90" FontSize="11"/>
+                                                  <TextBlock Text="&#x2022; Shortcuts: Hotkeys &amp; Mouse Buttons" Foreground="#00FF90" FontSize="15"/>
 
-                                                  <TextBlock Text="&#x2022; Vocabulary: Corrections &amp; Hints" Foreground="#00FF90" FontSize="11" Margin="0,5,0,0"/>
+                                                  <TextBlock Text="&#x2022; Vocabulary: Corrections &amp; Hints" Foreground="#00FF90" FontSize="15" Margin="0,8,0,0"/>
 
-                                                  <TextBlock Text="&#x2022; Workflow: Auto-Submit &amp; Mode" Foreground="#00FF90" FontSize="11" Margin="0,5,0,0"/>
+                                                  <TextBlock Text="&#x2022; Workflow: Auto-Submit &amp; Mode" Foreground="#00FF90" FontSize="15" Margin="0,8,0,0"/>
 
                                               </StackPanel>
 
@@ -3329,7 +3249,7 @@
 
                                                       <StackPanel Grid.Column="1" VerticalAlignment="Center">
 
-                                                          <TextBlock Text="BACKUP DIRECTORY" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold"/>
+                                                          <TextBlock Text="BACKUP DIRECTORY" Foreground="White" Opacity="0.4" FontSize="12" FontWeight="Bold"/>
 
                                                           <TextBlock x:Name="TxtBackupPath" Text="C:\Users\...\CosmoWhisper\Backups" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
 
@@ -3353,72 +3273,76 @@
 
                                                   
 
-                                                  <Grid>
+                                                   <Grid Margin="0,0,0,5">
+                                                       <Grid.RowDefinitions>
+                                                           <RowDefinition Height="Auto"/>
+                                                           <RowDefinition Height="Auto"/>
+                                                       </Grid.RowDefinitions>
+                                                       <Grid.ColumnDefinitions>
+                                                           <ColumnDefinition Width="*"/>
+                                                           <ColumnDefinition Width="Auto"/>
+                                                       </Grid.ColumnDefinitions>
 
-                                                      <StackPanel>
+                                                       <StackPanel Grid.Row="0" Grid.Column="0">
+                                                           <TextBlock Text="Local Backup" Foreground="White" FontWeight="Bold" FontSize="18"/>
+                                                           <TextBlock Text="Last full snapshot size" Foreground="White" Opacity="0.5" FontSize="11"/>
+                                                       </StackPanel>
 
-                                                          <TextBlock Text="Local Backup" Foreground="White" FontWeight="Bold"/>
+                                                       <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,15,0">
+                                                           <TextBlock Text="256-BIT AES ENCRYPTION" Foreground="#00FF90" FontWeight="Bold" FontSize="14" HorizontalAlignment="Right"/>
+                                                           <TextBlock Text="SECURE BACKUP" Foreground="#00FF90" Opacity="0.8" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                       </StackPanel>
 
-                                                          <TextBlock Text="Last full snapshot size" Foreground="White" Opacity="0.5" FontSize="11"/>
+                                                       <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                                                            <!-- RESTORE BUTTON -->
+                                                            <Button x:Name="BtnRestore" Content="Restore from Vault" Click="BtnRestore_Click" Padding="15,10" Margin="0,0,10,0" BorderThickness="0" Background="#20FFFFFF" Foreground="White">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                                                            <TextBlock x:Name="btnText" Text="{TemplateBinding Content}" 
+                                                                                       Foreground="{TemplateBinding Foreground}" 
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ThemeSurfaceBrush}"/>
+                                                                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ThemeGlowBrush}"/>
+                                                                                <Setter TargetName="border" Property="BorderThickness" Value="1"/>
+                                                                                <Setter TargetName="btnText" Property="Foreground" Value="White"/>
+                                                                            </Trigger>
+                                                                            <Trigger Property="IsPressed" Value="True">
+                                                                                <Setter TargetName="border" Property="Background" Value="#10FFFFFF"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
 
-                                                      </StackPanel>
-
-                                                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-
-                                                          <TextBlock Text="256-BIT" Foreground="#00FF90" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
-
-                                                          <TextBlock Text="AES" Foreground="#00FF90" Opacity="0.7" FontSize="10" VerticalAlignment="Bottom" Margin="2,0,15,4"/>
-
-                                                           <!-- RESTORE BUTTON -->
-                                                           <Button x:Name="BtnRestore" Content="Restore from Vault" Click="BtnRestore_Click" Padding="15,10" Margin="0,0,10,0" BorderThickness="0" Background="#20FFFFFF" Foreground="White">
-                                                               <Button.Template>
-                                                                   <ControlTemplate TargetType="Button">
-                                                                       <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                                                                           <TextBlock x:Name="btnText" Text="{TemplateBinding Content}" 
-                                                                                      Foreground="{TemplateBinding Foreground}" 
-                                                                                      HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                                                       </Border>
-                                                                       <ControlTemplate.Triggers>
-                                                                           <Trigger Property="IsMouseOver" Value="True">
-                                                                               <!-- Changed from semi-transparent white to a solid Theme Color to ensure visibility -->
-                                                                               <Setter TargetName="border" Property="Background" Value="{DynamicResource ThemeSurfaceBrush}"/>
-                                                                               <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ThemeGlowBrush}"/>
-                                                                               <Setter TargetName="border" Property="BorderThickness" Value="1"/>
-                                                                               <Setter TargetName="btnText" Property="Foreground" Value="White"/>
-                                                                           </Trigger>
-                                                                           <Trigger Property="IsPressed" Value="True">
-                                                                               <Setter TargetName="border" Property="Background" Value="#10FFFFFF"/>
-                                                                           </Trigger>
-                                                                       </ControlTemplate.Triggers>
-                                                                   </ControlTemplate>
-                                                               </Button.Template>
-                                                           </Button>
-
-                                                           <!-- BACKUP BUTTON -->
-                                                           <Button x:Name="BtnBackupNow" Content="Back up now" Click="BtnBackupNow_Click" FontWeight="Bold" Padding="15,10" BorderThickness="0" Background="{DynamicResource ThemeAccentBrush}" Foreground="White">
-                                                               <Button.Template>
-                                                                   <ControlTemplate TargetType="Button">
-                                                                       <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                                                                           <TextBlock x:Name="btnText" Text="{TemplateBinding Content}" 
-                                                                                      Foreground="{TemplateBinding Foreground}" 
-                                                                                      HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                                       </Border>
-                                                                       <ControlTemplate.Triggers>
-                                                                           <Trigger Property="IsMouseOver" Value="True">
-                                                                               <Setter TargetName="border" Property="Background" Value="{DynamicResource ThemeGlowBrush}"/>
-                                                                               <Setter TargetName="btnText" Property="Foreground" Value="White"/>
-                                                                           </Trigger>
-                                                                           <Trigger Property="IsPressed" Value="True">
-                                                                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
-                                                                           </Trigger>
-                                                                       </ControlTemplate.Triggers>
-                                                                   </ControlTemplate>
-                                                               </Button.Template>
-                                                           </Button>
-
-                                                      </StackPanel>
-
-                                                  </Grid>
+                                                            <!-- BACKUP BUTTON -->
+                                                            <Button x:Name="BtnBackupNow" Content="Back up now" Click="BtnBackupNow_Click" FontWeight="Bold" Padding="15,10" BorderThickness="0" Background="{DynamicResource ThemeAccentBrush}" Foreground="White">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                                                            <TextBlock x:Name="btnText" Text="{TemplateBinding Content}" 
+                                                                                       Foreground="{TemplateBinding Foreground}" 
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ThemeSurfaceBrush}"/>
+                                                                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ThemeGlowBrush}"/>
+                                                                                <Setter TargetName="border" Property="BorderThickness" Value="1"/>
+                                                                                <Setter TargetName="btnText" Property="Foreground" Value="White"/>
+                                                                            </Trigger>
+                                                                            <Trigger Property="IsPressed" Value="True">
+                                                                                <Setter TargetName="border" Property="Background" Value="#40000000"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+                                                       </StackPanel>
+                                                   </Grid>
 
                                               </StackPanel>
 
@@ -3490,32 +3414,23 @@
 
                                             <TextBlock Text="&#x1F4C5; Date &amp; Time Formatting" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
-                                            <TextBlock Text="Choose the format for inserted dates (e.g. via 'Insert Date' command)." Foreground="White" Opacity="0.5" FontSize="12" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Date Format" Foreground="White" Opacity="0.5" FontSize="12" Margin="0,0,0,5"/>
+                                            <ComboBox x:Name="ComboDateFormat" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" Margin="0,0,0,15" SelectionChanged="ComboDateFormat_SelectionChanged">
+                                                 <ComboBoxItem Content="31/01/2026 (UK/EU)" Tag="dd/MM/yyyy"/>
+                                                 <ComboBoxItem Content="01/31/2026 (US)" Tag="MM/dd/yyyy"/>
+                                                 <ComboBoxItem Content="2026-01-31 (ISO)" Tag="yyyy-MM-dd"/>
+                                                 <ComboBoxItem Content="31 January 2026 (Long UK)" Tag="dd MMMM yyyy"/>
+                                                 <ComboBoxItem Content="January 31, 2026 (Long US)" Tag="MMMM dd, yyyy"/>
+                                                 <ComboBoxItem Content="Sat, 31 Jan 2026 (Short Text)" Tag="ddd, dd MMM yyyy"/>
+                                                 <ComboBoxItem Content="Saturday, 31 January 2026 (Full)" Tag="dddd, dd MMMM yyyy"/>
+                                            </ComboBox>
 
-                                            <ComboBox x:Name="ComboDateTime" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboDateTime_SelectionChanged">
-
-                                                <ComboBoxItem Content="31/01/2026 (UK/EU)" Tag="dd/MM/yyyy"/>
-
-                                                <ComboBoxItem Content="01/31/2026 (US)" Tag="MM/dd/yyyy"/>
-
-                                                <ComboBoxItem Content="2026-01-31 (ISO)" Tag="yyyy-MM-dd"/>
-
-                                                <ComboBoxItem Content="31 January 2026 (Long UK)" Tag="dd MMMM yyyy"/>
-
-                                                <ComboBoxItem Content="January 31, 2026 (Long US)" Tag="MMMM dd, yyyy"/>
-
-                                                <ComboBoxItem Content="Sat, 31 Jan 2026 (Short Text)" Tag="ddd, dd MMM yyyy"/>
-
-                                                <ComboBoxItem Content="Saturday, 31 January 2026 (Full)" Tag="dddd, dd MMMM yyyy"/>
-
-                                                <ComboBoxItem Content="17:30 (24 Hour Time)" Tag="HH:mm"/>
-
-                                                <ComboBoxItem Content="5:30 PM (12 Hour Time)" Tag="h:mm tt"/>
-
-                                                <ComboBoxItem Content="31/01/2026 17:30 (Date &amp; Time UK)" Tag="dd/MM/yyyy HH:mm"/>
-
-                                                <ComboBoxItem Content="01/31/2026 5:30 PM (Date &amp; Time US)" Tag="MM/dd/yyyy h:mm tt"/>
-
+                                            <TextBlock Text="Time Format" Foreground="White" Opacity="0.5" FontSize="12" Margin="0,0,0,5"/>
+                                            <ComboBox x:Name="ComboTimeFormat" SelectedIndex="0" Padding="10" Foreground="White" BorderThickness="0" SelectionChanged="ComboTimeFormat_SelectionChanged">
+                                                 <ComboBoxItem Content="17:30 (24 Hour Time)" Tag="HH:mm"/>
+                                                 <ComboBoxItem Content="5:30 PM (12 Hour Time)" Tag="h:mm tt"/>
+                                                 <ComboBoxItem Content="17:30:45 (24 Hour with Seconds)" Tag="HH:mm:ss"/>
+                                                 <ComboBoxItem Content="5:30:45 PM (12 Hour with Seconds)" Tag="h:mm:ss tt"/>
                                             </ComboBox>
 
                                         </StackPanel>
@@ -4026,7 +3941,7 @@
 
                                             <Border Background="#10FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,20">
 
-                                                <TextBox x:Name="TxtLoginEmail" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14"/>
+                                                <TextBox x:Name="TxtLoginEmail" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14"/>
 
                                             </Border>
 
@@ -4036,7 +3951,7 @@
 
                                             <Border Background="#10FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,30">
 
-                                                <PasswordBox x:Name="TxtLoginPassword" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14"/>
+                                                <PasswordBox x:Name="TxtLoginPassword" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14"/>
 
                                             </Border>
 
@@ -4272,7 +4187,11 @@
 
             </Border>
 
-            <Border Width="400" MaxHeight="550" Height="Auto" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border x:Name="VaultContent" Width="400" MaxHeight="550" Height="Auto" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                </Border.RenderTransform>
+                <Border.RenderTransformOrigin>0.5,0.5</Border.RenderTransformOrigin>
 
                 <Border.Effect>
 
@@ -4292,7 +4211,7 @@
 
                     <TextBlock x:Name="LblVaultName" Text="Backup Name (Optional)" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
 
-                    <TextBox x:Name="TxtVaultName" Height="40" Background="#10FFFFFF" Foreground="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0" Margin="0,0,0,15">
+                    <TextBox x:Name="TxtVaultName" Height="40" Background="#10FFFFFF" Foreground="White" CaretBrush="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0" Margin="0,0,0,15">
 
                          <TextBox.Resources>
 
@@ -4310,7 +4229,7 @@
 
                     <TextBlock Text="Vault Password" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
 
-                    <PasswordBox x:Name="TxtVaultPassword" Height="40" Background="#10FFFFFF" Foreground="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0">
+                    <PasswordBox x:Name="TxtVaultPassword" Height="40" Background="#10FFFFFF" Foreground="White" CaretBrush="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0">
 
                          <PasswordBox.Resources>
 
@@ -4368,7 +4287,7 @@
 
 
 
-        <Grid x:Name="UniversalDialog" Visibility="Collapsed" Opacity="0">
+        <Grid x:Name="UniversalDialog" Visibility="Collapsed" Opacity="0" Panel.ZIndex="200">
 
             <!-- Background Backdrop with Blur -->
 
@@ -4386,7 +4305,7 @@
 
             <!-- Dialog Box -->
 
-            <Border x:Name="DialogContent" Width="420" MinHeight="220" MaxHeight="500" Background="#1C1E32" CornerRadius="28" BorderBrush="#35FFFFFF" BorderThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border x:Name="DialogContent" Width="440" MinHeight="220" MaxHeight="650" Background="#1C1E32" CornerRadius="28" BorderBrush="#35FFFFFF" BorderThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="0,0,0,10">
 
                 <Border.Effect>
 
@@ -4563,6 +4482,10 @@
     </Grid>
 
 </Window>
+
+
+
+
 
 
 

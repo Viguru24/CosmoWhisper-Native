@@ -151,6 +151,13 @@ namespace CosmoWhisper.Controllers
                 view.BeginAnimation(UIElement.OpacityProperty, fadeIn);
                 view.BeginAnimation(FrameworkElement.MarginProperty, slideUp);
 
+                // Ensure the view scrolls to the top when switched
+                if (view is ScrollViewer sv)
+                {
+                    sv.ScrollToVerticalOffset(0);
+                    sv.UpdateLayout();
+                }
+
                 if (activeBtn != null) SetButtonActive(activeBtn);
             }
             catch (Exception ex)

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Linq;
 using System.Threading.Tasks;
 using CosmoWhisper.Managers;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper;
 
@@ -19,10 +20,16 @@ public partial class App : System.Windows.Application
         // 1. Register the protocol handler (idempotent)
         Managers.ProtocolHandler.Register();
 
-        // Warm up SoundManager Early
+        // Warm up Services Early
         _ = Task.Run(() =>
         {
-            try { var sm = SoundManager.Shared; } catch { }
+            try 
+            { 
+                _ = SoundManager.Shared;
+                _ = AIService.Shared;
+                _ = CommandController.Shared;
+            } 
+            catch { }
         });
 
         // 2. Handle protocol URLs

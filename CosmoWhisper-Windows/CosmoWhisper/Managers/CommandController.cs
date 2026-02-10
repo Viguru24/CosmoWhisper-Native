@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.IO;
 using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
@@ -66,6 +67,8 @@ namespace CosmoWhisper.Managers
             {"spotify", "spotify"},
             {"vlc", "vlc"},
             {"discord", "discord"},
+            {"whatsapp", "whatsapp:"},
+            {"whats app", "whatsapp:"},
             {"browser", "chrome"},
             {"explorer", "explorer"},
             {"file explorer", "explorer"},
@@ -78,17 +81,28 @@ namespace CosmoWhisper.Managers
 
         public async Task<bool> Handle(string text)
         {
+            // Check for Macros first (ITEM 4)
+            if (await MacroManager.Shared.TryExecuteMacro(text)) return true;
+
             string cmd = Regex.Replace(text.ToLower(), @"[^\w\s]", "").Trim();
 
             if (string.IsNullOrWhiteSpace(cmd)) return false;
 
-            try { System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cosmo_commands.txt"), $"{DateTime.Now}: Processing '{cmd}' (Original: '{text}')\n"); } catch { }
+            // Debug logging
+            LogToFile($"[CommandController] Original: '{text}' | Processed: '{cmd}'");
 
             // Normalize "openapp" -> "open app"
             if (cmd.StartsWith("open") && !cmd.StartsWith("open ") && cmd.Length > 4)
             {
                 cmd = "open " + cmd.Substring(4);
             }
+            
+            // Normalize "launchapp" -> "launch app"
+            if (cmd.StartsWith("launch") && !cmd.StartsWith("launch ") && cmd.Length > 6)
+            {
+                cmd = "launch " + cmd.Substring(6);
+            }
+
 
             // Helper for trigger matching
             bool IsTriggered(params string[] triggers)
@@ -136,13 +150,13 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("insert date", "todays date", "current date"))
             {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
-                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false);
+                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt) + " ", false, false);
                 CommandExecuted?.Invoke(); return true;
             }
             if (IsTriggered("insert time", "current time"))
             {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
-                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt), false, false);
+                await InputController.Shared.PasteText(DateTime.Now.ToString(fmt) + " ", false, false);
                 CommandExecuted?.Invoke(); return true;
             }
             if (IsTriggered("insert date and time"))
@@ -190,8 +204,27 @@ namespace CosmoWhisper.Managers
             // --- 7. APP LAUNCHING ---
             if (cmd.StartsWith("open ") || cmd.StartsWith("launch "))
             {
-                string app = cmd.Replace("open ", "").Replace("launch ", "").Trim();
-                bool ok = LaunchApp(app);
+                string appQuery = cmd.Replace("open ", "").Replace("launch ", "").Trim();
+                LogToFile($"[CommandController] Attempting to launch app: '{appQuery}'");
+                
+                // 1. Try exact match
+                bool ok = await LaunchApp(appQuery);
+                
+                // 2. Try identifying the app name within a longer sentence (e.g. "Launch WhatsApp is not working")
+                if (!ok)
+                {
+                    var knownApp = _appShortcuts.Keys
+                        .OrderByDescending(k => k.Length)
+                        .FirstOrDefault(k => appQuery.StartsWith(k + " ") || appQuery == k);
+                        
+                    if (knownApp != null)
+                    {
+                        LogToFile($"[CommandController] Found partial match: '{knownApp}' in '{appQuery}'");
+                        ok = await LaunchApp(knownApp);
+                    }
+                }
+                
+                LogToFile($"[CommandController] Launch result: {ok}");
                 if (ok) CommandExecuted?.Invoke();
                 return ok;
             }
@@ -329,23 +362,119 @@ namespace CosmoWhisper.Managers
             return false;
         }
 
-        private bool LaunchApp(string name)
+        private string NormalizeAppName(string name)
         {
-            if (_appShortcuts.TryGetValue(name, out string app))
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(app) { UseShellExecute = true });
-                    return true;
-                }
-                catch { }
-            }
+            if (string.IsNullOrEmpty(name)) return "";
+            // Remove spaces and non-alphanumeric characters for fuzzy matching
+            return Regex.Replace(name.ToLower(), @"[^a-z0-9]", "");
+        }
+
+        private string FindAppInStartMenu(string appName)
+        {
             try
             {
-                Process.Start(new ProcessStartInfo(name) { UseShellExecute = true });
+                string normSearch = NormalizeAppName(appName);
+                if (string.IsNullOrEmpty(normSearch)) return null;
+
+                // Common locations for Start Menu shortcuts
+                string[] locations = {
+                    Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
+                    Environment.GetFolderPath(Environment.SpecialFolder.Programs)
+                };
+
+                var candidates = new List<(string path, int score)>();
+
+                foreach (var loc in locations)
+                {
+                    if (string.IsNullOrEmpty(loc) || !Directory.Exists(loc)) continue;
+
+                    // Search for .lnk files (shortcuts)
+                    var files = Directory.GetFiles(loc, "*.lnk", SearchOption.AllDirectories);
+                    
+                    foreach (var file in files)
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(file);
+                        string normFile = NormalizeAppName(fileName);
+
+                        // SCORING LOGIC:
+                        // 100: Exact match
+                        if (fileName.Equals(appName, StringComparison.OrdinalIgnoreCase)) candidates.Add((file, 100));
+                        // 90: Normalized exact match (e.g., "Cosmo Vault" == "CosmoVault")
+                        else if (normFile == normSearch) candidates.Add((file, 90));
+                        // 80: Starts with
+                        else if (fileName.StartsWith(appName, StringComparison.OrdinalIgnoreCase)) candidates.Add((file, 80));
+                        // 70: Normalized starts with
+                        else if (normFile.StartsWith(normSearch)) candidates.Add((file, 70));
+                        // 60: Contains
+                        else if (fileName.IndexOf(appName, StringComparison.OrdinalIgnoreCase) >= 0) candidates.Add((file, 60));
+                        // 50: Normalized contains
+                        else if (normFile.Contains(normSearch)) candidates.Add((file, 50));
+                    }
+                }
+
+                var bestMatch = candidates.OrderByDescending(c => c.score).FirstOrDefault();
+                if (bestMatch.path != null)
+                {
+                    LogToFile($"[SearchStartMenu] Found fuzzy match (score {bestMatch.score}): {bestMatch.path}");
+                    return bestMatch.path;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"[SearchStartMenu] Error: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private async Task<bool> LaunchApp(string name)
+        {
+            string target = null;
+            
+            // 1. Check hardcoded dictionary (Exact)
+            if (_appShortcuts.TryGetValue(name.ToLower(), out string shortcut))
+            {
+                target = shortcut;
+            }
+
+            // 1b. Check hardcoded dictionary (Normalized)
+            if (target == null)
+            {
+                string normSearch = NormalizeAppName(name);
+                target = _appShortcuts
+                    .Where(kvp => NormalizeAppName(kvp.Key) == normSearch)
+                    .Select(kvp => kvp.Value)
+                    .FirstOrDefault();
+            }
+            
+            // 2. Dynamic Search in Start Menu (Background Task)
+            if (target == null)
+            {
+                target = await Task.Run(() => FindAppInStartMenu(name));
+            }
+
+            // 3. Try to launch whatever we found (or the original name as a last resort)
+            string launchPath = target ?? name;
+            
+            try
+            {
+                Process.Start(new ProcessStartInfo(launchPath) { UseShellExecute = true });
                 return true;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                LogToFile($"[LaunchApp] Error opening '{launchPath}': {ex.Message}");
+                
+                // Show pop-up if the app absolutely could not be opened
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    System.Windows.MessageBox.Show($"The application '{name}' could not be opened or found.", 
+                        "CosmoWhisper - App Launch Error", 
+                        System.Windows.MessageBoxButton.OK, 
+                        System.Windows.MessageBoxImage.Warning);
+                });
+                
+                return false;
+            }
         }
 
         private async Task ProcessAI(string context, string prompt)
@@ -404,12 +533,14 @@ namespace CosmoWhisper.Managers
             }
         }
 
+
         private void LogToFile(string msg)
         {
             try
             {
-                string path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cosmo_commands.txt");
-                System.IO.File.AppendAllText(path, $"{DateTime.Now}: {msg}\n");
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                Directory.CreateDirectory(logPath);
+                File.AppendAllText(Path.Combine(logPath, "command_debug.txt"), $"{DateTime.Now}: {msg}\n");
             }
             catch { }
         }
