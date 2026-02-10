@@ -51,7 +51,7 @@ $installerPath = Join-Path $setupRoot "publish\CosmoSetup.exe"
 Write-Host $installerPath
 
 # --- Deploy Archiving ---
-$version = "2.2.17"
+$version = "2.2.18"
 $deployDir = Join-Path $scriptPath "Deploy"
 if (-not (Test-Path $deployDir)) { New-Item $deployDir -ItemType Directory }
 $versionedInstaller = Join-Path $deployDir "CosmoWhisper_Installer_v$version.exe"
