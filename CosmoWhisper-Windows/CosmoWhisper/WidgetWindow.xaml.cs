@@ -26,6 +26,7 @@ namespace CosmoWhisper
         private Storyboard _soundWaveStoryboard;
         private Storyboard _rippleStoryboard;
         private Storyboard _idleBreathingStoryboard;
+        private Storyboard _thinkingStoryboard;
         private SolidColorBrush _cachedWhiteBrush;
         private SolidColorBrush _cachedBlueBrush;
 
@@ -33,10 +34,10 @@ namespace CosmoWhisper
         {
             InitializeComponent();
 
-            // Apply blur
+            // Apply Glassmorphism (ITEM 1)
             this.SourceInitialized += (s, e) =>
             {
-                // BlurManager.ApplyMica(this); // Disabled to fix black corners on transparent widget
+                // WindowEffectManager.ApplyEffect(this, BackdropType.Mica); // Disabled to prevent square corners
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
                 UpdateTopmostState();
@@ -54,6 +55,7 @@ namespace CosmoWhisper
             _soundWaveStoryboard = (Storyboard)FindResource("SoundWaveAnimation");
             _rippleStoryboard = (Storyboard)FindResource("RippleAnimation");
             _idleBreathingStoryboard = (Storyboard)FindResource("IdleBreathingAnimation");
+            _thinkingStoryboard = (Storyboard)FindResource("ThinkingAnimation");
 
             // Start animations
             _idleBreathingStoryboard.Begin();
@@ -168,6 +170,10 @@ namespace CosmoWhisper
             var pref = PreferenceManager.Shared.Preferences;
             if (pref.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {pref.MouseButton}";
             else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
+
+            // WARM UP: Initialize audio graph immediately so the first request is instant
+            // and the pre-roll buffer starts filling.
+            AudioRecorder.Shared.StartMonitoring();
         }
 
         private void LoadPosition()
@@ -253,12 +259,24 @@ namespace CosmoWhisper
 
             Dispatcher.Invoke(async () =>
             {
-                // Returns to neutral state if not recording
-                if (!isRecordingActive)
+                if (text.Contains("Thinking"))
                 {
+                    _thinkingStoryboard?.Begin();
+                    ThinkingAura.Opacity = 1;
+                    SetTheme(Colors.MediumPurple, "THINKING");
+                }
+                else
+                {
+                    _thinkingStoryboard?.Stop();
+                    ThinkingAura.Opacity = 0;
+                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
+
                     // UI provides feedback via Orb
-                    var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
-                    OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                    if (!isRecordingActive)
+                    {
+                        var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
+                        OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                    }
                 }
 
                 await Task.Delay(2000);
@@ -310,7 +328,7 @@ namespace CosmoWhisper
             }
 
             if (statusText == "ERROR") OrbMain.Fill = Brushes.OrangeRed;
-            if (statusText.Contains("THINKING")) OrbMain.Fill = Brushes.Gold;
+            if (statusText.Contains("THINKING")) OrbMain.Fill = new SolidColorBrush(Colors.MediumPurple);
         }
 
         public void ApplyWidgetTransparency()

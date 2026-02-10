@@ -6,7 +6,7 @@
         xmlns:Managers="clr-namespace:CosmoWhisper.Managers"
         mc:Ignorable="d"
         Title="CosmoWhisper Widget" 
-        Height="80" Width="240"
+        Height="100" Width="260"
         WindowStyle="None"
         ResizeMode="NoResize"
         AllowsTransparency="True"
@@ -16,6 +16,10 @@
         WindowStartupLocation="Manual"
         Left="500" Top="20"
         MouseDown="Window_MouseDown">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="0" CornerRadius="0" CaptionHeight="0" ResizeBorderThickness="0" />
+    </WindowChrome.WindowChrome>
     
     <Window.Resources>
         <!-- Idle Breathing -->
@@ -48,6 +52,14 @@
             <DoubleAnimation Storyboard.TargetName="Wave5" Storyboard.TargetProperty="Height" From="14" To="38" Duration="0:0:0.55" AutoReverse="True" BeginTime="0:0:0.08"/>
         </Storyboard>
 
+        <!-- AI Thinking Glow -->
+        <Storyboard x:Key="ThinkingAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="ThinkingAura" Storyboard.TargetProperty="Opacity" From="0.1" To="0.9" Duration="0:0:1" AutoReverse="True"/>
+            <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleX" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
+            <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleY" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
+            <DoubleAnimation Storyboard.TargetName="ThinkingAuraRotation" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:4"/>
+        </Storyboard>
+
         <!-- Command Confirmed Ripple -->
         <Storyboard x:Key="RippleAnimation">
             <DoubleAnimation Storyboard.TargetName="RippleEffect" Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.8"/>
@@ -56,7 +68,7 @@
         </Storyboard>
     </Window.Resources>
 
-    <Grid x:Name="RootGrid" Margin="0">
+    <Grid x:Name="RootGrid" Margin="10">
         <Grid.LayoutTransform>
             <ScaleTransform ScaleX="{Binding Path=Preferences.UIScale, Source={x:Static Managers:PreferenceManager.Shared}}" 
                            ScaleY="{Binding Path=Preferences.UIScale, Source={x:Static Managers:PreferenceManager.Shared}}"/>
@@ -64,6 +76,9 @@
         
         <!-- Capsule Background -->
         <Border CornerRadius="30" BorderThickness="1" x:Name="MainBorder">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.4" ShadowDepth="2"/>
+            </Border.Effect>
             <Border.Background>
                 <RadialGradientBrush GradientOrigin="0.5,0.2" Center="0.5,0.2" RadiusX="1.5" RadiusY="1">
                     <GradientStop Color="#FF0B1026" Offset="0"/>
@@ -129,6 +144,24 @@
 
                     <!-- Liquid Mic Orb -->
                     <Grid x:Name="MicControl" Cursor="Hand" MouseLeftButtonDown="MicControl_MouseLeftButtonDown" VerticalAlignment="Center" Margin="2,0,8,0">
+                        <Grid x:Name="ThinkingAura" Opacity="0">
+                            <Ellipse Width="46" Height="46">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#88A000FF" Offset="0"/>
+                                        <GradientStop Color="#00A000FF" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                                <Ellipse.Effect><BlurEffect Radius="25"/></Ellipse.Effect>
+                            </Ellipse>
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="ThinkingAuraScale" CenterX="23" CenterY="23"/>
+                                    <RotateTransform x:Name="ThinkingAuraRotation" CenterX="23" CenterY="23"/>
+                                </TransformGroup>
+                            </Grid.RenderTransform>
+                        </Grid>
+
                         <Ellipse x:Name="OrbCorona" Width="44" Height="44" Opacity="0">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>

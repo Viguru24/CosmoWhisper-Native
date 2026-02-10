@@ -88,6 +88,9 @@ namespace CosmoWhisper.Managers
         private const int PreRollDurationMs = 500;
         private AudioFrameInputNode? _preRollInputNode;
 
+        private float _lastRaw = 0;
+        private float _lastFiltered = 0;
+
         // --- WIN32 INTEROP (ITEM 7) ---
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -111,7 +114,7 @@ namespace CosmoWhisper.Managers
                 var title = new System.Text.StringBuilder(256);
                 GetWindowText(hWnd, title, 256);
 
-                return $"Application: {procName}, Window: '{title}'";
+                return $"{procName} ({title})";
             }
             catch { return "Unknown App"; }
         }
@@ -179,6 +182,38 @@ namespace CosmoWhisper.Managers
                     float* dataInFloat = (float*)dataInBytes;
                     uint samples = capacityInBytes / sizeof(float);
                     if (samples == 0) return;
+
+                    // --- ITEM 5: Audio Deep-Cleaning (Deep-Processing) ---
+                    // 1. High-Pass Filter (Simple DC Offset / Background Hum Removal)
+                    // 2. Local AGC (Ensure quiet voices are boosted before Whisper)
+                    float alpha = 0.98f; // ~100Hz Cutoff @ 44.1kHz
+                    float maxAbs = 0.001f;
+                    float noiseGateThreshold = 0.005f;
+
+                    for (int i = 0; i < samples; i++)
+                    {
+                        // High-Pass Filter
+                        float raw = dataInFloat[i];
+                        float filtered = alpha * (_lastFiltered + raw - _lastRaw);
+                        _lastRaw = raw;
+                        _lastFiltered = filtered;
+                        
+                        // Noise Gate
+                        if (Math.Abs(filtered) < noiseGateThreshold) filtered = 0;
+
+                        // Overwrite buffer with cleaned audio
+                        dataInFloat[i] = filtered;
+
+                        float abs = Math.Abs(filtered);
+                        if (abs > maxAbs) maxAbs = abs;
+                    }
+
+                    // Simple AGC: If volume is consistent but low, boost it (Max 4x)
+                    if (maxAbs < 0.3f && maxAbs > 0.01f)
+                    {
+                        float boost = Math.Min(4.0f, 0.5f / maxAbs);
+                        for (int i = 0; i < samples; i++) dataInFloat[i] *= boost;
+                    }
 
                     float sum = 0;
                     for (int i = 0; i < samples; i++)
@@ -448,6 +483,10 @@ namespace CosmoWhisper.Managers
 
             try
             {
+                string appContextFull = GetCurrentFocusedApp();
+                string procName = appContextFull.Split(' ')[0]; // Extract just the process name
+                VocabularyManager.Shared.SetContext(procName);
+
                 TranscriptionReceived?.Invoke($"Thinking ({info.Length / 1024}KB)...");
                 string text = await AIService.Shared.Transcribe(filePath);
                 LogDebug($"API Response: '{text}'");
@@ -499,7 +538,19 @@ namespace CosmoWhisper.Managers
                                 catch { }
                             }
 
-                            await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
+
+                            if (prefs.InsertionMode == InsertionMethod.DirectTyping)
+                            {
+                                string textToType = corrected + " ";
+                                LogDebug($"[TYPING] Text: '{textToType}' (Length: {textToType.Length})");
+                                await InputController.Shared.TypeText(textToType, prefs.AutoSubmit);
+                            }
+                            else
+                            {
+                                string textToPaste = corrected + " ";
+                                LogDebug($"[PASTING] Text: '{textToPaste}' (Length: {textToPaste.Length})");
+                                await InputController.Shared.PasteText(textToPaste, prefs.AutoSubmit, prefs.RestoreClipboard);
+                            }
                         }
                     }
                     else

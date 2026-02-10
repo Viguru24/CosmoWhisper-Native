@@ -109,12 +109,7 @@ namespace CosmoWhisper
 
         public static void LogCrash(string message)
         {
-            try
-            {
-                string path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CosmoWhisper_CrashLog.txt");
-                File.AppendAllText(path, $"{DateTime.Now}: {message}\n----------------\n");
-            }
-            catch { }
+            // Logging disabled in production
         }
 
         private void LoadPosition()
@@ -160,7 +155,7 @@ namespace CosmoWhisper
         {
             try
             {
-                BlurManager.ApplyMica(this);
+                WindowEffectManager.ApplyEffect(this, BackdropType.Mica);
                 InitializeAll();
 
             // Initialize UI Scale
@@ -360,39 +355,81 @@ namespace CosmoWhisper
         private TaskCompletionSource<(string? password, string? name)>? _vaultTask;
         public async Task<(string? password, string? name)> GetVaultPasswordAsync(bool isRestore = false)
         {
+            // Reset state
+            _vaultTask?.TrySetCanceled();
             _vaultTask = new TaskCompletionSource<(string? password, string? name)>();
             TxtVaultName.Text = "";
             TxtVaultPassword.Password = "";
             
             // Dynamic UI
-            TxtVaultTitle.Text = isRestore ? "ðŸ”“ Unlock Your Vault" : "ðŸ” Secure Your Vault";
+            TxtVaultTitle.Text = isRestore ? "\uD83D\uDD13 Unlock Your Vault" : "\uD83D\uDD10 Secure Your Vault";
             LblVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
             TxtVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
             
+            // Clear any active animations and reset state
+            VaultPasswordOverlay.BeginAnimation(OpacityProperty, null);
+            if (VaultContent.RenderTransform is ScaleTransform stFix)
+            {
+                stFix.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                stFix.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            }
+
+            VaultPasswordOverlay.Opacity = 0;
             VaultPasswordOverlay.Visibility = Visibility.Visible;
+            VaultPasswordOverlay.IsHitTestVisible = true;
+
+            // Animate In
+            var vaultFade = new DoubleAnimation(1, TimeSpan.FromMilliseconds(250)) { EasingFunction = new QuadraticEase() };
+            var vaultScale = new DoubleAnimation(1, TimeSpan.FromMilliseconds(350)) { EasingFunction = new BackEase { Amplitude = 0.2, EasingMode = EasingMode.EaseOut } };
             
+            VaultPasswordOverlay.BeginAnimation(OpacityProperty, vaultFade);
+            if (VaultContent.RenderTransform is ScaleTransform st2)
+            {
+                st2.BeginAnimation(ScaleTransform.ScaleXProperty, vaultScale);
+                st2.BeginAnimation(ScaleTransform.ScaleYProperty, vaultScale);
+            }
+            
+            // Set focus after allowing a brief moment for visibility
+            await Task.Delay(50);
             if (isRestore) TxtVaultPassword.Focus();
             else TxtVaultName.Focus();
             
             return await _vaultTask.Task;
         }
 
-        private void ConfirmVault_Click(object sender, RoutedEventArgs e)
+        private async Task HideVaultOverlayAsync()
         {
+            VaultPasswordOverlay.IsHitTestVisible = false;
+            var fadeAnim = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase() };
+            var scaleAnim = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase() };
+
+            VaultPasswordOverlay.BeginAnimation(OpacityProperty, fadeAnim);
+            if (VaultContent.RenderTransform is ScaleTransform st)
+            {
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            }
+
+            await Task.Delay(210);
             VaultPasswordOverlay.Visibility = Visibility.Collapsed;
-            _vaultTask?.SetResult((TxtVaultPassword.Password, TxtVaultName.Text));
         }
 
-        private void CancelVault_Click(object sender, RoutedEventArgs e)
+        private async void ConfirmVault_Click(object sender, RoutedEventArgs e)
         {
-            VaultPasswordOverlay.Visibility = Visibility.Collapsed;
-            _vaultTask?.SetResult((null, null));
+            await HideVaultOverlayAsync();
+            _vaultTask?.TrySetResult((TxtVaultPassword.Password, TxtVaultName.Text));
+        }
+
+        private async void CancelVault_Click(object sender, RoutedEventArgs e)
+        {
+            await HideVaultOverlayAsync();
+            _vaultTask?.TrySetResult((null, null));
         }
 
         private TaskCompletionSource<bool>? _dialogTask;
         private TaskCompletionSource<string?>? _listDialogTask;
 
-        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "ðŸ“‚")
+        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "\uD83D\uDCC2")
         {
             _listDialogTask = new TaskCompletionSource<string?>();
             TxtDialogTitle.Text = title;
@@ -414,11 +451,16 @@ namespace CosmoWhisper
 
         private async Task AnimateDialogOpen()
         {
-            // Reset transform and opacity
+            // Reset state
+            UniversalDialog.BeginAnimation(OpacityProperty, null);
+            DialogScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+
             UniversalDialog.Opacity = 0;
             DialogScale.ScaleX = 0.8;
             DialogScale.ScaleY = 0.8;
             UniversalDialog.Visibility = Visibility.Visible;
+            UniversalDialog.IsHitTestVisible = true;
 
             // Animate in
             var fadeAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(300)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
@@ -428,7 +470,7 @@ namespace CosmoWhisper
             // Add background blur
             var blur = new BlurEffect { Radius = 0 };
             RootContentBorder.Effect = blur;
-            var blurAnim = new DoubleAnimation(10, TimeSpan.FromMilliseconds(500)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
+            var blurAnim = new DoubleAnimation(10, TimeSpan.FromMilliseconds(300)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
             blur.BeginAnimation(BlurEffect.RadiusProperty, blurAnim);
 
             UniversalDialog.BeginAnimation(OpacityProperty, fadeAnim);
@@ -436,7 +478,7 @@ namespace CosmoWhisper
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
         }
 
-        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "âœ¨", bool showCancel = false)
+        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "\u2728", bool showCancel = false)
         {
             _dialogTask = new TaskCompletionSource<bool>();
             TxtDialogTitle.Text = title;
@@ -478,6 +520,7 @@ namespace CosmoWhisper
 
         private async Task HideDialogAsync()
         {
+            UniversalDialog.IsHitTestVisible = false;
             var fadeAnim = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
             var scaleXAnim = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
             var scaleYAnim = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
@@ -502,7 +545,7 @@ namespace CosmoWhisper
             e.Handled = true; // Prevent clicking through the backdrop
         }
 
-        internal void ShowToast(string message, string icon = "âœ¨")
+        internal void ShowToast(string message, string icon = "\u2728")
         {
             if (ToastContainer == null || TxtToastMessage == null || TxtToastIcon == null) return;
 
@@ -546,9 +589,14 @@ namespace CosmoWhisper
             _narration.VoiceChanged(content);
         }
 
-        private void ComboDateTime_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ComboDateFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ComboDateTime?.SelectedItem is ComboBoxItem item) _prefs?.SetDateFormat(item.Tag?.ToString());
+            if (ComboDateFormat?.SelectedItem is ComboBoxItem item) _prefs?.SetDateFormat(item.Tag?.ToString());
+        }
+
+        private void ComboTimeFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboTimeFormat?.SelectedItem is ComboBoxItem item) _prefs?.SetTimeFormat(item.Tag?.ToString());
         }
 
         private void ToggleClipboard_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleClipboard();
@@ -709,3 +757,5 @@ namespace CosmoWhisper
         }
     }
 }
+
+

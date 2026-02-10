@@ -67,39 +67,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public async Task TypeText(string text, bool autoSubmit)
-        {
-            // Real Direct Typing using SendInput with Unicode support
-            foreach (char c in text)
-            {
-                INPUT[] inputs = new INPUT[2];
 
-                // Key Down
-                inputs[0].type = INPUT_KEYBOARD;
-                inputs[0].ki.wVk = 0;
-                inputs[0].ki.wScan = (ushort)c;
-                inputs[0].ki.dwFlags = 0x0004; // KEYEVENTF_UNICODE
-
-                // Key Up
-                inputs[1].type = INPUT_KEYBOARD;
-                inputs[1].ki.wVk = 0;
-                inputs[1].ki.wScan = (ushort)c;
-                inputs[1].ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-
-                SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
-
-                // Small delay to simulate natural typing if needed, 
-                // but usually instant is fine for "Direct Typing" mode
-                // await Task.Delay(1); 
-            }
-
-            if (autoSubmit)
-            {
-                await Task.Delay(50);
-                SendKey(0x0D, false); // Enter
-                SendKey(0x0D, true);
-            }
-        }
 
         public void SendKey(byte virtualKey, bool keyUp)
         {
@@ -158,8 +126,31 @@ namespace CosmoWhisper.Managers
         [StructLayout(LayoutKind.Sequential)]
         struct INPUT
         {
-            public int type;
+            public uint type;
+            public InputUnion U;
+            public static int Size => Marshal.SizeOf(typeof(INPUT));
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct InputUnion
+        {
+            [FieldOffset(0)]
+            public MOUSEINPUT mi;
+            [FieldOffset(0)]
             public KEYBDINPUT ki;
+            [FieldOffset(0)]
+            public HARDWAREINPUT hi;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -170,6 +161,47 @@ namespace CosmoWhisper.Managers
             public uint dwFlags;
             public uint time;
             public IntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+
+        public async Task TypeText(string text, bool autoSubmit)
+        {
+            // Real Direct Typing using SendInput with Unicode support
+            foreach (char c in text)
+            {
+                INPUT[] inputs = new INPUT[2];
+
+                // Key Down
+                inputs[0].type = INPUT_KEYBOARD;
+                inputs[0].U.ki.wVk = 0;
+                inputs[0].U.ki.wScan = (ushort)c;
+                inputs[0].U.ki.dwFlags = 0x0004; // KEYEVENTF_UNICODE
+
+                // Key Up
+                inputs[1].type = INPUT_KEYBOARD;
+                inputs[1].U.ki.wVk = 0;
+                inputs[1].U.ki.wScan = (ushort)c;
+                inputs[1].U.ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
+
+                SendInput(2, inputs, INPUT.Size);
+
+                // Small delay to simulate natural typing and prevent UI freeze
+                await Task.Delay(1);
+            }
+
+            if (autoSubmit)
+            {
+                await Task.Delay(50);
+                SendKey(0x0D, false); // Enter
+                SendKey(0x0D, true);
+            }
         }
     }
 }

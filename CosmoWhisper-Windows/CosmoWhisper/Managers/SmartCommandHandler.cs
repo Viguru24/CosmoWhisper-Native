@@ -63,14 +63,16 @@ namespace CosmoWhisper.Managers
             // ===== UTILITY =====
             if (cmd == "insert date" || cmd == "todays date" || cmd == "current date")
             {
-                var dateStr = DateTime.Now.ToString("dddd, d MMMM yyyy"); // e.g., "Monday, 30 January 2026"
+                var fmt = PreferenceManager.Shared?.Preferences?.SelectedDateFormat ?? "dddd, d MMMM yyyy";
+                var dateStr = DateTime.Now.ToString(fmt) + " ";
                 SendKeys.SendWait(dateStr);
                 return true;
             }
 
             if (cmd == "insert time" || cmd == "current time")
             {
-                var timeStr = DateTime.Now.ToString("h:mm tt"); // e.g., "5:44 PM"
+                var fmt = PreferenceManager.Shared?.Preferences?.SelectedTimeFormat ?? "h:mm tt";
+                var timeStr = DateTime.Now.ToString(fmt) + " ";
                 SendKeys.SendWait(timeStr);
                 return true;
             }
@@ -125,7 +127,9 @@ namespace CosmoWhisper.Managers
                 { "task manager", "taskmgr" },
                 { "paint", "mspaint" },
                 { "veracrypt", @"C:\Program Files\VeraCrypt\VeraCrypt.exe" },
-                { "shredder", @"C:\Program Files (x86)\File Shredder\fileshredder.exe" }
+                { "shredder", @"C:\Program Files (x86)\File Shredder\fileshredder.exe" },
+                { "whatsapp", "whatsapp:" },
+                { "whats app", "whatsapp:" }
             };
 
             if (apps.TryGetValue(appName, out var target))
@@ -177,7 +181,8 @@ namespace CosmoWhisper.Managers
                 { "x", "https://x.com" },
                 { "amazon", "https://amazon.com" },
                 { "gmail", "https://mail.google.com" },
-                { "outlook", "https://outlook.live.com" }
+                { "outlook", "https://outlook.live.com" },
+                { "whatsapp", "https://web.whatsapp.com" }
             };
 
             if (shortcuts.TryGetValue(site, out var url))

@@ -47,7 +47,7 @@ namespace CosmoWhisper.Managers
 
         private void LogToFile(string msg)
         {
-            try { File.AppendAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cosmo_debug.txt"), $"{DateTime.Now}: [Narration] {msg}\n"); } catch { }
+            // Logging disabled in production
         }
     }
 }
