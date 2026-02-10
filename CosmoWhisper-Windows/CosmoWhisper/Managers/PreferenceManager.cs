@@ -45,7 +45,8 @@ namespace CosmoWhisper.Managers
         public bool EnableManusAgent { get => _enableManusAgent; set { _enableManusAgent = value; OnPropertyChanged(nameof(EnableManusAgent)); } }
         private bool _manusNarrationEnabled = true;
         public bool ManusNarrationEnabled { get => _manusNarrationEnabled; set { _manusNarrationEnabled = value; OnPropertyChanged(nameof(ManusNarrationEnabled)); } }
-        public string AIPersonality { get; set; } = "Balanced";
+        public string AIPersonality { get; set; } = "None";
+        public string AIVerbosity { get; set; } = "Balanced";
 
         // Window States
         public double WidgetTop { get; set; } = 100;

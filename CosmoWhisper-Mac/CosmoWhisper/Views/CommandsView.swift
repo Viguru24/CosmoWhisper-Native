@@ -62,7 +62,7 @@ struct CommandsView: View {
                 Spacer()
                 
                 Button(action: {
-                    if let url = URL(string: "https://cosmowhisper.com/smart-commands") {
+                    if let url = URL(string: "https://cosmowhisper-app.web.app/features") {
                         NSWorkspace.shared.open(url)
                     }
                 }) {

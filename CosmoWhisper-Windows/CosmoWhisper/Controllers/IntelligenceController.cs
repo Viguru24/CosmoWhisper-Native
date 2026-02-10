@@ -27,32 +27,57 @@ namespace CosmoWhisper.Controllers
             UpdatePersonalityUI();
         }
 
-        public void Personality_Click(string personality)
+        public void PersonalityChanged(string personality)
         {
             var p = PreferenceManager.Shared.Preferences;
-            p.AIPersonality = personality;
-            PreferenceManager.Shared.Save();
-            UpdatePersonalityUI();
+            if (p.AIPersonality != personality)
+            {
+                p.AIPersonality = personality;
+                PreferenceManager.Shared.Save();
+                // UI update not strictly needed if triggered by UI change, but good for consistency
+            }
+        }
+
+        public void VerbosityChanged(string verbosity)
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            if (p.AIVerbosity != verbosity)
+            {
+                p.AIVerbosity = verbosity;
+                PreferenceManager.Shared.Save();
+            }
         }
 
         public void UpdatePersonalityUI()
         {
-            if (Window.BtnConcise == null || Window.BtnBalanced == null || Window.BtnDetailed == null) return;
             var p = PreferenceManager.Shared.Preferences;
 
-            Window.BtnConcise.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(p.AIPersonality == "Concise" ? "#60A060" : "#10FFFFFF"));
-            Window.BtnBalanced.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(p.AIPersonality == "Balanced" ? "#60A060" : "#10FFFFFF"));
-            Window.BtnDetailed.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(p.AIPersonality == "Detailed" ? "#60A060" : "#10FFFFFF"));
+            if (Window.ComboPersonality != null)
+            {
+                foreach (ComboBoxItem item in Window.ComboPersonality.Items)
+                {
+                    if (item.Tag?.ToString() == p.AIPersonality)
+                    {
+                        Window.ComboPersonality.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+
+            if (Window.ComboVerbosity != null)
+            {
+                foreach (ComboBoxItem item in Window.ComboVerbosity.Items)
+                {
+                    if (item.Tag?.ToString() == p.AIVerbosity)
+                    {
+                        Window.ComboVerbosity.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
         }
 
-        public void ProviderChanged(string tag)
-        {
-            if (Window.PanelGroqKey != null) Window.PanelGroqKey.Visibility = tag == "Groq" ? Visibility.Visible : Visibility.Collapsed;
-            if (Window.PanelOpenAIKey != null) Window.PanelOpenAIKey.Visibility = tag == "OpenAI" ? Visibility.Visible : Visibility.Collapsed;
-            if (Window.PanelAnthropicKey != null) Window.PanelAnthropicKey.Visibility = tag == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
-
-            UpdateGroqStatusUI();
-        }
+        // ProviderChanged Removed - Consolidated to Single API Key
 
         public void UpdateGroqStatusUI()
         {
@@ -65,16 +90,36 @@ namespace CosmoWhisper.Controllers
 
             if (Window.UnlockPanel != null) Window.UnlockPanel.Visibility = isUnlocked ? Visibility.Collapsed : Visibility.Visible;
 
+            // Updated for new generic API Key field
             if (Window.TxtGroqApiKey != null) Window.TxtGroqApiKey.IsEnabled = isUnlocked;
-            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.IsEnabled = isUnlocked;
-            if (Window.TxtAnthropicApiKey != null) Window.TxtAnthropicApiKey.IsEnabled = isUnlocked;
-
+            
+            // Removed other provider keys
+            
             if (Window.BtnToggleLock != null)
             {
                 Window.BtnToggleLock.Content = isUnlocked ? "🔒 Lock" : "🔓 Unlock";
                 Window.BtnToggleLock.Background = isUnlocked
                     ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F5A623"))
                     : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+            }
+
+            // Show/hide toggle panel when unlocked
+            if (Window.ToggleAccessPanel != null)
+            {
+                Window.ToggleAccessPanel.Visibility = isUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            // Update toggle switch position
+            if (Window.TogglePremiumAccess != null)
+            {
+                var ellipse = Window.TogglePremiumAccess.Child as System.Windows.Shapes.Ellipse;
+                if (ellipse != null)
+                {
+                    ellipse.HorizontalAlignment = isUnlocked ? System.Windows.HorizontalAlignment.Right : System.Windows.HorizontalAlignment.Left;
+                }
+                Window.TogglePremiumAccess.Background = isUnlocked
+                    ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ECC71"))
+                    : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#95A5A6"));
             }
         }
 
@@ -130,6 +175,14 @@ namespace CosmoWhisper.Controllers
 
             UpdateGroqStatusUI();
             if (Window.TxtUnlockCode != null) Window.TxtUnlockCode.Clear();
+        }
+
+        public void TogglePremiumAccess()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.IsAIUnlocked = !p.IsAIUnlocked;
+            PreferenceManager.Shared.Save();
+            UpdateGroqStatusUI();
         }
     }
 }

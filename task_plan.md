@@ -41,7 +41,7 @@
     - [x] Global Hotkeys
     - [x] Agent Mode (Manus)
     - [x] Refine Agent Interaction (Fix chatter)
-    - [ ] Installer
+    - [x] Installer
 
 **Phase 4: Stabilization & Bug Fixes**
 - [x] **Preferences Crash Fix**

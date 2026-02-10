@@ -75,7 +75,7 @@ struct LoginView: View {
                 .frame(maxWidth: 400)
                 
                 Button("Create Account") {
-                    if let url = URL(string: "https://cosmowhisper.com/signup") {
+                    if let url = URL(string: "https://cosmowhisper-app.web.app/register") {
                         NSWorkspace.shared.open(url)
                     }
                 }
