@@ -1,0 +1,92 @@
+<Window x:Class="CosmoWhisper.Views.ConfirmExitWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Exit CosmoWhisper" Height="300" Width="400"
+        WindowStyle="None" ResizeMode="NoResize"
+        AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="0" CornerRadius="0" CaptionHeight="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Border CornerRadius="20" BorderThickness="1" BorderBrush="#30FFFFFF">
+        <Border.Background>
+            <RadialGradientBrush GradientOrigin="0.5,0.2" Center="0.5,0.2" RadiusX="1.5" RadiusY="1">
+                <GradientStop Color="#FF1A1E2E" Offset="0"/>
+                <GradientStop Color="#FF0B0E17" Offset="1"/>
+            </RadialGradientBrush>
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="10" Opacity="0.5" Direction="270"/>
+        </Border.Effect>
+
+        <Grid Margin="25">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <TextBlock Text="CosmoWhisper" 
+                       FontSize="22" FontWeight="Bold" 
+                       HorizontalAlignment="Center"
+                       Effect="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}">
+                <TextBlock.Foreground>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#00C6FF" Offset="0"/>
+                        <GradientStop Color="#0072FF" Offset="1"/>
+                    </LinearGradientBrush>
+                </TextBlock.Foreground>
+            </TextBlock>
+
+            <!-- Stats Block -->
+            <Border Grid.Row="1" Background="#20FFFFFF" CornerRadius="12" Margin="0,20" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="SESSION STATS" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="TxtStats" 
+                               Text="124 Words Saved Today" 
+                               FontSize="14" FontWeight="SemiBold" Foreground="White" 
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- Fun Message -->
+            <TextBlock Grid.Row="2" x:Name="TxtFunMessage"
+                       Text="See you later, space cowboy!" 
+                       FontSize="13" Foreground="#B0B0B0" 
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       VerticalAlignment="Center" Margin="0,0,0,20" FontStyle="Italic"/>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Keep Whispering" Width="130" Height="40"
+                        Background="#15FFFFFF" Foreground="White" BorderThickness="1" BorderBrush="#30FFFFFF"
+                        Margin="0,0,15,0"
+                        Click="Cancel_Click" Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="20"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                
+                <Button Content="Exit App" Width="100" Height="40"
+                        Background="#FF453A" Foreground="White" BorderThickness="0"
+                        Click="Exit_Click" Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="20"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
