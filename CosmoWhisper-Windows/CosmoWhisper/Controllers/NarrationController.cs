@@ -36,18 +36,23 @@ namespace CosmoWhisper.Controllers
             if (Window.ComboVoice == null) return;
             Window.ComboVoice.Items.Clear();
 
+            // 1. Add Neural Voices (OpenAI) - Always available as options
+            string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer" };
+            foreach (var nv in neuralVoices)
+            {
+                Window.ComboVoice.Items.Add(new ComboBoxItem 
+                { 
+                    Content = $"🌐 {nv} (Neural AI)", 
+                    Tag = nv,
+                    FontWeight = FontWeights.Bold
+                });
+            }
+
             var languagePriority = new System.Collections.Generic.Dictionary<string, int>
             {
                 { "en-GB", 1 }, { "en-US", 2 }, { "zh", 3 }, { "es", 4 },
                 { "hi", 5 }, { "ar", 6 }, { "pt", 7 }, { "fr", 8 },
                 { "de", 9 }, { "ja", 10 }
-            };
-
-            var languageIcons = new System.Collections.Generic.Dictionary<string, string>
-            {
-                { "en-GB", "🇬🇧" }, { "en-US", "🇺🇸" }, { "zh", "🇨🇳" }, { "es", "🇪🇸" },
-                { "hi", "🇮🇳" }, { "ar", "🇸🇦" }, { "pt", "🇵🇹" }, { "fr", "🇫🇷" },
-                { "de", "🇩🇪" }, { "ja", "🇯🇵" }
             };
 
             var voices = SpeechSynthesizer.AllVoices
@@ -64,29 +69,43 @@ namespace CosmoWhisper.Controllers
             foreach (var item in voices)
             {
                 var v = item.Voice;
-                string icon = "🌐";
-                foreach (var lang in languageIcons)
+                // Use the Star emoji (✨) for Premier local voices as per Pro Tip
+                Window.ComboVoice.Items.Add(new ComboBoxItem 
+                { 
+                    Content = $"✨ {v.DisplayName}", 
+                    Tag = v.DisplayName 
+                });
+            }
+
+            // Restore selection from preferences
+            var p = PreferenceManager.Shared.Preferences;
+            if (!string.IsNullOrEmpty(p.SelectedVoice))
+            {
+                foreach (ComboBoxItem item in Window.ComboVoice.Items)
                 {
-                    if (v.Language.StartsWith(lang.Key))
+                    if (item.Tag?.ToString() == p.SelectedVoice)
                     {
-                        icon = lang.Value;
+                        Window.ComboVoice.SelectedItem = item;
                         break;
                     }
                 }
-                Window.ComboVoice.Items.Add(new ComboBoxItem { Content = $"{icon} {v.DisplayName}" });
             }
-
-            if (Window.ComboVoice.Items.Count > 0) Window.ComboVoice.SelectedIndex = 0;
+            
+            if (Window.ComboVoice.SelectedIndex == -1 && Window.ComboVoice.Items.Count > 0) 
+                Window.ComboVoice.SelectedIndex = 0;
         }
 
-        public void VoiceChanged(string content)
+        public void VoiceChanged(object selectedItem)
         {
-            var p = PreferenceManager.Shared.Preferences;
-            string voiceName = content.Length > 3 ? content.Substring(3).Trim() : content;
-            if (p.SelectedVoice != voiceName)
+            if (selectedItem is ComboBoxItem item)
             {
-                p.SelectedVoice = voiceName;
-                PreferenceManager.Shared.Save();
+                var p = PreferenceManager.Shared.Preferences;
+                string voiceName = item.Tag?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(voiceName) && p.SelectedVoice != voiceName)
+                {
+                    p.SelectedVoice = voiceName;
+                    PreferenceManager.Shared.Save();
+                }
             }
         }
 
@@ -115,9 +134,8 @@ namespace CosmoWhisper.Controllers
 
             if (Window.ComboVoice.SelectedItem is ComboBoxItem item)
             {
-                var content = item.Content.ToString() ?? "";
-                voice = content.Length > 3 ? content.Substring(3) : content;
-                isLocal = true;
+                voice = item.Tag?.ToString() ?? "alloy";
+                isLocal = item.Content?.ToString().StartsWith("✨") ?? false;
             }
 
             string apiKey = Window.TxtApiKey.Password;

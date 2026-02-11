@@ -41,33 +41,34 @@ namespace CosmoWhisper.Managers
                 }
             }
 
-            // Command Processing: Paragraphs and New Lines
-            if (Regex.IsMatch(text, @"^(new|next) paragraph\s*", RegexOptions.IgnoreCase))
-            {
-                text = Regex.Replace(text, @"^(new|next) paragraph\s*", "", RegexOptions.IgnoreCase);
-                text = "\n\n" + text;
-            }
-
-            if (Regex.IsMatch(text, @"^(new|next) line\s*", RegexOptions.IgnoreCase))
-            {
-                text = Regex.Replace(text, @"^(new|next) line\s*", "", RegexOptions.IgnoreCase);
-                text = "\n" + text;
-            }
+            // Command Processing: Paragraphs and New Lines (Handle anywhere and with optional punctuation)
+            text = Regex.Replace(text, @"\b(new|next) paragraph[\.\?\!]*\s*", "\n\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(new|next) line[\.\?\!]*\s*", "\n", RegexOptions.IgnoreCase);
 
             // Punctuation commands
             if (low.Contains("comma")) text = Regex.Replace(text, @"\bcomma\b", ",", RegexOptions.IgnoreCase);
             if (low.Contains("full stop") || low.Contains("period")) text = Regex.Replace(text, @"\b(full stop|period)\b", ".", RegexOptions.IgnoreCase);
 
-            // Cleanup trailing punctuation if text is short segment
+            // Cleanup trailing punctuation if text is short segment (e.g. 1-2 words),
+            // but ONLY if the segment contains actual letters/digits to avoid stripping punctuation-only commands.
             int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-            if (wordCount < 6) text = Regex.Replace(text, @"[\.\\?!…]+[\s]*$", "");
+            if (wordCount < 6 && text.Any(char.IsLetterOrDigit)) 
+            {
+                text = Regex.Replace(text, @"[\.\\?!…]+[\s]*$", "");
+            }
 
             return text;
         }
 
         public static bool IsGarbage(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return true;
+            if (string.IsNullOrWhiteSpace(text)) 
+            {
+                // Allow segments that are just newlines (result of formatting commands)
+                if (text != null && (text.Contains("\n") || text.Contains("\r"))) return false;
+                return true;
+            }
+            
             string low = text.ToLower().Trim();
 
             if (low.Length <= 2) return true;

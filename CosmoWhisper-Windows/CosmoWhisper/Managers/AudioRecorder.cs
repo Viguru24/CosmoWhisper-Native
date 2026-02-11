@@ -541,13 +541,13 @@ namespace CosmoWhisper.Managers
 
                             if (prefs.InsertionMode == InsertionMethod.DirectTyping)
                             {
-                                string textToType = corrected + " ";
+                                string textToType = corrected + (corrected.EndsWith("\n") ? "" : " ");
                                 LogDebug($"[TYPING] Text: '{textToType}' (Length: {textToType.Length})");
                                 await InputController.Shared.TypeText(textToType, prefs.AutoSubmit);
                             }
                             else
                             {
-                                string textToPaste = corrected + " ";
+                                string textToPaste = corrected + (corrected.EndsWith("\n") ? "" : " ");
                                 LogDebug($"[PASTING] Text: '{textToPaste}' (Length: {textToPaste.Length})");
                                 await InputController.Shared.PasteText(textToPaste, prefs.AutoSubmit, prefs.RestoreClipboard);
                             }

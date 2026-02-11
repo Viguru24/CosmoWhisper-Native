@@ -340,7 +340,7 @@ namespace CosmoWhisper
 
         private void Preferences_Click(object sender, RoutedEventArgs e) => _navigation.ShowPreferences();
 
-        private void Language_Click(object sender, RoutedEventArgs e) => _navigation.ShowLanguage();
+
         private void TxtVocabHints_TextChanged(object sender, TextChangedEventArgs e) { } // Handled manually in Controller, but needed for XAML compatibility
 
 
@@ -576,17 +576,12 @@ namespace CosmoWhisper
 
         private void ToggleLaunchOnStartup_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLaunchOnStartup();
 
-        private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ComboLanguage?.SelectedItem is ComboBoxItem item) _prefs?.SetLanguage(item.Tag?.ToString());
-        }
+
 
         private void ComboVoice_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (ComboVoice == null || ComboVoice.SelectedItem == null) return;
-            var item = ComboVoice.SelectedItem as ComboBoxItem;
-            var content = item?.Content?.ToString() ?? "";
-            _narration.VoiceChanged(content);
+            _narration.VoiceChanged(ComboVoice.SelectedItem);
         }
 
         private void ComboDateFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -642,7 +637,21 @@ namespace CosmoWhisper
         private void ActivateLicense_Click(object sender, RoutedEventArgs e) => _dashboard.ActivateLicense(TxtLicense.Text);
         private void SignOut_Click(object sender, RoutedEventArgs e) => _dashboard.SignOut();
 
+        private void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/pricing", UseShellExecute = true });
         private void SignUp_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/register", UseShellExecute = true });
+        
+        private void GoogleLogin_Click(object sender, RoutedEventArgs e)
+        {
+            string url = PreferenceManager.Shared.Preferences.BackendUrl;
+            if (string.IsNullOrEmpty(url)) url = "http://localhost:5000";
+            if (!url.EndsWith("/")) url += "/";
+            
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
+            { 
+                FileName = url + "api/auth/google?platform=windows", 
+                UseShellExecute = true 
+            });
+        }
 
         // Removed Provider logic
         

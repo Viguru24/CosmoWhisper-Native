@@ -44,7 +44,7 @@ catch {
 }
 
 Write-Host "4. Building Installer (Single File)..." -ForegroundColor Cyan
-dotnet publish "$setupRoot\CosmoSetup.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "$setupRoot\publish"
+dotnet publish "$setupRoot\CosmoSetup.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "$setupRoot\publish"
 
 Write-Host "5. Done! Installer is at:" -ForegroundColor Green
 $installerPath = Join-Path $setupRoot "publish\CosmoSetup.exe"

@@ -68,10 +68,7 @@ namespace CosmoWhisper.Controllers
             SwitchToView(Window.PreferencesHeader, Window.PreferencesView, Window.BtnPreferences);
         }
 
-        public void ShowLanguage()
-        {
-            SwitchToView(Window.LanguageHeader, Window.LanguageView, Window.BtnLanguage);
-        }
+
 
         public void OpenVault()
         {
@@ -100,7 +97,8 @@ namespace CosmoWhisper.Controllers
                 {
                     _allViews = new List<UIElement?> {
                         Window.DashboardView, Window.SmartCommandsView, Window.MicrophoneView, Window.VocabularyView,
-                        Window.NarrationView, Window.IntelligenceView, Window.PreferencesView, Window.LanguageView,
+                        Window.NarrationView, Window.IntelligenceView, Window.PreferencesView,
+
                         Window.AccountView, Window.CloudLibraryView, Window.LoginView
                     };
                 }
@@ -115,7 +113,8 @@ namespace CosmoWhisper.Controllers
                 {
                     _allHeaders = new List<UIElement?> {
                        Window.DashboardHeader, Window.SmartCommandsHeader, Window.MicrophoneHeader, Window.VocabularyHeader,
-                       Window.NarrationHeader, Window.IntelligenceHeader, Window.PreferencesHeader, Window.LanguageHeader,
+                       Window.NarrationHeader, Window.IntelligenceHeader, Window.PreferencesHeader,
+
                        Window.AccountHeader, Window.LoginHeader
                     };
                 }
@@ -133,7 +132,7 @@ namespace CosmoWhisper.Controllers
                 SetButtonInactive(Window.BtnNarration);
                 SetButtonInactive(Window.BtnIntelligence);
                 SetButtonInactive(Window.BtnPreferences);
-                SetButtonInactive(Window.BtnLanguage);
+
                 SetButtonInactive(Window.BtnAccount);
                 SetButtonInactive(Window.BtnLibrary);
 

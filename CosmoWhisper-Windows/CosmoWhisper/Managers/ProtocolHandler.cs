@@ -65,6 +65,24 @@ namespace CosmoWhisper.Managers
                             _ = CosmoMessage.Show("Protocol Activation", "Welcome to the Inner Circle. Cosmo Intelligence Unlocked!", "👤");
                         }
                     }
+                    else if (action.Equals("auth", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string token = GetQueryParam(query, "token");
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            PreferenceManager.Shared.Preferences.AuthToken = token;
+                            PreferenceManager.Shared.Save();
+                            System.Windows.Application.Current.Dispatcher.Invoke(async () =>
+                            {
+                                if (DashboardWindow.Instance != null)
+                                {
+                                    await DashboardWindow.Instance.CheckAuthStatus();
+                                    DashboardWindow.Instance._navigation.ShowAccount();
+                                    _ = CosmoMessage.Show("Verified", "Logged in successfully!", "👋");
+                                }
+                            });
+                        }
+                    }
                     else if (action.Equals("configure", StringComparison.OrdinalIgnoreCase))
                     {
                         var groqKey = GetQueryParam(query, "groq");

@@ -76,17 +76,6 @@ namespace CosmoWhisper.Controllers
             // Language Settings
             if (Window.ToggleRegionalSpelling != null) UpdateToggle(Window.ToggleRegionalSpelling, p.EnableRegionalSpelling);
             if (Window.ToggleLaunchOnStartup != null) UpdateToggle(Window.ToggleLaunchOnStartup, p.LaunchOnStartup);
-            if (Window.ComboLanguage != null)
-            {
-                foreach (ComboBoxItem item in Window.ComboLanguage.Items)
-                {
-                    if (item.Tag?.ToString() == p.InterfaceLanguage)
-                    {
-                        Window.ComboLanguage.SelectedItem = item;
-                        break;
-                    }
-                }
-            }
 
             // Date Formatting
             if (Window.ComboDateFormat != null)

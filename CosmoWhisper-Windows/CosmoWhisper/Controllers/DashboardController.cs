@@ -65,20 +65,24 @@ namespace CosmoWhisper.Controllers
             Window.Dispatcher.Invoke(() =>
             {
                 var p = PreferenceManager.Shared.Preferences;
-                bool isPro = p.UserTier.Equals("pro", StringComparison.OrdinalIgnoreCase);
+                var sub = SubscriptionManager.Shared;
+                
+                string tierName = sub.TierDisplayName;
+                string tierIcon = sub.TierIcon;
+                bool isUnlimited = sub.IsUnlimited;
 
-                if (Window.TxtTierStatus != null) Window.TxtTierStatus.Text = isPro ? "Pro Member" : "Free Tier";
-                if (Window.TierIcon != null) Window.TierIcon.Text = isPro ? "💎" : "🔒";
-                if (Window.TxtUsageLabel != null) Window.TxtUsageLabel.Text = isPro ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
+                if (Window.TxtTierStatus != null) Window.TxtTierStatus.Text = tierName;
+                if (Window.TierIcon != null) Window.TierIcon.Text = tierIcon;
+                if (Window.TxtUsageLabel != null) Window.TxtUsageLabel.Text = isUnlimited ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
 
                 if (Window.TxtUsageStats != null)
                 {
-                    Window.TxtUsageStats.Text = isPro ? $"{p.UsageMinutes:F1} / ∞" : $"{p.UsageMinutes:F1} / {p.UsageLimitMinutes}";
+                    Window.TxtUsageStats.Text = isUnlimited ? $"{p.UsageMinutes:F1} / ∞" : $"{p.UsageMinutes:F1} / {p.UsageLimitMinutes}";
                 }
 
                 if (Window.UsageProgressBar != null)
                 {
-                    double percentage = isPro ? 0.1 : (p.UsageMinutes / p.UsageLimitMinutes);
+                    double percentage = isUnlimited ? 0.1 : (p.UsageMinutes / p.UsageLimitMinutes);
                     if (percentage > 1) percentage = 1;
 
                     var animation = new DoubleAnimation(percentage * 300, TimeSpan.FromMilliseconds(800))
@@ -87,7 +91,7 @@ namespace CosmoWhisper.Controllers
                     };
                     Window.UsageProgressBar.BeginAnimation(FrameworkElement.WidthProperty, animation);
 
-                    Window.UsageProgressBar.Background = (p.UsageMinutes >= p.UsageLimitMinutes && !isPro)
+                    Window.UsageProgressBar.Background = (p.UsageMinutes >= p.UsageLimitMinutes && !isUnlimited)
                         ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"))
                         : (Brush)Application.Current.Resources["ThemeAccentBrush"];
                 }
@@ -100,14 +104,15 @@ namespace CosmoWhisper.Controllers
                     Window.StatTimeSaved.Text = hours >= 1 ? $"{hours:F1}h" : $"{p.TotalTimeSavedMinutes:F0}m";
                 }
 
-                if (Window.AccountTierStatus != null) Window.AccountTierStatus.Text = isPro ? "Pro Member" : "Free Tier";
-                if (Window.AccountTierIcon != null) Window.AccountTierIcon.Text = isPro ? "💎" : "🔒";
-                if (Window.AccountUsageLabel != null) Window.AccountUsageLabel.Text = isPro ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
-                if (Window.AccountUsageStats != null) Window.AccountUsageStats.Text = isPro ? $"{p.UsageMinutes:F1} / ∞" : $"{p.UsageMinutes:F1} / {p.UsageLimitMinutes}";
+                // Account View
+                if (Window.AccountTierStatus != null) Window.AccountTierStatus.Text = tierName;
+                if (Window.AccountTierIcon != null) Window.AccountTierIcon.Text = tierIcon;
+                if (Window.AccountUsageLabel != null) Window.AccountUsageLabel.Text = isUnlimited ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
+                if (Window.AccountUsageStats != null) Window.AccountUsageStats.Text = isUnlimited ? $"{p.UsageMinutes:F1} / ∞" : $"{p.UsageMinutes:F1} / {p.UsageLimitMinutes}";
 
                 if (Window.AccountUsageProgressBar != null)
                 {
-                    double percentage = isPro ? 0.1 : (p.UsageMinutes / p.UsageLimitMinutes);
+                    double percentage = isUnlimited ? 0.1 : (p.UsageMinutes / p.UsageLimitMinutes);
                     if (percentage > 1) percentage = 1;
 
                     var animation = new DoubleAnimation(percentage * 300, TimeSpan.FromMilliseconds(800))
