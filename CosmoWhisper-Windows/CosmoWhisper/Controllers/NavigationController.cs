@@ -45,6 +45,11 @@ namespace CosmoWhisper.Controllers
 
         public void ShowAccount()
         {
+            if (string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.UserEmail))
+            {
+                ShowLogin();
+                return;
+            }
             SwitchToView(Window.AccountHeader, Window.AccountView, Window.BtnAccount);
         }
 

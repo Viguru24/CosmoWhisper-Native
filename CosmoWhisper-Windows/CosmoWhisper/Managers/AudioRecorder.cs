@@ -10,28 +10,10 @@ using NAudio.CoreAudioApi;
 using CosmoWhisper.Services;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Windows.Media;
-using Windows.Foundation;
-using Windows.Media.Audio;
-using Windows.Media.Render;
-using Windows.Media.Capture;
-using Windows.Media.MediaProperties;
-using Windows.Storage;
-using Windows.Media.Playback;
-using Windows.Media.Core;
 using Windows.Devices.Enumeration;
 
 namespace CosmoWhisper.Managers
 {
-    // WinRT Interop for direct buffer access
-    [ComImport]
-    [Guid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IMemoryBufferByteAccess
-    {
-        unsafe void GetBuffer(out byte* buffer, out uint capacity);
-    }
-
     public class AudioRecorder
     {
         public static AudioRecorder Shared { get; } = new AudioRecorder();
@@ -40,6 +22,18 @@ namespace CosmoWhisper.Managers
         public event Action<float>? AudioLevelChanged;
         public event Action<string>? TranscriptionReceived;
         public event Action<string>? ErrorOccurred;
+
+        private WaveInEvent? _waveIn;
+        private WaveFileWriter? _writer;
+        private string? _currentFilePath;
+        private bool _isRecording;
+        private bool _isMonitoring;
+        private DateTime _recordingStartTime = DateTime.MinValue;
+        private DateTime _lastToggleTime = DateTime.MinValue;
+
+        private bool _isWaveInRecording = false;
+        private readonly object _waveInLock = new object();
+        private TaskCompletionSource<bool>? _waveInStoppingTask;
 
         public AudioRecorder()
         {
@@ -61,7 +55,6 @@ namespace CosmoWhisper.Managers
         public string ActiveDeviceName { get; private set; } = "Default System Device";
         public string? SelectedDeviceId { get; set; }
 
-        private bool _isRecording;
         public bool IsRecording
         {
             get => _isRecording;
@@ -72,239 +65,223 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        private bool _isMonitoring;
         public bool IsMonitoring => _isMonitoring;
-        private AudioGraph? _audioGraph;
-        private AudioDeviceInputNode? _deviceInputNode;
-        private AudioFileOutputNode? _fileOutputNode;
-        private AudioFrameOutputNode? _frameOutputNode;
-        private string? _currentFilePath;
-        private DateTime _lastToggleTime = DateTime.MinValue;
-        private DateTime _recordingStartTime = DateTime.MinValue;
-        private readonly object _cleanupLock = new object();
 
-        // --- PRE-ROLL BUFFER (ITEM 5) ---
-        private readonly System.Collections.Concurrent.ConcurrentQueue<AudioFrame> _preRollBuffer = new System.Collections.Concurrent.ConcurrentQueue<AudioFrame>();
-        private const int PreRollDurationMs = 500;
-        private AudioFrameInputNode? _preRollInputNode;
+        // --- MONITORING & CAPTURE ---
 
-        private float _lastRaw = 0;
-        private float _lastFiltered = 0;
-
-        // --- WIN32 INTEROP (ITEM 7) ---
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-
-        public string GetCurrentFocusedApp()
+        private void InitializeWaveIn()
         {
-            try
-            {
-                IntPtr hWnd = GetForegroundWindow();
-                if (hWnd == IntPtr.Zero) return "Desktop";
-
-                uint pid;
-                GetWindowThreadProcessId(hWnd, out pid);
-                var process = Process.GetProcessById((int)pid);
-                string procName = process.ProcessName;
-
-                var title = new System.Text.StringBuilder(256);
-                GetWindowText(hWnd, title, 256);
-
-                return $"{procName} ({title})";
-            }
-            catch { return "Unknown App"; }
-        }
-
-        private async Task EnsureGraphInitialized()
-        {
-            if (_audioGraph != null) return;
+            if (_waveIn != null) return;
 
             try
             {
-                var settings = new AudioGraphSettings(AudioRenderCategory.Speech);
-                var graphResult = await AudioGraph.CreateAsync(settings).AsTask();
-                if (graphResult.Status != AudioGraphCreationStatus.Success)
-                    throw new Exception($"Graph Error: {graphResult.Status}");
-                _audioGraph = graphResult.Graph;
+                _waveIn = new WaveInEvent();
+                _waveIn.WaveFormat = new WaveFormat(44100, 1); // 44.1kHz Mono
+                _waveIn.DataAvailable += WaveIn_DataAvailable;
+                _waveIn.RecordingStopped += WaveIn_RecordingStopped;
 
-                CreateAudioDeviceInputNodeResult? inputResult;
+                // Select device if we have one
                 if (!string.IsNullOrEmpty(SelectedDeviceId))
                 {
-                    var device = await DeviceInformation.CreateFromIdAsync(SelectedDeviceId);
-                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Other, _audioGraph.EncodingProperties, device).AsTask();
+                    // NAudio DeviceNumber is just an index (0, 1, 2...)
+                    // We need to map the WinRT DeviceId back to an index
+                    int devIndex = GetDeviceIndex(SelectedDeviceId);
+                    if (devIndex >= 0) _waveIn.DeviceNumber = devIndex;
                 }
-                else
-                {
-                    inputResult = await _audioGraph.CreateDeviceInputNodeAsync(MediaCategory.Other).AsTask();
-                }
-
-                if (inputResult.Status != AudioDeviceNodeCreationStatus.Success)
-                    throw new Exception($"Input Node Error: {inputResult.Status}");
-                _deviceInputNode = inputResult.DeviceInputNode;
-
-                // ITEM 6: Enable Native Noise Suppression / Speech Optimization
-                _deviceInputNode.OutgoingGain = 2.0;
-
-                // Frame Output for Level Monitoring & Pre-roll
-                _frameOutputNode = _audioGraph.CreateFrameOutputNode();
-                _deviceInputNode.AddOutgoingConnection(_frameOutputNode);
-
-                _audioGraph.QuantumStarted += AudioGraph_QuantumStarted;
-
-                // If we are just initializing, we might want to start the graph immediately so monitoring works
-                _audioGraph.Start();
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke($"Init Failed: {ex.Message}");
-                _audioGraph = null;
+                ErrorOccurred?.Invoke($"Mic Init Error: {ex.Message}");
+                _waveIn = null;
             }
         }
 
-        private unsafe void AudioGraph_QuantumStarted(AudioGraph sender, object args)
+        private int GetDeviceIndex(string deviceId)
         {
             try
             {
-                if (_frameOutputNode == null) return;
-
-                var frame = _frameOutputNode.GetFrame();
-                using (var buffer = frame.LockBuffer(AudioBufferAccessMode.Read))
-                using (var reference = buffer.CreateReference())
+                var enumerator = new MMDeviceEnumerator();
+                var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+                
+                for (int i = 0; i < WaveIn.DeviceCount; i++)
                 {
-                    byte* dataInBytes;
-                    uint capacityInBytes;
-                    ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacityInBytes);
-
-                    float* dataInFloat = (float*)dataInBytes;
-                    uint samples = capacityInBytes / sizeof(float);
-                    if (samples == 0) return;
-
-                    // --- ITEM 5: Audio Deep-Cleaning (Deep-Processing) ---
-                    // 1. High-Pass Filter (Simple DC Offset / Background Hum Removal)
-                    // 2. Local AGC (Ensure quiet voices are boosted before Whisper)
-                    float alpha = 0.98f; // ~100Hz Cutoff @ 44.1kHz
-                    float maxAbs = 0.001f;
-                    float noiseGateThreshold = 0.005f;
-
-                    for (int i = 0; i < samples; i++)
+                    var caps = WaveIn.GetCapabilities(i);
+                    // Match by name starts with (WaveIn names are truncated to 31 chars)
+                    foreach (var device in devices)
                     {
-                        // High-Pass Filter
-                        float raw = dataInFloat[i];
-                        float filtered = alpha * (_lastFiltered + raw - _lastRaw);
-                        _lastRaw = raw;
-                        _lastFiltered = filtered;
-                        
-                        // Noise Gate
-                        if (Math.Abs(filtered) < noiseGateThreshold) filtered = 0;
-
-                        // Overwrite buffer with cleaned audio
-                        dataInFloat[i] = filtered;
-
-                        float abs = Math.Abs(filtered);
-                        if (abs > maxAbs) maxAbs = abs;
-                    }
-
-                    // Simple AGC: If volume is consistent but low, boost it (Max 4x)
-                    if (maxAbs < 0.3f && maxAbs > 0.01f)
-                    {
-                        float boost = Math.Min(4.0f, 0.5f / maxAbs);
-                        for (int i = 0; i < samples; i++) dataInFloat[i] *= boost;
-                    }
-
-                    float sum = 0;
-                    for (int i = 0; i < samples; i++)
-                    {
-                        float val = dataInFloat[i];
-                        sum += val * val;
-                    }
-
-                    float rms = (float)Math.Sqrt(sum / samples);
-                    float db = rms > 0.000001f ? 20 * (float)Math.Log10(rms) : -100;
-
-                    AudioLevelChanged?.Invoke(db);
-
-                    // ITEM 5: Maintain Pre-roll Buffer (last 500ms)
-                    if (!IsRecording)
-                    {
-                        _preRollBuffer.Enqueue(frame);
-                        // 500ms at 10ms quantum is ~50 frames
-                        while (_preRollBuffer.Count > 50)
+                        if (device.ID == deviceId)
                         {
-                            if (_preRollBuffer.TryDequeue(out var oldFrame)) oldFrame.Dispose();
+                            if (device.FriendlyName.StartsWith(caps.ProductName))
+                                return i;
                         }
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Graph likely disposed or stopping. Ignore.
+                LogDebug($"Device mapping error: {ex.Message}");
             }
+            return -1; // Fallback to default
         }
 
-        // --- MONITORING ---
+        private void WaveIn_DataAvailable(object? sender, WaveInEventArgs e)
+        {
+            // 1. Write to file if recording
+            if (IsRecording && _writer != null)
+            {
+                _writer.Write(e.Buffer, 0, e.BytesRecorded);
+            }
+
+            // 2. Calculate Audio Level (Meter)
+            float max = 0;
+            for (int i = 0; i < e.BytesRecorded; i += 2)
+            {
+                short sample = BitConverter.ToInt16(e.Buffer, i);
+                float sample32 = sample / 32768f;
+                if (System.Math.Abs(sample32) > max) max = System.Math.Abs(sample32);
+            }
+
+            float db = max > 0.000001f ? 20 * (float)System.Math.Log10(max) : -100;
+            AudioLevelChanged?.Invoke(db);
+        }
+
+        private void WaveIn_RecordingStopped(object? sender, StoppedEventArgs e)
+        {
+            lock (_waveInLock)
+            {
+                _isWaveInRecording = false;
+                _waveInStoppingTask?.TrySetResult(true);
+                _waveInStoppingTask = null;
+                DiagnosticManager.Shared.Log("Mic WaveIn Hardware Released.", "AUDIO");
+            }
+
+            if (e.Exception != null)
+            {
+                LogDebug($"Mic Error Event: {e.Exception.Message}");
+                ErrorOccurred?.Invoke($"Mic Error: {e.Exception.Message}");
+            }
+        }
 
         public async void StartMonitoring()
         {
             if (_isMonitoring) return;
-            await EnsureGraphInitialized();
-            _isMonitoring = true;
+            
+            // Wait for any pending stop to complete
+            if (_waveInStoppingTask != null) 
+            {
+                DiagnosticManager.Shared.Log("Waiting for mic hardware to let go...", "AUDIO");
+                await _waveInStoppingTask.Task;
+            }
+
+            lock (_waveInLock)
+            {
+                try
+                {
+                    InitializeWaveIn();
+                    if (_waveIn != null && !_isWaveInRecording)
+                    {
+                        _waveIn.StartRecording();
+                        _isWaveInRecording = true;
+                        DiagnosticManager.Shared.Log("Mic WaveIn Physical Start (Monitoring)", "AUDIO");
+                    }
+                    _isMonitoring = true;
+                    LogDebug("Monitoring started.");
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticManager.Shared.Log($"Start Monitoring Fail: {ex.Message}", "ERROR");
+                    ErrorOccurred?.Invoke($"Start Monitoring Fail: {ex.Message}");
+                }
+            }
         }
 
         public void StopMonitoring()
         {
             if (!_isMonitoring) return;
-            _isMonitoring = false;
-
-            // Only stop/dispose graph if we are NOT recording
-            if (!IsRecording)
+            lock (_waveInLock)
             {
-                CleanupGraph();
+                _isMonitoring = false;
+                if (!IsRecording && _isWaveInRecording)
+                {
+                    _waveInStoppingTask = new TaskCompletionSource<bool>();
+                    _waveIn?.StopRecording();
+                    // Note: _isWaveInRecording will be set false in event handler
+                    DiagnosticManager.Shared.Log("Mic WaveIn Physical Stop Initiated (Monitoring)", "AUDIO");
+                }
+                LogDebug("Monitoring stopped.");
             }
         }
 
         // --- PLAYBACK ---
 
-        private MediaPlayer? _mediaPlayer;
+        private WaveOutEvent? _outputDevice;
+        private AudioFileReader? _audioFile;
 
         public async Task PlayAudio(string filePath)
         {
-            if (!File.Exists(filePath)) return;
-
-            try
+            if (!File.Exists(filePath))
             {
-                // Force mixer slider to 100%
-                SoundManager.Shared.ForceProcessVolumeMax();
+                ErrorOccurred?.Invoke($"File not found: {filePath}");
+                return;
+            }
 
-                if (_mediaPlayer == null)
+            await Task.Run(() =>
+            {
+                try
                 {
-                    _mediaPlayer = new MediaPlayer();
+                    StopPlayback();
+                    SoundManager.Shared.ForceProcessVolumeMax();
+
+                    DiagnosticManager.Shared.Log($"PlayAudio: Initializing NAudio for {filePath}", "AUDIO");
+
+                    _audioFile = new AudioFileReader(filePath);
+                    _audioFile.Volume = (float)(PreferenceManager.Shared.Preferences.VoiceVolume / 100.0);
+
+                    _outputDevice = new WaveOutEvent();
+                    try
+                    {
+                        int devIndex = PreferenceManager.Shared.Preferences.OutputDeviceIndex;
+                        _outputDevice.DeviceNumber = devIndex;
+                        DiagnosticManager.Shared.Log($"PlayAudio: Using Output Device index {devIndex}", "AUDIO");
+                    }
+                    catch
+                    {
+                        _outputDevice.DeviceNumber = -1; // Fallback
+                    }
+
+                    _outputDevice.Init(_audioFile);
+                    _outputDevice.Play();
+
+                    var startTime = DateTime.Now;
+                    while (_outputDevice != null && _outputDevice.PlaybackState == PlaybackState.Playing)
+                    {
+                        System.Threading.Thread.Sleep(50);
+                        if ((DateTime.Now - startTime).TotalSeconds > 20) break;
+                    }
                 }
-
-                _mediaPlayer.Volume = 1.0;
-                _mediaPlayer.IsMuted = false;
-
-                // For WinRT MediaPlayer, ensure we use a proper file URI for local files
-                var uri = new Uri(filePath);
-                _mediaPlayer.Source = MediaSource.CreateFromUri(uri);
-                _mediaPlayer.Play();
-            }
-            catch (Exception ex)
-            {
-                ErrorOccurred?.Invoke($"Playback Error: {ex.Message}");
-            }
-            await Task.CompletedTask;
+                catch (Exception ex)
+                {
+                    ErrorOccurred?.Invoke($"Playback Error: {ex.Message}");
+                    LogDebug($"Playback Fail: {ex.Message}");
+                }
+            });
         }
 
         public void StopPlayback()
         {
             try
             {
-                _mediaPlayer?.Pause();
-                _mediaPlayer.Source = null;
+                if (_outputDevice != null)
+                {
+                    _outputDevice.Stop();
+                    _outputDevice.Dispose();
+                    _outputDevice = null;
+                }
+                if (_audioFile != null)
+                {
+                    _audioFile.Dispose();
+                    _audioFile = null;
+                }
             }
             catch { }
         }
@@ -313,278 +290,208 @@ namespace CosmoWhisper.Managers
 
         public async void StartRecording()
         {
-            LogDebug("StartRecording() called.");
             if (IsRecording) return;
+
+            // Wait for any pending stop (e.g. from monitoring)
+            if (_waveInStoppingTask != null) await _waveInStoppingTask.Task;
+
+            // Usage Limit
+            var p = PreferenceManager.Shared.Preferences;
+            var sub = SubscriptionManager.Shared;
+            if (p.UsageMinutes >= sub.MonthlyLimitMinutes)
+            {
+                _ = CosmoMessage.Show("Limit Reached", "Monthly limit reached. Visit cosmowhisper-app.web.app for unlimited.", "⏳");
+                return;
+            }
 
             try { SoundManager.Shared.PlayStartSound(); } catch { }
 
-            await EnsureGraphInitialized();
-            if (_audioGraph == null) return;
-
             try
             {
-                _currentFilePath = Path.Combine(Path.GetTempPath(), $"cosmo_{Guid.NewGuid()}.m4a");
-                var folder = await StorageFolder.GetFolderFromPathAsync(Path.GetTempPath()).AsTask();
-                var storageFile = await folder.CreateFileAsync(Path.GetFileName(_currentFilePath), CreationCollisionOption.ReplaceExisting).AsTask();
-
-                var profile = MediaEncodingProfile.CreateM4a(AudioEncodingQuality.High);
-                profile.Audio.ChannelCount = 1;
-                profile.Audio.SampleRate = 44100;
-
-                var outputResult = await _audioGraph.CreateFileOutputNodeAsync(storageFile, profile).AsTask();
-                if (outputResult.Status != AudioFileNodeCreationStatus.Success)
-                    throw new Exception($"File Output Error: {outputResult.Status}");
-
-                _fileOutputNode = outputResult.FileOutputNode;
-                _deviceInputNode.AddOutgoingConnection(_fileOutputNode);
-
-                // ITEM 5: Inject Pre-roll frames into the file output
-                var frameInputResult = _audioGraph.CreateFrameInputNode();
-                _preRollInputNode = frameInputResult;
-                _preRollInputNode.AddOutgoingConnection(_fileOutputNode);
-                _preRollInputNode.Start();
-
-                while (_preRollBuffer.TryDequeue(out var preFrame))
+                lock (_waveInLock)
                 {
-                    _preRollInputNode.AddFrame(preFrame);
+                    InitializeWaveIn();
+                    if (_waveIn == null) return;
+
+                    _currentFilePath = Path.Combine(Path.GetTempPath(), $"cosmo_{Guid.NewGuid()}.wav");
+                    _writer = new WaveFileWriter(_currentFilePath, _waveIn.WaveFormat);
+
+                    if (!_isWaveInRecording)
+                    {
+                        _waveIn.StartRecording();
+                        _isWaveInRecording = true;
+                        DiagnosticManager.Shared.Log("Mic WaveIn Physical Start (Capture)", "AUDIO");
+                    }
                 }
 
                 _recordingStartTime = DateTime.Now;
                 IsRecording = true;
+                LogDebug($"Recording started: {_currentFilePath}");
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke($"Start Recording Failed: {ex.Message}");
-                CleanupGraph();
+                ErrorOccurred?.Invoke($"Start Rec Fail: {ex.Message}");
+                IsRecording = false;
             }
         }
 
-        public async void StopRecording()
+        public void StopRecording()
         {
-            LogDebug($"StopRecording() called. IsRecording={IsRecording}");
-            if (!IsRecording || _audioGraph == null) return;
+            if (!IsRecording) return;
             IsRecording = false;
 
-            try { SoundManager.Shared.PlayStopSound(); } catch (Exception ex) { LogDebug($"Sound Error: {ex.Message}"); }
+            try { SoundManager.Shared.PlayStopSound(); } catch { }
 
             try
             {
-                // Disconnect and Finalize File
-                if (_fileOutputNode != null)
-                {
-                    try { _deviceInputNode?.RemoveOutgoingConnection(_fileOutputNode); } catch { }
+                _writer?.Flush();
+                _writer?.Close();
+                _writer?.Dispose();
+                _writer = null;
 
-                    // This is where "ObjectDisposed" usually happens if CleanupGraph runs
-                    await _fileOutputNode.FinalizeAsync().AsTask();
-                    _fileOutputNode.Dispose();
-                    _fileOutputNode = null;
+                lock (_waveInLock)
+                {
+                    if (!_isMonitoring && _isWaveInRecording)
+                    {
+                        _waveInStoppingTask = new TaskCompletionSource<bool>();
+                        _waveIn?.StopRecording();
+                        DiagnosticManager.Shared.Log("Mic WaveIn Physical Stop Initiated (Capture)", "AUDIO");
+                    }
                 }
 
-                // If not monitoring, kill graph
-                if (!_isMonitoring)
-                {
-                    CleanupGraph();
-                }
-
-                // Calculate duration and report usage
                 if (_recordingStartTime != DateTime.MinValue)
                 {
-                    double durationSeconds = (DateTime.Now - _recordingStartTime).TotalSeconds;
+                    double dur = (DateTime.Now - _recordingStartTime).TotalSeconds;
                     _recordingStartTime = DateTime.MinValue;
-                    _ = LicenseManager.Shared.ReportUsageAsync(durationSeconds);
+                    _ = LicenseManager.Shared.ReportUsageAsync(dur);
                 }
-            }
-            catch (ObjectDisposedException)
-            {
-                // Graph was disposed by StopMonitoring race - this is expected/safe.
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("Dispose") || ex.Message.Contains("ObjectDisposed")) return;
-                ErrorOccurred?.Invoke($"Stop Failed: {ex.Message}");
-            }
-            finally
-            {
-                // Always attempt to process the file, even if graph crashed
+
                 if (!string.IsNullOrEmpty(_currentFilePath))
                 {
-                    await ProcessAudioFile(_currentFilePath);
-                    _currentFilePath = null;
+                    _ = ProcessAudioFile(_currentFilePath);
                 }
             }
+            catch (Exception ex) { ErrorOccurred?.Invoke($"Stop Rec Fail: {ex.Message}"); }
         }
 
-        private void CleanupGraph()
+        private void CleanupResources()
         {
-            lock (_cleanupLock)
+            try
             {
-                if (_audioGraph == null) return;
-                try
-                {
-                    _audioGraph.Stop();
-                    _audioGraph.QuantumStarted -= AudioGraph_QuantumStarted;
-                    _audioGraph.Dispose();
-                }
-                catch { }
-                finally
-                {
-                    _audioGraph = null;
-                    _deviceInputNode = null;
-                    _frameOutputNode = null;
-                }
+                _writer?.Dispose();
+                _writer = null;
+                _waveIn?.Dispose();
+                _waveIn = null;
             }
+            catch { }
         }
 
         public void ToggleRecording()
         {
-            if ((DateTime.Now - _lastToggleTime).TotalMilliseconds < 300) return;
+            if ((DateTime.Now - _lastToggleTime).TotalMilliseconds < 400) return;
             _lastToggleTime = DateTime.Now;
 
             if (IsRecording) StopRecording();
             else StartRecording();
         }
 
-
-
-        private void CleanupTempFiles()
-        {
-            Task.Run(() =>
-            {
-                try
-                {
-                    var tempPath = Path.GetTempPath();
-                    var files = Directory.GetFiles(tempPath, "cosmo_*.m4a");
-                    foreach (var f in files)
-                    {
-                        try 
-                        { 
-                            var fi = new FileInfo(f);
-                            if (fi.CreationTime < DateTime.Now.AddMinutes(-10)) // Only delete old files
-                                File.Delete(f); 
-                        } 
-                        catch { }
-                    }
-                }
-                catch { }
-            });
-        }
-
         private async Task ProcessAudioFile(string filePath)
         {
-            var info = new FileInfo(filePath);
-            LogDebug($"Processing file: {filePath} ({info.Length} bytes)");
-
-            if (info.Length < 1000)
-            {
-                LogDebug("File too small (<1KB), deleting.");
-                try { File.Delete(filePath); } catch { }
-                return;
-            }
-
             try
             {
-                string appContextFull = GetCurrentFocusedApp();
-                string procName = appContextFull.Split(' ')[0]; // Extract just the process name
-                VocabularyManager.Shared.SetContext(procName);
+                var info = new FileInfo(filePath);
+                if (info.Length < 1000) { File.Delete(filePath); return; }
 
-                TranscriptionReceived?.Invoke($"Thinking ({info.Length / 1024}KB)...");
+                string app = GetCurrentFocusedApp();
+                VocabularyManager.Shared.SetContext(app.Split(' ')[0]);
+
+                TranscriptionReceived?.Invoke($"Thinking...");
                 string text = await AIService.Shared.Transcribe(filePath);
-                LogDebug($"API Response: '{text}'");
 
-                if (text.StartsWith("Error:"))
-                {
-                    LogDebug("API Error detected.");
-                    ErrorOccurred?.Invoke(text);
-                }
+                if (text.StartsWith("Error:")) ErrorOccurred?.Invoke(text);
                 else
                 {
                     string cleaned = TextProcessor.CleanText(text);
-                    LogDebug($"Cleaned Text: '{cleaned}'");
-
                     if (!TextProcessor.IsGarbage(cleaned))
                     {
-                        // Apply Regional Spelling & Custom Corrections
-                        string regionFixed = RegionalSpellingManager.Shared.Apply(cleaned);
-                        string corrected = VocabularyManager.Shared.ApplyCorrections(regionFixed);
-                        LogDebug($"Corrected Text: '{corrected}'");
+                        string corrected = VocabularyManager.Shared.ApplyCorrections(RegionalSpellingManager.Shared.Apply(cleaned));
+                        TranscriptionReceived?.Invoke(corrected);
 
                         bool handled = await CommandController.Shared.Handle(corrected);
                         if (!handled)
                         {
-                            TranscriptionReceived?.Invoke(corrected);
                             var prefs = PreferenceManager.Shared.Preferences;
+                            // Stats
+                            int words = corrected.Split(' ').Length;
+                            prefs.TotalWords += words;
+                            prefs.TotalTranscriptions += 1;
+                            prefs.TotalTimeSavedMinutes += (words / 65.0);
+                            PreferenceManager.Shared.Save();
 
-                            // Centralized Performance Stats Tracking
-                            int wordCount = corrected.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
-                            if (wordCount > 0)
-                            {
-                                prefs.TotalWords += wordCount;
-                                prefs.TotalTranscriptions += 1;
-                                // Heuristic: Speaking is ~3x faster than typing. Saves ~1 min per 65 words.
-                                prefs.TotalTimeSavedMinutes += (wordCount / 65.0);
-                                PreferenceManager.Shared.Save();
-                                LogDebug($"[STATS] Updated: {wordCount} words. New Total: {prefs.TotalWords}");
-                            }
-
-                            if (prefs.AutoCopy)
-                            {
-                                try
-                                {
-                                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                                    {
-                                        System.Windows.Clipboard.SetText(corrected);
-                                    });
-                                }
-                                catch { }
-                            }
-
+                            if (prefs.AutoCopy) System.Windows.Application.Current.Dispatcher.Invoke(() => System.Windows.Clipboard.SetText(corrected));
 
                             if (prefs.InsertionMode == InsertionMethod.DirectTyping)
-                            {
-                                string textToType = corrected + (corrected.EndsWith("\n") ? "" : " ");
-                                LogDebug($"[TYPING] Text: '{textToType}' (Length: {textToType.Length})");
-                                await InputController.Shared.TypeText(textToType, prefs.AutoSubmit);
-                            }
+                                await InputController.Shared.TypeText(corrected + " ", prefs.AutoSubmit);
                             else
-                            {
-                                string textToPaste = corrected + (corrected.EndsWith("\n") ? "" : " ");
-                                LogDebug($"[PASTING] Text: '{textToPaste}' (Length: {textToPaste.Length})");
-                                await InputController.Shared.PasteText(textToPaste, prefs.AutoSubmit, prefs.RestoreClipboard);
-                            }
+                                await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
                         }
-                    }
-                    else
-                    {
-                        LogDebug("Text classified as GARBAGE.");
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                LogDebug($"Exception: {ex.Message}");
-                ErrorOccurred?.Invoke($"Worker Error: {ex.Message}");
-            }
-            finally
-            {
-                try { File.Delete(filePath); } catch { }
-            }
+            catch (Exception ex) { ErrorOccurred?.Invoke($"Process Error: {ex.Message}"); }
+            finally { try { File.Delete(filePath); } catch { } }
         }
 
         public async Task<List<DeviceInformation>> EnumerateInputDevices()
         {
+            // We use WinRT for enumeration because it gives better names/IDs
             var devices = await DeviceInformation.FindAllAsync(DeviceClass.AudioCapture).AsTask();
             return devices.ToList();
         }
 
+        public List<(int Index, string Name)> EnumerateOutputDevices()
+        {
+            var list = new List<(int Index, string Name)>();
+            list.Add((-1, "Default System Device"));
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                var caps = WaveOut.GetCapabilities(i);
+                list.Add((i, caps.ProductName));
+            }
+            return list;
+        }
+
+        private void CleanupTempFiles()
+        {
+            Task.Run(() => {
+                try {
+                    foreach (var f in Directory.GetFiles(Path.GetTempPath(), "cosmo_*.wav"))
+                        if (new FileInfo(f).CreationTime < DateTime.Now.AddMinutes(-10)) File.Delete(f);
+                } catch { }
+            });
+        }
+
         private void LogDebug(string msg)
         {
-            try
-            {
-                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                Directory.CreateDirectory(logPath);
-                File.AppendAllText(Path.Combine(logPath, "audio_debug.txt"), $"{DateTime.Now}: {msg}\n");
-            }
-            catch { }
+            DiagnosticManager.Shared.Log(msg, "DEBUG");
+            try {
+                string p = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                Directory.CreateDirectory(p);
+                File.AppendAllText(Path.Combine(p, "audio_debug.txt"), $"{DateTime.Now}: {msg}\n");
+            } catch { }
+        }
+
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", CharSet = CharSet.Auto)] private static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
+        public string GetCurrentFocusedApp()
+        {
+            try {
+                IntPtr h = GetForegroundWindow();
+                if (h == IntPtr.Zero) return "Desktop";
+                uint p; GetWindowThreadProcessId(h, out p);
+                return Process.GetProcessById((int)p).ProcessName;
+            } catch { return "Unknown"; }
         }
     }
 }

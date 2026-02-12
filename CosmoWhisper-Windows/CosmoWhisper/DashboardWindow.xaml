@@ -664,7 +664,7 @@
 
                                         <StackPanel Orientation="Horizontal">
 
-                                            <TextBlock Text="&#x2699;" Foreground="#64D2FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="&#x2699;" Foreground="#FFD700" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
 
                                             <TextBlock Text="Preferences" VerticalAlignment="Center" FontWeight="SemiBold"/>
 
@@ -844,7 +844,7 @@
 
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.5-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="Version 2.2.19.2-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
 
                                 <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
 
@@ -976,13 +976,40 @@
 
                             <!-- Smart Commands Header (Hidden by default) -->
 
-                            <StackPanel x:Name="SmartCommandsHeader" Visibility="Collapsed">
+                            <Grid x:Name="SmartCommandsHeader" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="Smart Commands" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Smart Commands" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                    <TextBlock Text="Voice-activated shortcuts for your active text field." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                </StackPanel>
 
-                                <TextBlock Text="Voice-activated shortcuts for your active text field." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
+                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,0,0">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                             <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
+                                                 <StackPanel Orientation="Horizontal">
+                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                                 </StackPanel>
+                                             </Border>
+                                             <ControlTemplate.Triggers>
+                                                 <Trigger Property="IsMouseOver" Value="True">
+                                                      <Setter TargetName="bdr" Property="Background" Value="#40FFFFFF"/>
+                                                      <Setter TargetName="bdr" Property="Effect">
+                                                          <Setter.Value>
+                                                              <DropShadowEffect Color="#00F7FF" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                                                          </Setter.Value>
+                                                      </Setter>
+                                                 </Trigger>
+                                             </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
 
 
 
@@ -1000,13 +1027,40 @@
 
                             <!-- Vocabulary Header -->
 
-                            <StackPanel x:Name="VocabularyHeader" Visibility="Collapsed">
+                            <Grid x:Name="VocabularyHeader" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="Personal Dictionary" Foreground="White" FontSize="36" FontWeight="Bold"/>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Personal Dictionary" Foreground="White" FontSize="36" FontWeight="Bold"/>
+                                    <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="16"/>
+                                </StackPanel>
 
-                                <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="16"/>
-
-                            </StackPanel>
+                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,0,0">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                             <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
+                                                 <StackPanel Orientation="Horizontal">
+                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                                 </StackPanel>
+                                             </Border>
+                                             <ControlTemplate.Triggers>
+                                                 <Trigger Property="IsMouseOver" Value="True">
+                                                      <Setter TargetName="bdr" Property="Background" Value="#40FFFFFF"/>
+                                                      <Setter TargetName="bdr" Property="Effect">
+                                                          <Setter.Value>
+                                                              <DropShadowEffect Color="#32D74B" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                                                          </Setter.Value>
+                                                      </Setter>
+                                                 </Trigger>
+                                             </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
 
 
 
@@ -1084,9 +1138,35 @@
 
                                 <StackPanel>
 
-                                    <!-- Pro Banner -->
+                                    <!-- Store Lite Banner -->
+                                    <Border x:Name="StoreLiteBanner" Visibility="Collapsed" Background="#FF1E293B" CornerRadius="12" BorderBrush="#00F7FF" BorderThickness="1.5" Margin="0,0,0,30">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#00F7FF" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                        </Border.Effect>
+                                        <Grid Margin="20">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <Border Background="#2000F7FF" Width="42" Height="42" CornerRadius="10" Margin="0,0,15,0">
+                                                <TextBlock Text="&#x1F6D2;" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Foreground="#00F7FF"/>
+                                            </Border>
 
-                                    <Border Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1.2" Margin="0,0,0,30">
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="Microsoft Store Edition (Lite)" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                                                <TextBlock Text="Limited to 20 mins/month. Want full access?" Foreground="White" Opacity="0.7" FontSize="13"/>
+                                            </StackPanel>
+
+                                            <Border Grid.Column="2" Background="#007AFF" CornerRadius="8" Padding="15,8" Cursor="Hand" MouseLeftButtonDown="GetFullAccess_Click" VerticalAlignment="Center">
+                                                <TextBlock Text="Upgrade at cosmowhisper-app.web.app" Foreground="White" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Pro Banner -->
+                                    <Border x:Name="ProBanner" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1.2" Margin="0,0,0,30">
 
                                         <Border.Effect>
 
@@ -1802,11 +1882,37 @@
 
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
-                                            <TextBlock Text="TL;DR" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                                            <TextBlock Text="The Narrator" Foreground="White" FontSize="18" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Summarize'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Read Summary'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
 
-                                            <TextBlock Text="Too long; didn't read. Give me the gist." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Too long; didn't read. Listen to the gist." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                                        </StackPanel>
+
+                                    </Border>
+
+                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+
+                                        <Border.Background>
+
+                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+
+                                                <GradientStop Color="#FF06B6D4" Offset="0"/>
+
+                                                <GradientStop Color="#FF0891B2" Offset="1"/>
+
+                                            </LinearGradientBrush>
+
+                                        </Border.Background>
+
+                                        <StackPanel Margin="15" VerticalAlignment="Center">
+
+                                            <TextBlock Text="The Scribe" Foreground="White" FontSize="18" FontWeight="Bold"/>
+
+                                            <TextBlock Text="Trigger: 'Write Summary'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+
+                                            <TextBlock Text="Digest the text. Type it out immediately." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
                                         </StackPanel>
 
@@ -2275,7 +2381,14 @@
                                             <!-- Dynamic Voices Loaded in Code Behind -->
 
                                         </ComboBox>
+                                    </Border>
 
+                                    <!-- Output Device -->
+                                    <TextBlock Text="🔈 Output Device" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+                                    <Border Background="#10FFFFFF" CornerRadius="10" Padding="5" Margin="0,0,0,25">
+                                        <ComboBox x:Name="ComboOutput" Foreground="White" BorderThickness="0" FontSize="16" Padding="10" SelectionChanged="ComboOutput_SelectionChanged">
+                                            <!-- Dynamic Devices Loaded in Code Behind -->
+                                        </ComboBox>
                                     </Border>
 
 
@@ -2322,173 +2435,40 @@
 
                                     <!-- Split View: Fine-Tuning & Playground -->
 
-                                    <Grid>
-
-                                        <Grid.ColumnDefinitions>
-
-                                            <ColumnDefinition Width="*"/>
-
-                                            <ColumnDefinition Width="20"/>
-
-                                            <ColumnDefinition Width="*"/>
-
-                                        </Grid.ColumnDefinitions>
-
-
-
-                                        <!-- Fine-Tuning -->
-
-                                        <Border Grid.Column="0" Background="#10FFFFFF" CornerRadius="12" Padding="20">
-
-                                            <StackPanel>
-
-                                                <TextBlock Text="&#x1F6E0; Fine-Tuning" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,20"/>
-
-                                                
-
-                                                <!-- Speed -->
-
-                                                <Grid Margin="0,0,0,5">
-
-                                                    <TextBlock Text="Narration Speed" Foreground="White" Opacity="0.7" FontSize="12"/>
-
-                                                    <TextBlock x:Name="TxtSpeedValue" Text="1.0" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
-
-                                                </Grid>
-
-                                                <Slider x:Name="SldSpeed" Minimum="0.25" Maximum="4.0" Value="1.0" Margin="0,0,0,20" ValueChanged="SldSpeed_ValueChanged"/>
-
-
-
-                                                <!-- Volume -->
-
-                                                <Grid Margin="0,0,0,5">
-
-                                                    <TextBlock Text="Narration Volume" Foreground="White" Opacity="0.7" FontSize="12"/>
-
-                                                    <TextBlock x:Name="TxtVolumeValue" Text="100%" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
-
-                                                </Grid>
-
-                                                <Slider x:Name="SldVolume" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,20" ValueChanged="SldVolume_ValueChanged"/>
-
-
-
-                                                <!-- Pitch -->
-
-                                                <Grid Margin="0,0,0,5">
-
-                                                    <TextBlock Text="Voice Pitch" Foreground="White" Opacity="0.7" FontSize="12"/>
-
-                                                    <TextBlock x:Name="TxtPitchValue" Text="1.0" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="Bold" HorizontalAlignment="Right" FontSize="12"/>
-
-                                                </Grid>
-
-                                                <Slider x:Name="SldPitch" Minimum="0.5" Maximum="2.0" Value="1.0" Margin="0,0,0,0" ValueChanged="SldPitch_ValueChanged"/>
-
-
-
-                                            </StackPanel>
-
-                                        </Border>
-
-
-
-                                        <!-- Playground -->
-
-                                        <Border Grid.Column="2" Background="#10FFFFFF" CornerRadius="12" Padding="20">
-
-                                            <Grid>
-
-                                                <Grid.RowDefinitions>
-
-                                                    <RowDefinition Height="Auto"/>
-
-                                                    <RowDefinition Height="*"/>
-
-                                                    <RowDefinition Height="Auto"/>
-
-                                                </Grid.RowDefinitions>
-
-
-
-                                                <TextBlock Text="&#x25B7; Test Playground" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
-
-                                                
-
-                                                <Border Grid.Row="1" Background="#15FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,15">
-
-                                                    <TextBox x:Name="TxtPlayground" Text="Hello! I am your CosmoWhisper assistant. How can I help you today?" 
-
-                                                             Background="Transparent" BorderThickness="0" Foreground="White" 
-
-                                                             TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"/>
-
-                                                </Border>
-
-
-
-                                                <Grid Grid.Row="2">
-
-                                                    <Grid.ColumnDefinitions>
-
-                                                        <ColumnDefinition Width="*"/>
-
-                                                        <ColumnDefinition Width="10"/>
-
-                                                        <ColumnDefinition Width="Auto"/>
-
-                                                    </Grid.ColumnDefinitions>
-
-                                                    <Button x:Name="BtnPlaySample" Content="▶ Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,16" MinHeight="54" FontSize="16" FontWeight="Bold" Click="BtnPlaySample_Click">
-
-                                                        <Button.Template>
-
-                                                            <ControlTemplate TargetType="Button">
-
-                                                                <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
-
-                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                                                                </Border>
-
-                                                            </ControlTemplate>
-
-                                                        </Button.Template>
-
-                                                    </Button>
-
-                                                    
-
-                                                    <Button Grid.Column="2" Width="50" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Content="↻" FontSize="18" Padding="0">
-
-                                                        <Button.Template>
-
-                                                            <ControlTemplate TargetType="Button">
-
-                                                                <Border Background="{TemplateBinding Background}" CornerRadius="12">
-
-                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                                                                </Border>
-
-                                                            </ControlTemplate>
-
-                                                        </Button.Template>
-
-                                                    </Button>
-
-                                                </Grid>
-
+                                    <!-- Test Playground -->
+                                    <Border Background="#10FFFFFF" CornerRadius="12" Padding="20">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Text="&#x25B7; Test Playground" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
+                                            
+                                            <Border Grid.Row="1" Background="#15FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+                                                <TextBox x:Name="TxtPlayground" Text="Hello! I am your CosmoWhisper assistant. How can I help you today?" FontSize="18" 
+                                                         Background="Transparent" BorderThickness="0" Foreground="White" 
+                                                         TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"/>
+                                            </Border>
+
+                                            <Grid Grid.Row="2">
+                                                <Button x:Name="BtnPlaySample" Content="▶ Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,16" MinHeight="54" FontSize="16" FontWeight="Bold" Click="BtnPlaySample_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
                                             </Grid>
-
-                                        </Border>
-
-                                    </Grid>
+                                        </Grid>
+                                    </Border>
 
 
 
-                                    <TextBlock Text="Operating as Narration Studio v2.2.5 (Premium &amp; Free Mode)" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,30,0,10"/>
+                                    <TextBlock Text="Operating as Narration Studio v2.2.19.1 (Premium &amp; Free Mode)" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,30,0,10"/>
 
                                 </StackPanel>
 
@@ -3509,7 +3489,7 @@
 
 
 
-                                            <Button Content="Open Master Commands List" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="30,15" FontWeight="Bold" Cursor="Hand" Click="OpenLibraryWeb_Click">
+                                            <Button Content="Open Master Commands List" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="30,15" Width="380" FontWeight="Bold" Cursor="Hand" Click="OpenLibraryWeb_Click">
 
                                                 <Button.Template>
 
@@ -3529,7 +3509,7 @@
 
 
 
-                                            <TextBlock Text="Includes system triggers, formatting rules, and AI personas." Foreground="White" Opacity="0.4" FontSize="11" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                                            <TextBlock Text="Includes system triggers, formatting rules, and AI personas." Foreground="White" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,0"/>
 
                                         </StackPanel>
 
@@ -3671,7 +3651,7 @@
 
                                                 <StackPanel>
 
-                                                    <TextBlock Text="Plan" Foreground="White" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="Plan" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
                                                     <TextBlock x:Name="AccountUsageLabel" Text="Free Starter" Foreground="White" Opacity="0.6" FontSize="12"/>
 
@@ -3711,7 +3691,7 @@
 
                                                 <StackPanel>
 
-                                                    <TextBlock Text="Usage This Month" Foreground="White" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="Usage This Month" Foreground="White" FontWeight="SemiBold" Margin="0,20,0,8"/>
 
                                                     <TextBlock x:Name="AccountUsageStats" Text="0 / 23 minutes used" Foreground="White" Opacity="0.6" FontSize="12"/>
 
@@ -3802,7 +3782,7 @@
                                                 <PasswordBox x:Name="TxtLoginPassword" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14"/>
                                             </Border>
 
-                                            <Button Content="Sign In" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,15" FontWeight="Bold" FontSize="16" Cursor="Hand" Click="PerformLogin_Click">
+                                            <Button Content="Sign In" Height="50" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" FontWeight="Bold" FontSize="16" Cursor="Hand" Click="PerformLogin_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -3812,13 +3792,13 @@
                                                 </Button.Template>
                                             </Button>
 
-                                            <Button Margin="0,15,0,0" Background="White" Foreground="#444" BorderThickness="0" Padding="0,12" FontWeight="SemiBold" Cursor="Hand" Click="GoogleLogin_Click">
+                                            <Button Margin="0,15,0,0" Height="50" Background="White" Foreground="Black" BorderThickness="0" FontWeight="SemiBold" Cursor="Hand" Click="GoogleLogin_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="12">
-                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                                <TextBlock Text="G" Foreground="#4285F4" FontWeight="Bold" FontSize="18" Margin="0,0,10,0"/>
-                                                                <TextBlock Text="Continue with Google" VerticalAlignment="Center"/>
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock Text="G" Foreground="#4285F4" FontWeight="Bold" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Continue with Google" Foreground="Black" VerticalAlignment="Center" FontSize="14"/>
                                                             </StackPanel>
                                                         </Border>
                                                     </ControlTemplate>

@@ -24,28 +24,35 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public string TierDisplayName => CurrentTier switch
+        public string TierDisplayName 
         {
-            UserTier.Personal => "Personal Plan",
-            UserTier.Professional => "Professional Plan",
-            _ => "Free Tier"
-        };
+            get
+            {
+                if (PreferenceManager.Shared.Preferences.IsStoreVersion) return "Store Edition (Lite)";
+                return CurrentTier switch
+                {
+                    UserTier.Personal => "Personal Plan",
+                    UserTier.Professional => "Professional Plan",
+                    _ => "Free Tier"
+                };
+            }
+        }
 
-        public string TierIcon => CurrentTier switch
+        public string TierIcon => PreferenceManager.Shared.Preferences.IsStoreVersion ? "🛒" : CurrentTier switch
         {
             UserTier.Personal => "👤",
             UserTier.Professional => "👑",
             _ => "⚡"
         };
 
-        public bool IsUnlimited => CurrentTier != UserTier.Free;
+        public bool IsUnlimited => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
 
         // Feature Gating
         public bool HasUltraAccuracy => CurrentTier == UserTier.Professional;
         public bool HasScreenOCR => CurrentTier == UserTier.Professional;
-        public bool HasPrioritySupport => CurrentTier != UserTier.Free;
+        public bool HasPrioritySupport => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
 
-        public int MonthlyLimitMinutes => CurrentTier switch
+        public int MonthlyLimitMinutes => (PreferenceManager.Shared.Preferences.IsStoreVersion) ? 20 : CurrentTier switch
         {
             UserTier.Personal => 999999, // Essentially unlimited
             UserTier.Professional => 999999,

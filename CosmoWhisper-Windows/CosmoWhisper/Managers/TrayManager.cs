@@ -3,6 +3,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Windows;
 
+using System.Runtime.InteropServices;
+using System.Text;
+
 namespace CosmoWhisper.Managers
 {
     /// <summary>
@@ -129,6 +132,24 @@ namespace CosmoWhisper.Managers
             }
         }
 
+
+
+        private bool IsPackaged()
+        {
+            try
+            {
+                int length = 0;
+                return GetCurrentPackageFullName(ref length, null) != 15700; // 15700 = APPMODEL_ERROR_NO_PACKAGE
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder? packageFullName);
+
         private void ToggleStartup(ToolStripMenuItem item)
         {
             var prefs = PreferenceManager.Shared.Preferences;
@@ -136,7 +157,14 @@ namespace CosmoWhisper.Managers
             item.Checked = prefs.LaunchOnStartup;
             PreferenceManager.Shared.Save();
 
-            // Actually register/unregister from Windows startup
+            // Check if running as MSIX
+            if (IsPackaged())
+            {
+                ShowBalloon("Startup Settings", "To change startup settings for the Store version, please use Windows Settings > Apps > Startup.", ToolTipIcon.Info);
+                return;
+            }
+
+            // Legacy Registry Startup (Win32)
             if (prefs.LaunchOnStartup)
             {
                 StartupManager.Enable();

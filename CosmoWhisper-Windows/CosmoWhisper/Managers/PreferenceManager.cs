@@ -26,7 +26,8 @@ namespace CosmoWhisper.Managers
         // Voice Studio: Speed, Pitch & Selection
         public double VoiceSpeed { get; set; } = 1.0;
         public double VoicePitch { get; set; } = 1.0;
-        public string SelectedVoice { get; set; } = "alloy";
+        public double VoiceVolume { get; set; } = 100.0;
+        public string SelectedVoice { get; set; } = ""; // Empty means use default (George)
 
         // Intelligence: API Keys & AI Models
         public string GroqApiKey { get; set; } = "";
@@ -39,6 +40,10 @@ namespace CosmoWhisper.Managers
         public string MicDeviceName { get; set; } = "Default";
         public string MicDeviceId { get; set; } = "";
         public double MicSensitivity { get; set; } = 0.5;
+
+        // Output Device Settings
+        public string OutputDeviceName { get; set; } = "Default";
+        public int OutputDeviceIndex { get; set; } = -1; // -1 = default
 
         // Agent Settings
         private bool _enableManusAgent = true;
@@ -70,10 +75,32 @@ namespace CosmoWhisper.Managers
         // License & Web Control
         public string LicenseToken { get; set; } = "";
         public string AuthToken { get; set; } = "";
-        public string BackendUrl { get; set; } = "http://localhost:5000"; // Default dev URL from the old app
+        public string BackendUrl { get; set; } = "https://cosmowhisper-app.web.app"; // Updated to official URL
+        public string UserEmail { get; set; } = "";
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
-        public int UsageLimitMinutes { get; set; } = 20; // Corrected 20 minute monthly limit
+        public int UsageLimitMinutes { get; set; } = 20;
+
+        private bool? _isStoreVersion;
+        public bool IsStoreVersion
+        {
+            get
+            {
+                if (_isStoreVersion.HasValue) return _isStoreVersion.Value;
+                try
+                {
+                    // If we can access the package ID, we are a packaged app
+                    var package = Windows.ApplicationModel.Package.Current;
+                    // The specific Store Package Name we used in our manifest
+                    _isStoreVersion = package.Id.Name.Contains("MicroMeadow.CosmoWhisper", StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    _isStoreVersion = false;
+                }
+                return _isStoreVersion.Value;
+            }
+        }
 
         // Cumulative Stats
         public long TotalWords { get; set; } = 0;
@@ -134,6 +161,14 @@ namespace CosmoWhisper.Managers
                 {
                     string json = File.ReadAllText(_settingsPath);
                     Preferences = JsonSerializer.Deserialize<UserPreferences>(json) ?? new UserPreferences();
+                    
+                    // Auto-fix localhost URL for end users
+                    if (Preferences.BackendUrl.Contains("localhost"))
+                    {
+                        Preferences.BackendUrl = "https://cosmowhisper-app.web.app";
+                        Save(); 
+                    }
+
                     PreferencesUpdated?.Invoke();
                 }
                 catch { Preferences = new UserPreferences(); }

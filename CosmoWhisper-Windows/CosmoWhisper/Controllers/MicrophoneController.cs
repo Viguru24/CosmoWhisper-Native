@@ -23,6 +23,7 @@ namespace CosmoWhisper.Controllers
 
         public async Task Initialize()
         {
+            AudioRecorder.Shared.PlayInteractionSounds = PreferenceManager.Shared.Preferences.InteractionSoundsEnabled;
             UpdateInteractionSoundsUI();
 
             // Sync sensitivity UI
@@ -99,7 +100,11 @@ namespace CosmoWhisper.Controllers
 
         public void ToggleInteractionSounds()
         {
-            AudioRecorder.Shared.PlayInteractionSounds = !AudioRecorder.Shared.PlayInteractionSounds;
+            var p = PreferenceManager.Shared.Preferences;
+            p.InteractionSoundsEnabled = !p.InteractionSoundsEnabled;
+            PreferenceManager.Shared.Save();
+
+            AudioRecorder.Shared.PlayInteractionSounds = p.InteractionSoundsEnabled;
             UpdateInteractionSoundsUI();
         }
 
