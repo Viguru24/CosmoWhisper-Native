@@ -944,6 +944,39 @@
 
                             
 
+                            <!-- Window Controls (Top Right) -->
+                            <!-- Window Controls (Top Right) -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,20,0" Canvas.ZIndex="1000">
+                                
+                                <!-- EXIT Button (Red Pill) -->
+                                <Button Click="Close_Click" Width="80" Height="32" Background="#E81123" BorderThickness="0" Cursor="Hand" ToolTip="Close Application">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="16" BorderBrush="#FF5555" BorderThickness="1">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="EXIT" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bdr" Property="Background" Value="#FF3333"/>
+                                                    <Setter TargetName="bdr" Property="Effect">
+                                                        <Setter.Value>
+                                                            <DropShadowEffect Color="#E81123" BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                
+                            </StackPanel>
+
                             <!-- Content Grid -->
 
                             <Grid Margin="30">
@@ -987,7 +1020,7 @@
                                     <TextBlock Text="Voice-activated shortcuts for your active text field." Foreground="White" Opacity="0.6" FontSize="14"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,0,0">
+                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,80,0">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                              <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
@@ -1038,7 +1071,7 @@
                                     <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="16"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,0,0">
+                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,80,0">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                              <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
@@ -3792,6 +3825,7 @@
                                                 </Button.Template>
                                             </Button>
 
+                                            <!-- Google Login Temporarily Disabled for Store Submission (Backend Route Pending)
                                             <Button Margin="0,15,0,0" Height="50" Background="White" Foreground="Black" BorderThickness="0" FontWeight="SemiBold" Cursor="Hand" Click="GoogleLogin_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
@@ -3804,6 +3838,7 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
+                                            -->
 
                                             <Button Content="Create an Account" Background="Transparent" Foreground="{DynamicResource ThemeGlowBrush}" BorderThickness="0" Margin="0,20,0,0" FontSize="12" Cursor="Hand" Click="SignUp_Click"/>
                                         </StackPanel>
