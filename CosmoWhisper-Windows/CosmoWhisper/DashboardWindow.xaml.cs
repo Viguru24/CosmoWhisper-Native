@@ -141,6 +141,11 @@ namespace CosmoWhisper
                 DragMove();
         }
 
+        private void Minimize_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             AudioRecorder.Shared.StopMonitoring();
@@ -651,8 +656,8 @@ namespace CosmoWhisper
 
         private void GoogleLogin_Click(object sender, RoutedEventArgs e)
         {
-            // Always use production URL for Google Login to ensure OAuth works
-            string url = "https://cosmowhisper-app.web.app/";
+            // Always use production backend URL for Google Login
+            string url = "https://cosmowhisper-backend.onrender.com/";
             
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 
