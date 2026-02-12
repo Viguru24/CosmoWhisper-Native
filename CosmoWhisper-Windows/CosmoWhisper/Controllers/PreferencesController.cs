@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.IO;
@@ -251,7 +251,7 @@ namespace CosmoWhisper.Controllers
                 var (password, name) = await Window.GetVaultPasswordAsync();
                 if (string.IsNullOrEmpty(password)) return;
 
-                btn.Content = "🛡️ Securing Vault...";
+                btn.Content = "??? Securing Vault...";
                 btn.IsEnabled = false;
 
                 var p = PreferenceManager.Shared.Preferences;
@@ -262,7 +262,7 @@ namespace CosmoWhisper.Controllers
                 
                 await System.Threading.Tasks.Task.Delay(1000);
 
-                btn.Content = "✅ Vault Secured";
+                btn.Content = "? Vault Secured";
                 long size = new FileInfo(vaultPath).Length;
                 string sizeDisplay = size < 1024 * 1024 ? $"{(size / 1024.0):F1} KB" : $"{(size / (1024.0 * 1024.0)):F2} MB";
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using CosmoWhisper.Models;
 using System.Windows;
@@ -75,7 +75,7 @@ namespace CosmoWhisper
                 AudioRecorder.Shared.ErrorOccurred += (msg) =>
                 {
                     System.Diagnostics.Debug.WriteLine($"AUDIO ERROR: {msg}");
-                    Dispatcher.Invoke(() => _ = CosmoMessage.Show("Audio System", msg, "🔊"));
+                    Dispatcher.Invoke(() => _ = CosmoMessage.Show("Audio System", msg, "??"));
                 };
 
 
@@ -657,7 +657,7 @@ namespace CosmoWhisper
         private void GoogleLogin_Click(object sender, RoutedEventArgs e)
         {
             // Always use production backend URL for Google Login
-            string url = "https://cosmowhisper-backend.onrender.com/";
+            string url = "https://cosmowhisper-app.onrender.com/";
             
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 
@@ -783,7 +783,7 @@ namespace CosmoWhisper
 
     public static class CosmoMessage
     {
-        public static async Task<bool> Show(string title, string message, string icon = "âœ¨", bool showCancel = false)
+        public static async Task<bool> Show(string title, string message, string icon = "✨", bool showCancel = false)
         {
             if (DashboardWindow.Instance != null)
             {

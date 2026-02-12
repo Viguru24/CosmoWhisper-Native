@@ -18,7 +18,8 @@ if (Test-Path $PayloadDir) { Remove-Item $PayloadDir -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $ImagesDir | Out-Null
 
 Write-Host "1. Building WPF Application..." -ForegroundColor Cyan
-dotnet publish "$ProjectDir\CosmoWhisper.csproj" -c Release -r win-x64 --self-contained false -o $PayloadDir
+# ENABLE SELF-CONTAINED to fix "Undisclosed Dependency" store rejection
+dotnet publish "$ProjectDir\CosmoWhisper.csproj" -c Release -r win-x64 --self-contained true -o $PayloadDir
 
 # Copy Manifest
 Copy-Item "$PackageDir\Package.appxmanifest" "$PayloadDir\AppxManifest.xml"
@@ -36,12 +37,34 @@ $Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($IconSource.FullName)
 $Bitmap = $Icon.ToBitmap()
 
 function Resize-Image {
-    param($InputImage, $Width, $Height, $OutputPath)
-    $Rect = New-Object System.Drawing.Rectangle(0, 0, $Width, $Height)
+    param($InputImage, $Width, $Height, $OutputPath, $Fit = $false)
     $NewImage = New-Object System.Drawing.Bitmap($Width, $Height)
     $Graphics = [System.Drawing.Graphics]::FromImage($NewImage)
     $Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-    $Graphics.DrawImage($InputImage, $Rect)
+    $Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+
+    if ($Fit) {
+        # Fill background with App Theme Color (#333333) to prevent transparency issues on tiles
+        $Brush = New-Object System.Drawing.SolidBrush([System.Drawing.ColorTranslator]::FromHtml("#333333"))
+        $Graphics.FillRectangle($Brush, 0, 0, $Width, $Height)
+
+        # Calculate best fit ratio
+        $Ratio = [Math]::Min($Width / $InputImage.Width, $Height / $InputImage.Height)
+        $Ratio = $Ratio * 0.8 # 80% scale to leave healthy padding
+
+        $NewW = [int]($InputImage.Width * $Ratio)
+        $NewH = [int]($InputImage.Height * $Ratio)
+        $X = [int](($Width - $NewW) / 2)
+        $Y = [int](($Height - $NewH) / 2)
+
+        $Graphics.DrawImage($InputImage, $X, $Y, $NewW, $NewH)
+        $Brush.Dispose()
+    }
+    else {
+        # Standard stretch (fine for squares)
+        $Graphics.DrawImage($InputImage, 0, 0, $Width, $Height)
+    }
+
     $NewImage.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
     $Graphics.Dispose()
     $NewImage.Dispose()
@@ -52,8 +75,9 @@ function Resize-Image {
 Resize-Image $Bitmap 44 44 "$ImagesDir\Square44x44Logo.png"
 Resize-Image $Bitmap 150 150 "$ImagesDir\Square150x150Logo.png"
 Resize-Image $Bitmap 50 50 "$ImagesDir\StoreLogo.png"
-Resize-Image $Bitmap 310 150 "$ImagesDir\Wide310x150Logo.png" # Streched, but functional
-Resize-Image $Bitmap 620 300 "$ImagesDir\SplashScreen.png"     # Scaled up for splash
+# Use Fit=$true for non-square images to avoid distortion (Store Rejection 10.1.1.11)
+Resize-Image $Bitmap 310 150 "$ImagesDir\Wide310x150Logo.png" $true 
+Resize-Image $Bitmap 620 300 "$ImagesDir\SplashScreen.png" $true
 
 $Bitmap.Dispose()
 
