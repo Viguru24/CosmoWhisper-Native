@@ -105,15 +105,20 @@ namespace CosmoWhisper.Controllers
                 }
 
                 // Handle Store Lite Banner Visibility
+                // Handle Banner Visibility
+                bool isPro = sub.IsUnlimited;
+
                 if (Window.StoreLiteBanner != null)
                 {
-                    Window.StoreLiteBanner.Visibility = p.IsStoreVersion ? Visibility.Visible : Visibility.Collapsed;
+                    // Always show the "Lite/Free" banner explanation if the user is NOT Pro.
+                    // This satisfies Microsoft Store Policy 10.8.4 regarding disclosure of free tier limits.
+                    Window.StoreLiteBanner.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;
                 }
 
-                // If Pro is active AND it's not the Store version, show normal Pro Banner
                 if (Window.ProBanner != null)
                 {
-                    Window.ProBanner.Visibility = (!p.IsStoreVersion && sub.IsUnlimited) ? Visibility.Visible : Visibility.Collapsed;
+                    // Show Pro status only if they are Pro
+                    Window.ProBanner.Visibility = isPro ? Visibility.Visible : Visibility.Collapsed;
                 }
 
                 // Account View

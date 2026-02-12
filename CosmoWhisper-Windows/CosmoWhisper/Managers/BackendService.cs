@@ -22,7 +22,7 @@ namespace CosmoWhisper.Managers
         public void UpdateBaseAddress()
         {
             string url = PreferenceManager.Shared.Preferences.BackendUrl;
-            if (string.IsNullOrEmpty(url)) url = "https://cosmowhisper-backend.onrender.com";
+            if (string.IsNullOrEmpty(url)) url = "https://cosmowhisper-app.onrender.com";
             if (!url.EndsWith("/")) url += "/";
 
             try
