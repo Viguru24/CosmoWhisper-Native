@@ -44,9 +44,9 @@ namespace CosmoWhisper.Managers
 
                     if (status != null)
                     {
-                        prefs.UserTier = status.tier;
+                        prefs.UserTier = prefs.IsStoreVersion ? "free" : status.tier;
                         prefs.UsageMinutes = status.usageMinutes;
-                        prefs.UsageLimitMinutes = status.limitMinutes;
+                        prefs.UsageLimitMinutes = prefs.IsStoreVersion ? 20 : status.limitMinutes;
                         prefs.IsAIUnlocked = !status.isOverLimit;
 
                         PreferenceManager.Shared.Save();

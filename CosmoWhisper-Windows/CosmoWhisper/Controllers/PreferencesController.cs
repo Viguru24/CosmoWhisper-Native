@@ -109,11 +109,30 @@ namespace CosmoWhisper.Controllers
 
             if (Window.TxtApiKey != null)
             {
+                _ = Window.TxtApiKey.Password; // Warm up
                 Window.TxtApiKey.Password = p.OpenAIApiKey;
                 Window.TxtApiKey.PasswordChanged += (s, e) =>
                 {
-                    p.OpenAIApiKey = Window.TxtApiKey.Password;
-                    PreferenceManager.Shared.Save();
+                    if (p.OpenAIApiKey != Window.TxtApiKey.Password)
+                    {
+                        p.OpenAIApiKey = Window.TxtApiKey.Password;
+                        if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
+                        PreferenceManager.Shared.Save();
+                    }
+                };
+            }
+
+            if (Window.TxtOpenAIApiKey_Int != null)
+            {
+                Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
+                Window.TxtOpenAIApiKey_Int.PasswordChanged += (s, e) =>
+                {
+                    if (p.OpenAIApiKey != Window.TxtOpenAIApiKey_Int.Password)
+                    {
+                        p.OpenAIApiKey = Window.TxtOpenAIApiKey_Int.Password;
+                        if (Window.TxtApiKey != null) Window.TxtApiKey.Password = p.OpenAIApiKey;
+                        PreferenceManager.Shared.Save();
+                    }
                 };
             }
 
@@ -130,18 +149,6 @@ namespace CosmoWhisper.Controllers
                 };
             }
 
-            if (Window.TxtOpenAIApiKey_Int != null)
-            {
-                Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-                Window.TxtOpenAIApiKey_Int.PasswordChanged += (s, e) =>
-                {
-                    if (p.IsAIUnlocked)
-                    {
-                        p.OpenAIApiKey = Window.TxtOpenAIApiKey_Int.Password;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
-            }
 
             if (Window.TxtAnthropicApiKey != null)
             {

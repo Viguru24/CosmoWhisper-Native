@@ -104,6 +104,18 @@ namespace CosmoWhisper.Controllers
                     Window.StatTimeSaved.Text = hours >= 1 ? $"{hours:F1}h" : $"{p.TotalTimeSavedMinutes:F0}m";
                 }
 
+                // Handle Store Lite Banner Visibility
+                if (Window.StoreLiteBanner != null)
+                {
+                    Window.StoreLiteBanner.Visibility = p.IsStoreVersion ? Visibility.Visible : Visibility.Collapsed;
+                }
+
+                // If Pro is active AND it's not the Store version, show normal Pro Banner
+                if (Window.ProBanner != null)
+                {
+                    Window.ProBanner.Visibility = (!p.IsStoreVersion && sub.IsUnlimited) ? Visibility.Visible : Visibility.Collapsed;
+                }
+
                 // Account View
                 if (Window.AccountTierStatus != null) Window.AccountTierStatus.Text = tierName;
                 if (Window.AccountTierIcon != null) Window.AccountTierIcon.Text = tierIcon;
@@ -185,6 +197,7 @@ namespace CosmoWhisper.Controllers
             var p = PreferenceManager.Shared.Preferences;
             p.LicenseToken = "";
             p.AuthToken = "";
+            p.UserEmail = "";
             p.UserTier = "free";
             PreferenceManager.Shared.Save();
 

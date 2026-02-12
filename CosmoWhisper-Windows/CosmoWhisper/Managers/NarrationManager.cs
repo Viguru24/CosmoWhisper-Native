@@ -19,9 +19,10 @@ namespace CosmoWhisper.Managers
                 SpeechStarted?.Invoke();
                 LogToFile($"Speaking text: {text.Length} chars");
                 using var synth = new SpeechSynthesizer();
-                synth.Options.SpeakingRate = PreferenceManager.Shared.Preferences.VoiceSpeed;
+                synth.Options.AudioVolume = 1.0;
+                synth.Options.SpeakingRate = 1.0;
                 var stream = await synth.SynthesizeTextToStreamAsync(text);
-                string tempFile = Path.Combine(Path.GetTempPath(), $"manus_{Guid.NewGuid()}.mp3");
+                string tempFile = Path.Combine(Path.GetTempPath(), $"manus_{Guid.NewGuid()}.wav");
                 using var dr = new Windows.Storage.Streams.DataReader(stream.GetInputStreamAt(0));
                 await dr.LoadAsync((uint)stream.Size);
                 byte[] buf = new byte[(int)stream.Size];

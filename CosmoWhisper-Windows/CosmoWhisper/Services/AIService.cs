@@ -57,7 +57,7 @@ namespace CosmoWhisper.Services
                 using var form = new MultipartFormDataContent();
                 var fileBytes = await File.ReadAllBytesAsync(filePath);
                 var fileContent = new ByteArrayContent(fileBytes);
-                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/mp4");
+                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/wav");
 
                 form.Add(fileContent, "file", Path.GetFileName(filePath));
                 form.Add(new StringContent(model), "model");
@@ -163,13 +163,13 @@ namespace CosmoWhisper.Services
             }
         }
 
-        public async Task<string> ProcessCommand(string prompt, string context)
+        public async Task<string> ProcessCommand(string prompt, string context, bool usePersonality = true)
         {
             try
             {
                 var p = PreferenceManager.Shared.Preferences;
                 string langHint = GetLanguageHint(p.InterfaceLanguage);
-                string personalityHint = GetPersonalityHint(p.AIPersonality);
+                string personalityHint = usePersonality ? GetPersonalityHint(p.AIPersonality) : "";
                 string finalPrompt = prompt + langHint + personalityHint;
 
                 // ITEM 4: Dual-Track Inference (Fast-track for short commands)

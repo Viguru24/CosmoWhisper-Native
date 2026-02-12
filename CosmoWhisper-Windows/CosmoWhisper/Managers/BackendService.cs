@@ -22,7 +22,7 @@ namespace CosmoWhisper.Managers
         public void UpdateBaseAddress()
         {
             string url = PreferenceManager.Shared.Preferences.BackendUrl;
-            if (string.IsNullOrEmpty(url)) url = "http://localhost:5000";
+            if (string.IsNullOrEmpty(url)) url = "https://cosmowhisper-app.web.app";
             if (!url.EndsWith("/")) url += "/";
 
             try
@@ -65,6 +65,7 @@ namespace CosmoWhisper.Managers
                         var p = PreferenceManager.Shared.Preferences;
                         p.AuthToken = result.token;
                         p.UserTier = result.user.tier;
+                        p.UserEmail = result.user.email;
                         PreferenceManager.Shared.Save();
                         return (true, "Login Successful");
                     }

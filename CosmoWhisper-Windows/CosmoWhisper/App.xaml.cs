@@ -17,6 +17,9 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 0. Initialize Diagnostic Flight Recorder
+        _ = DiagnosticManager.Shared;
+
         // 1. Register the protocol handler (idempotent)
         Managers.ProtocolHandler.Register();
 

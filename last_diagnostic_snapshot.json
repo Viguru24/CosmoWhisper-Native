@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-02-12 09:45:17.198",
+  "error": "The parameter is incorrect.
+
+The parameter is incorrect.
+",
+  "state": {
+    "Voice": "System.Windows.Controls.ComboBoxItem: 👑 Microsoft George (Default)",
+    "Text": "Hello! I am your CosmoWhisper assistant. How can I help you today?",
+    "Pitch": "1",
+    "Speed": "1",
+    "Volume": "100"
+  }
+}

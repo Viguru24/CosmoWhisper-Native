@@ -75,7 +75,9 @@ namespace CosmoWhisper
                 AudioRecorder.Shared.ErrorOccurred += (msg) =>
                 {
                     System.Diagnostics.Debug.WriteLine($"AUDIO ERROR: {msg}");
+                    Dispatcher.Invoke(() => _ = CosmoMessage.Show("Audio System", msg, "🔊"));
                 };
+
 
                 try { _narration.Initialize(); } catch (Exception ex) { LogCrash($"InitVoices Error: {ex.Message}"); }
                 try { _mic.Initialize(); } catch (Exception ex) { LogCrash($"InitMics Error: {ex.Message}"); }
@@ -274,9 +276,7 @@ namespace CosmoWhisper
             }
         }
 
-        private void SldSpeed_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.SpeedChanged(e.NewValue);
-        private void SldVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.VolumeChanged(e.NewValue);
-        private void SldPitch_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _narration?.PitchChanged(e.NewValue);
+        private void ComboOutput_SelectionChanged(object sender, SelectionChangedEventArgs e) => _narration?.OutputDeviceChanged();
         private async void BtnPlaySample_Click(object sender, RoutedEventArgs e) => await _narration.PlaySample();
         private void SldWidgetOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _prefs?.UpdateWidgetOpacity(e.NewValue);
         private bool _needsScaleInit = true;
@@ -640,11 +640,19 @@ namespace CosmoWhisper
         private void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/pricing", UseShellExecute = true });
         private void SignUp_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/register", UseShellExecute = true });
         
+        private void GetFullAccess_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
+            { 
+                FileName = "https://cosmowhisper-app.web.app/pricing", 
+                UseShellExecute = true 
+            });
+        }
+
         private void GoogleLogin_Click(object sender, RoutedEventArgs e)
         {
-            string url = PreferenceManager.Shared.Preferences.BackendUrl;
-            if (string.IsNullOrEmpty(url)) url = "http://localhost:5000";
-            if (!url.EndsWith("/")) url += "/";
+            // Always use production URL for Google Login to ensure OAuth works
+            string url = "https://cosmowhisper-app.web.app/";
             
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 

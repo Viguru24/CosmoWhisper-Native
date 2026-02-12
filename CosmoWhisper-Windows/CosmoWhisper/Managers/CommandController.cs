@@ -114,9 +114,9 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("paste mode", "use paste mode")) { return true; }
 
             // --- 2. TEXT FORMATTING ---
-            if (IsTriggered("uppercase", "all caps")) { await ProcessAIOnSelection("Make the text uppercase."); return true; }
-            if (IsTriggered("lowercase", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase."); return true; }
-            if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case."); return true; }
+            if (IsTriggered("uppercase", "all caps")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
+            if (IsTriggered("lowercase", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
+            if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case. Output ONLY the text.", usePersonality: false); return true; }
 
             if (cmd == "select all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); return true; }
             if (cmd == "undo" || cmd == "undo that") { InputController.Shared.ExecuteKeystroke("z", ctrl: true); return true; }
@@ -238,18 +238,31 @@ namespace CosmoWhisper.Managers
                 CommandExecuted?.Invoke(); return true;
             }
 
-            if (IsTriggered("summarize", "summarize this", "summarise", "summarise this")) { await SummarizeAndRead(); CommandExecuted?.Invoke(); return true; }
+            // Summarize (Voice vs Text)
+            if (IsTriggered("write summary", "type summary", "paste summary", "summarize to text")) 
+            { 
+                await ProcessAIOnSelection("You are a strict summarization tool. TASK: Summarize the following text concisely. CONSTRAINTS: Capture key points only. Do not add external info. Do not hallucinate. Output ONLY the summary text.", usePersonality: false); 
+                CommandExecuted?.Invoke(); 
+                return true; 
+            }
+            // Default "Summarize" -> Read aloud
+            if (IsTriggered("summarize", "summarize this", "summarise", "summarise this", "read summary")) 
+            { 
+                await SummarizeAndRead(); 
+                CommandExecuted?.Invoke(); 
+                return true; 
+            }
             if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning."); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite."); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable."); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("translate to spanish")) { await ProcessAIOnSelection("Translate the following text into Spanish."); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("translate to french")) { await ProcessAIOnSelection("Translate the following text into French."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("bullet points", "make bullet list")) { await ProcessAIOnSelection("Convert this text into a clean bulleted list using '•'."); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("bullet points", "make bullet list")) { await ProcessAIOnSelection("Convert this text into a clean bulleted list using '•'. Output ONLY the list.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy."); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive."); CommandExecuted?.Invoke(); return true; }
 
             // --- 8. OPEN ACCESSIBILITY ---
-            if (IsTriggered("read this", "read selection", "speak this", "say this")) { await ReadSelection(); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("read this", "read that", "read the", "read selection", "speak this", "say this")) { await ReadSelection(); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("stop reading", "stop speaking", "stop playback", "shush", "hush")) { NarrationManager.Shared.CancelSpeech(); CommandExecuted?.Invoke(); return true; }
 
             return false;
@@ -261,9 +274,9 @@ namespace CosmoWhisper.Managers
             InputController.Shared.ExecuteKeystroke("c", ctrl: true);
             
             // 2. Wait for clipboard to update (progressive checks)
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 10; i++)
             {
-                await Task.Delay(250); // Checks at 250, 500, 750, 1000ms
+                await Task.Delay(250); // Checks at 250, 500, ..., 2500ms
                 
                 string current = "";
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -271,11 +284,6 @@ namespace CosmoWhisper.Managers
                     try { if (System.Windows.Clipboard.ContainsText()) current = System.Windows.Clipboard.GetText(); } catch { }
                 });
 
-                // If we found text, great! But is it new?
-                // We can't easily know if it's new or old without clearing, 
-                // but clearing breaks the "Manual Copy -> Summarize" workflow.
-                // So we'll accept whatever is there, assuming the user's intent 
-                // matches the clipboard state (either auto-copied or manually copied).
                 if (!string.IsNullOrWhiteSpace(current)) return current;
             }
 
@@ -327,9 +335,8 @@ namespace CosmoWhisper.Managers
 
                 await NarrationManager.Shared.SpeakAsync("Summarizing selection...");
 
-                // AI Summarize
-                string prompt = "Provide an extremely brief summary. Maximum 2 short sentences. Focus only on the core meaning.";
-                string summary = await AIService.Shared.ProcessCommand(prompt, selection);
+                string prompt = "You are a concise summarization tool. TASK: Summarize the provided text in maximum 2 short sentences. CONSTRAINTS: Stick STRICTLY to the text provided. Do not add outside knowledge. No intro/outro.";
+                string summary = await AIService.Shared.ProcessCommand(prompt, selection, usePersonality: false);
 
                 if (summary.StartsWith("Error:"))
                 {
@@ -498,7 +505,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        private async Task ProcessAIOnSelection(string prompt)
+        private async Task ProcessAIOnSelection(string prompt, bool usePersonality = true)
         {
             try
             {
@@ -514,7 +521,7 @@ namespace CosmoWhisper.Managers
                 }
 
                 // Process
-                string result = await AIService.Shared.ProcessCommand(prompt, selection);
+                string result = await AIService.Shared.ProcessCommand(prompt, selection, usePersonality);
                 LogToFile($"AI Result received: {result.Length} chars");
 
                 // Paste back
