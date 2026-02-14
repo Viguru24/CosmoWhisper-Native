@@ -30,16 +30,20 @@ namespace CosmoWhisper.Controllers
             PreferenceManager.Shared.PreferencesUpdated += UpdateDashboardStats;
 
             var p = PreferenceManager.Shared.Preferences;
-            if (!string.IsNullOrEmpty(p.LicenseToken))
+            if (!string.IsNullOrEmpty(p.LicenseToken) || !string.IsNullOrEmpty(p.AuthToken))
             {
-                // Ensure we don't start multiple tasks if initialized multiple times
-                // Ideally this should use a CancellationTokenSource, but for now we trust single initialization or restart.
                 Task.Run(async () =>
                 {
                     while (true)
                     {
-                        await LicenseManager.Shared.SyncStatusAsync();
-                        await Task.Delay(TimeSpan.FromMinutes(5));
+                        try
+                        {
+                            if (!string.IsNullOrEmpty(p.LicenseToken)) await LicenseManager.Shared.SyncStatusAsync();
+                            if (!string.IsNullOrEmpty(p.AuthToken)) await BackendService.Shared.SyncStatus();
+                            UpdateDashboardStats();
+                        }
+                        catch { }
+                        await Task.Delay(TimeSpan.FromMinutes(1)); // More frequent sync for "automatic" feel
                     }
                 });
             }
@@ -177,23 +181,34 @@ namespace CosmoWhisper.Controllers
             }
         }
 
-        public void ActivateLicense(string key)
+        public async void ActivateLicense(string key)
         {
             if (string.IsNullOrWhiteSpace(key)) return;
 
+            var p = PreferenceManager.Shared.Preferences;
+            string oldToken = p.LicenseToken;
+            p.LicenseToken = key;
+
             if (key == "COSMO-PRO-TEST")
             {
-                var p = PreferenceManager.Shared.Preferences;
-                p.LicenseToken = key;
                 p.UserTier = "pro";
                 PreferenceManager.Shared.Save();
+                _ = CosmoMessage.Show("Success", "Test License Activated Successfully!", "💎");
+                UpdateDashboardStats();
+                return;
+            }
 
-                _ = CosmoMessage.Show("Success", "License Activated Successfully!", "💎");
+            // Try to sync with server
+            bool success = await LicenseManager.Shared.SyncStatusAsync();
+            if (success)
+            {
+                _ = CosmoMessage.Show("Success", "License Activated Successfully!", "✨");
                 UpdateDashboardStats();
             }
             else
             {
-                _ = CosmoMessage.Show("Error", "Invalid License Key", "❌");
+                p.LicenseToken = oldToken; // Revert
+                _ = CosmoMessage.Show("Error", "Invalid License Key or Server Offline", "❌");
             }
         }
 

@@ -87,7 +87,14 @@ namespace CosmoWhisper
                 try { _mic.UpdateInteractionSoundsUI(); } catch (Exception ex) { LogCrash($"UpdateSoundsUI Error: {ex.Message}"); }
 
                 // Ensure default state is Productivity Dashboard
-                try { _navigation.ShowDashboard(); } catch (Exception ex) { LogCrash($"ShowDashboard Init Error: {ex.Message}"); }
+                if (!PreferenceManager.Shared.Preferences.HasCompletedOnboarding)
+                {
+                    ShowOnboarding();
+                }
+                else
+                {
+                    try { _navigation.ShowDashboard(); } catch (Exception ex) { LogCrash($"ShowDashboard Init Error: {ex.Message}"); }
+                }
 
                 this.LocationChanged += (s, e) => SavePosition();
                 this.Closing += (s, e) => SavePosition();
@@ -198,6 +205,11 @@ namespace CosmoWhisper
         }
 
         private void Dashboard_Click(object sender, RoutedEventArgs e)
+        {
+            _navigation.ShowDashboard();
+        }
+
+        private void Preferences_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             _navigation.ShowDashboard();
         }
@@ -635,6 +647,10 @@ namespace CosmoWhisper
             });
         }
 
+        private void SaveApiKey_Click(object sender, RoutedEventArgs e) => _prefs.SaveApiKey();
+        private void DeleteApiKey_Click(object sender, RoutedEventArgs e) => _prefs.DeleteApiKey();
+        private void GetOpenAIKey_Click(object sender, RoutedEventArgs e) => _prefs.OpenOpenAIKeyLink();
+
 
         // --- Account & Login Logic ---
 
@@ -743,6 +759,14 @@ namespace CosmoWhisper
                     ConfirmSecureMode_Click(null, null);
                     e.Handled = true;
                 }
+                else if (OverlayOnboarding.Visibility == Visibility.Visible)
+                {
+                    if (_currentOnboardingStep < 3)
+                        OnboardingNext_Click(null, null);
+                    else
+                        OnboardingComplete_Click(null, null);
+                    e.Handled = true;
+                }
                 else if (VaultPasswordOverlay.Visibility == Visibility.Visible)
                 {
                     ConfirmVault_Click(null, null);
@@ -779,6 +803,127 @@ namespace CosmoWhisper
                 }
             }
         }
+        #region Onboarding Logic
+        private int _currentOnboardingStep = 1;
+
+        public async void ShowOnboarding()
+        {
+            OverlayOnboarding.Visibility = Visibility.Visible;
+            OverlayOnboarding.Opacity = 0;
+
+            var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(500));
+            OverlayOnboarding.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+            // Setup initial state for onboarding
+            await _mic.InitializeMicrophones();
+            if (SldOnboardingSensitivity != null) SldOnboardingSensitivity.Value = AudioRecorder.Shared.Sensitivity * 100;
+        }
+
+        private async void OnboardingNext_Click(object sender, RoutedEventArgs e)
+        {
+            _currentOnboardingStep++;
+            await SwitchOnboardingStep(_currentOnboardingStep);
+        }
+
+        private async Task SwitchOnboardingStep(int step)
+        {
+            // Hide all steps with a small fade out
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
+            
+            StepWelcome.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            StepMic.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            StepActivation.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            StepVocabulary.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            StepIntelligence.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            StepLibrary.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+            await Task.Delay(200);
+
+            StepWelcome.Visibility = Visibility.Collapsed;
+            StepMic.Visibility = Visibility.Collapsed;
+            StepActivation.Visibility = Visibility.Collapsed;
+            StepVocabulary.Visibility = Visibility.Collapsed;
+            StepIntelligence.Visibility = Visibility.Collapsed;
+            StepLibrary.Visibility = Visibility.Collapsed;
+
+            Grid target = step switch
+            {
+                1 => StepWelcome,
+                2 => StepMic,
+                3 => StepActivation,
+                4 => StepVocabulary,
+                5 => StepIntelligence,
+                6 => StepLibrary,
+                _ => StepWelcome
+            };
+
+            target.Visibility = Visibility.Visible;
+            target.Opacity = 0;
+
+            var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(300));
+            target.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        }
+
+
+
+        private void OnboardingSkip_Click(object sender, RoutedEventArgs e)
+        {
+            CompleteOnboarding();
+        }
+
+        private void OnboardingComplete_Click(object sender, RoutedEventArgs e)
+        {
+            // Save settings from onboarding
+            if (ComboOnboardingMics.SelectedItem is ComboBoxItem mic)
+                _mic.MicSelectionChanged(mic);
+
+            _mic.SensitivityChanged(SldOnboardingSensitivity.Value);
+
+            CompleteOnboarding();
+        }
+
+        private async void CompleteOnboarding()
+        {
+            PreferenceManager.Shared.Preferences.HasCompletedOnboarding = true;
+            PreferenceManager.Shared.Save();
+
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
+            fadeOut.Completed += (s, e) => OverlayOnboarding.Visibility = Visibility.Collapsed;
+            OverlayOnboarding.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+            _navigation.ShowDashboard();
+            
+            _ = CosmoMessage.Show("Setup Complete", "Welcome to CosmoWhisper! You can change these settings anytime in the sidebar.", "✨");
+        }
+        private void RestartSetup_Click(object sender, RoutedEventArgs e)
+        {
+            ShowOnboarding();
+        }
+
+        private void VisitLibrary_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string path)
+            {
+                string baseUrl = "https://cosmowhisper-app.web.app";
+                string url = path.StartsWith("http") ? path : baseUrl + path;
+                
+                // Discord is special, usually a full link
+                if (path == "/discord") url = "https://discord.gg/your-invite-link"; // Placeholder, but functional for the logic
+
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error opening Library URL: {ex.Message}");
+                    _ = CosmoMessage.Show("Link Error", "Could not open the browser. Please check your internet connection.", "❌");
+                }
+            }
+        }
+
+        #endregion
+
     }
 
     public static class CosmoMessage

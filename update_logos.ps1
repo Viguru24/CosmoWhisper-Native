@@ -1,6 +1,6 @@
 Add-Type -AssemblyName System.Drawing
 
-$sourceFile = "C:\Users\louis\Downloads\Cosmo whisper.jpg"
+$sourceFile = "c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-Native\master_logo.png"
 $destRoot = "c:\Users\louis\OneDrive\Documents\GitHub"
 
 # Helper for resizing with System.Drawing
@@ -15,12 +15,15 @@ function Resize-PNG {
     $newImg.Dispose()
 }
 
+# Ensure destination directories exist
+function Ensure-Path {
+    param($path)
+    if (!(Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
+}
+
 # Load Source
 $srcImg = [System.Drawing.Image]::FromFile($sourceFile)
-
-# Create a master PNG first (to use with FFmpeg)
-$masterPng = "$destRoot\CosmoWhisper-Native\master_logo.png"
-$srcImg.Save($masterPng, [System.Drawing.Imaging.ImageFormat]::Png)
+$masterPng = $sourceFile
 
 Write-Host "Updating all logo assets..." -ForegroundColor Cyan
 

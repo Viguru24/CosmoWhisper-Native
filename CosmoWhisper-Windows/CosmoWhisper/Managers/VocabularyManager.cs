@@ -17,7 +17,11 @@ namespace CosmoWhisper.Managers
 
         public VocabularyManager()
         {
+#if DEBUG
+            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Dev");
+#else
             string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
+#endif
             Directory.CreateDirectory(folder);
             _filePath = Path.Combine(folder, "vocabulary.json");
             Load();

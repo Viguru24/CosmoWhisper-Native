@@ -408,7 +408,11 @@ namespace CosmoWhisper.Managers
                 TranscriptionReceived?.Invoke($"Thinking...");
                 string text = await AIService.Shared.Transcribe(filePath);
 
-                if (text.StartsWith("Error:")) ErrorOccurred?.Invoke(text);
+                if (text.StartsWith("Error:"))
+                {
+                    DiagnosticManager.Shared.Log($"Transcription API Error: {text}", "ERROR");
+                    ErrorOccurred?.Invoke($"Transcription Failed: {text.Replace("Error:", "").Trim()}");
+                }
                 else
                 {
                     string cleaned = TextProcessor.CleanText(text);
@@ -436,10 +440,22 @@ namespace CosmoWhisper.Managers
                                 await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
                         }
                     }
+                    else
+                    {
+                        DiagnosticManager.Shared.Log("Transcription filtered as garbage/silence.", "INFO");
+                        TranscriptionReceived?.Invoke(""); // Clear thinking state
+                    }
                 }
             }
-            catch (Exception ex) { ErrorOccurred?.Invoke($"Process Error: {ex.Message}"); }
-            finally { try { File.Delete(filePath); } catch { } }
+            catch (Exception ex) 
+            { 
+                DiagnosticManager.Shared.Log($"Audio Processing Exception: {ex.Message}", "ERROR");
+                ErrorOccurred?.Invoke($"Process Error: {ex.Message}"); 
+            }
+            finally 
+            { 
+                try { File.Delete(filePath); } catch { } 
+            }
         }
 
         public async Task<List<DeviceInformation>> EnumerateInputDevices()

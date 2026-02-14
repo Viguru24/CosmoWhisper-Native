@@ -171,6 +171,16 @@ namespace CosmoWhisper
             if (pref.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {pref.MouseButton}";
             else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
 
+            // LOG STARTUP
+            Dispatcher.Invoke(() => {
+                try {
+                    string logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                    System.IO.Directory.CreateDirectory(logDir);
+                    string logPath = System.IO.Path.Combine(logDir, "cosmo_errors.log");
+                    System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - --- APP STARTING v2.2.20 ---\n");
+                } catch { }
+            });
+
             // WARM UP: Initialize audio graph immediately so the first request is instant
             // and the pre-roll buffer starts filling.
             AudioRecorder.Shared.StartMonitoring();
@@ -309,8 +319,10 @@ namespace CosmoWhisper
                 // Log to file for debugging
                 try
                 {
-                    System.IO.File.AppendAllText("cosmo_errors.log",
-                        $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
+                    string logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                    System.IO.Directory.CreateDirectory(logDir);
+                    string logPath = System.IO.Path.Combine(logDir, "cosmo_errors.log");
+                    System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
                 }
                 catch { }
             });

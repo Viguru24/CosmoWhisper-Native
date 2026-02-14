@@ -39,23 +39,34 @@ namespace CosmoWhisper.Controllers
 
         public async Task InitializeMicrophones()
         {
-            if (Window.ComboMics == null) return;
-            Window.ComboMics.Items.Clear();
+            if (Window.ComboMics != null) Window.ComboMics.Items.Clear();
+            if (Window.ComboOnboardingMics != null) Window.ComboOnboardingMics.Items.Clear();
 
             try
             {
                 var devices = await AudioRecorder.Shared.EnumerateInputDevices();
                 foreach (var d in devices)
                 {
-                    Window.ComboMics.Items.Add(new ComboBoxItem { Content = d.Name, Tag = d.Id });
+                    if (Window.ComboMics != null) 
+                        Window.ComboMics.Items.Add(new ComboBoxItem { Content = d.Name, Tag = d.Id });
+                    
+                    if (Window.ComboOnboardingMics != null) 
+                        Window.ComboOnboardingMics.Items.Add(new ComboBoxItem { Content = d.Name, Tag = d.Id });
                 }
 
-                if (Window.ComboMics.Items.Count > 0)
+                var p = PreferenceManager.Shared.Preferences;
+                if (Window.ComboMics != null && Window.ComboMics.Items.Count > 0)
                 {
-                    var p = PreferenceManager.Shared.Preferences;
-                    var selected = Window.ComboMics.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag.ToString() == p.MicDeviceId);
+                    var selected = Window.ComboMics.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == p.MicDeviceId);
                     if (selected != null) Window.ComboMics.SelectedItem = selected;
                     else Window.ComboMics.SelectedIndex = 0;
+                }
+
+                if (Window.ComboOnboardingMics != null && Window.ComboOnboardingMics.Items.Count > 0)
+                {
+                    var selected = Window.ComboOnboardingMics.Items.Cast<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == p.MicDeviceId);
+                    if (selected != null) Window.ComboOnboardingMics.SelectedItem = selected;
+                    else Window.ComboOnboardingMics.SelectedIndex = 0;
                 }
             }
             catch (Exception ex)

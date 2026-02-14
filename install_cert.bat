@@ -1,0 +1,3 @@
+@echo off
+echo Requesting Admin privileges to trust the CosmoWhisper Developer Certificate...
+powershell -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"%~dp0trust_cert.ps1\"'"
