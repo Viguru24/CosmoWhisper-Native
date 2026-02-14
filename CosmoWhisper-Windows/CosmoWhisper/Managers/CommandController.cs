@@ -85,7 +85,7 @@ namespace CosmoWhisper.Managers
             // Check for Macros first (ITEM 4)
             if (await MacroManager.Shared.TryExecuteMacro(text)) return true;
 
-            string cmd = Regex.Replace(text.ToLower(), @"[^\w\s]", "").Trim();
+            string cmd = Regex.Replace(text.ToLower(), @"[^\w\s\.]", "").Trim();
 
             if (string.IsNullOrWhiteSpace(cmd)) return false;
 
@@ -200,6 +200,21 @@ namespace CosmoWhisper.Managers
                 InputController.Shared.SendKey(0x7B, false); // F12 key
                 InputController.Shared.SendKey(0x7B, true);
                 CommandExecuted?.Invoke(); return true;
+            }
+
+            // --- SYSTEM SETTINGS SHORTCUTS ---
+            if (IsTriggered(
+                "uninstall app", "remove app", "delete app",
+                "uninstall program", "remove program", "delete program",
+                "uninstall programme", "remove programme", "delete programme", // British spelling
+                "removed program", "removed programme", "uninstalled programme", // Past tense/Speech error
+                "add remove programs", "add or remove programs", "change or remove a program",
+                "uninstalled program" // catch speech error
+            ))
+            {
+                Process.Start(new ProcessStartInfo("ms-settings:appsfeatures") { UseShellExecute = true });
+                CommandExecuted?.Invoke();
+                return true;
             }
 
             // --- 7. APP LAUNCHING ---
@@ -356,17 +371,39 @@ namespace CosmoWhisper.Managers
 
         private bool OpenSite(string name)
         {
+            // Normalize: remove trailing dot if it exists
+            name = name.TrimEnd('.');
+
+            // 1. Check exact dictionary match
             if (_webShortcuts.TryGetValue(name, out string url))
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 return true;
             }
+
+            // 2. Check if it's a known shortcut with a common TLD suffix (e.g. "github.com" matches "github")
+            string[] commonTlds = { ".com", ".org", ".net", ".io", ".ai", ".app", ".dev" };
+            foreach (var tld in commonTlds)
+            {
+                if (name.EndsWith(tld))
+                {
+                    string root = name.Substring(0, name.Length - tld.Length);
+                    if (_webShortcuts.TryGetValue(root, out string shortcutUrl))
+                    {
+                        Process.Start(new ProcessStartInfo(shortcutUrl) { UseShellExecute = true });
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Last resort: if it has any dot, try to visit it directly
             if (name.Contains("."))
             {
                 Process.Start(new ProcessStartInfo("https://" + name) { UseShellExecute = true });
                 CommandExecuted?.Invoke();
                 return true;
             }
+
             return false;
         }
 

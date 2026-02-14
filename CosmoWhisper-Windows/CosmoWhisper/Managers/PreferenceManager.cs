@@ -19,7 +19,7 @@ namespace CosmoWhisper.Managers
         public string MouseButton { get; set; } = "None"; // "Left", "Right", "Middle", "XButton1", "XButton2"
         public InsertionMethod InsertionMode { get; set; } = InsertionMethod.FastPaste;
         public bool RestoreClipboard { get; set; } = true;
-        public bool AutoSubmit { get; set; } = true;
+        public bool AutoSubmit { get; set; } = false;
         public string BackupDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
         public string TranscriptionHints { get; set; } = "";
 
@@ -75,7 +75,7 @@ namespace CosmoWhisper.Managers
         // License & Web Control
         public string LicenseToken { get; set; } = "";
         public string AuthToken { get; set; } = "";
-        public string BackendUrl { get; set; } = "https://cosmowhisper-app.web.app"; // Updated to official URL
+        public string BackendUrl { get; set; } = "https://cosmowhisper-app.onrender.com"; // Updated to actual backend API URL
         public string UserEmail { get; set; } = "";
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
@@ -114,6 +114,9 @@ namespace CosmoWhisper.Managers
 
         // Vocabulary Settings
         public bool EnableSmartEmailCorrections { get; set; } = true; // Auto-format emails, domains, etc.
+
+        private bool _hasCompletedOnboarding = false;
+        public bool HasCompletedOnboarding { get => _hasCompletedOnboarding; set { _hasCompletedOnboarding = value; OnPropertyChanged(nameof(HasCompletedOnboarding)); } }
     }
 
     public class PreferenceManager : System.ComponentModel.INotifyPropertyChanged
@@ -142,7 +145,11 @@ namespace CosmoWhisper.Managers
         {
             try
             {
-                _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
+#if DEBUG
+                _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Dev");
+#else
+                _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Native");
+#endif
                 Directory.CreateDirectory(_appDataFolder);
                 _settingsPath = Path.Combine(_appDataFolder, "settings.json");
                 Load();
@@ -162,13 +169,13 @@ namespace CosmoWhisper.Managers
                     string json = File.ReadAllText(_settingsPath);
                     Preferences = JsonSerializer.Deserialize<UserPreferences>(json) ?? new UserPreferences();
                     
-                    // Auto-fix localhost URL for end users
-                    if (Preferences.BackendUrl.Contains("localhost"))
+                    // Removed the auto-reset to onrender to allow local development and custom proxies
+#if DEBUG
+                    if (Preferences.BackendUrl == "https://cosmowhisper-app.onrender.com")
                     {
-                        Preferences.BackendUrl = "https://cosmowhisper-app.web.app";
-                        Save(); 
+                        Preferences.BackendUrl = "http://localhost:5000";
                     }
-
+#endif
                     PreferencesUpdated?.Invoke();
                 }
                 catch { Preferences = new UserPreferences(); }
@@ -176,6 +183,9 @@ namespace CosmoWhisper.Managers
             else
             {
                 Preferences = new UserPreferences();
+#if DEBUG
+                Preferences.BackendUrl = "http://localhost:5000";
+#endif
             }
         }
 

@@ -109,31 +109,12 @@ namespace CosmoWhisper.Controllers
 
             if (Window.TxtApiKey != null)
             {
-                _ = Window.TxtApiKey.Password; // Warm up
                 Window.TxtApiKey.Password = p.OpenAIApiKey;
-                Window.TxtApiKey.PasswordChanged += (s, e) =>
-                {
-                    if (p.OpenAIApiKey != Window.TxtApiKey.Password)
-                    {
-                        p.OpenAIApiKey = Window.TxtApiKey.Password;
-                        if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
             }
 
             if (Window.TxtOpenAIApiKey_Int != null)
             {
                 Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-                Window.TxtOpenAIApiKey_Int.PasswordChanged += (s, e) =>
-                {
-                    if (p.OpenAIApiKey != Window.TxtOpenAIApiKey_Int.Password)
-                    {
-                        p.OpenAIApiKey = Window.TxtOpenAIApiKey_Int.Password;
-                        if (Window.TxtApiKey != null) Window.TxtApiKey.Password = p.OpenAIApiKey;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
             }
 
             if (Window.TxtGroqApiKey != null)
@@ -161,6 +142,69 @@ namespace CosmoWhisper.Controllers
                         PreferenceManager.Shared.Save();
                     }
                 };
+            }
+        }
+
+        public async void SaveApiKey()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            
+            // Determine which field contains the "current" edit
+            string newKey = Window.TxtApiKey?.Password ?? "";
+            
+            // If the user is in the Intelligence tab, that field is the source of truth for the save click
+            if (Window.IntelligenceView != null && Window.IntelligenceView.Visibility == Visibility.Visible)
+            {
+                if (Window.TxtOpenAIApiKey_Int != null && !string.IsNullOrEmpty(Window.TxtOpenAIApiKey_Int.Password))
+                {
+                    newKey = Window.TxtOpenAIApiKey_Int.Password;
+                }
+            }
+
+            p.OpenAIApiKey = newKey.Trim();
+            
+            // Force Sync both UI fields to the final trimmed value
+            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = p.OpenAIApiKey;
+            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
+            
+            PreferenceManager.Shared.Save();
+
+            // Success feedback
+            await Window.ShowDialogAsync("API Key Secured", 
+                "Your OpenAI API Key has been successfully saved and synced across all modules.\n\nNeural High-Fidelity voices are now active.", 
+                "\u2728");
+        }
+
+        public async void DeleteApiKey()
+        {
+            bool confirm = await Window.ShowDialogAsync("Delete API Key?", 
+                "Are you sure you want to remove your API key? This will disable neural high-fidelity voices.", 
+                "\u26A0\uFE0F", true);
+
+            if (!confirm) return;
+
+            var p = PreferenceManager.Shared.Preferences;
+            p.OpenAIApiKey = "";
+            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = "";
+            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = "";
+            PreferenceManager.Shared.Save();
+            
+            Window.ShowToast("OpenAI Key Deleted", "\uD83D\uDDD1");
+        }
+
+        public void OpenOpenAIKeyLink()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://platform.openai.com/api-keys",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Window.ShowToast("Could not open link", "\u26A0");
             }
         }
 

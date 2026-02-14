@@ -34,13 +34,13 @@ namespace CosmoWhisper.Controllers
         protected void SetButtonActive(Button? btn)
         {
             if (btn != null)
-                btn.Background = ActiveButtonBrush;
+                btn.Tag = "Active";
         }
 
         protected void SetButtonInactive(Button? btn)
         {
             if (btn != null)
-                btn.Background = Brushes.Transparent;
+                btn.Tag = null;
         }
     }
 }

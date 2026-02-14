@@ -129,17 +129,17 @@ namespace CosmoWhisper.Controllers
                     if (h != null) h.Visibility = Visibility.Collapsed;
                 }
 
-                // Inactivate all buttons
-                SetButtonInactive(Window.BtnDashboard);
-                SetButtonInactive(Window.BtnSmartCommands);
-                SetButtonInactive(Window.BtnMicrophone);
-                SetButtonInactive(Window.BtnVocabulary);
-                SetButtonInactive(Window.BtnNarration);
-                SetButtonInactive(Window.BtnIntelligence);
-                SetButtonInactive(Window.BtnPreferences);
+                // Inactivate all buttons (Comprehensive)
+                var allButtons = new List<Button?> {
+                    Window.BtnDashboard, Window.BtnSmartCommands, Window.BtnMicrophone, 
+                    Window.BtnVocabulary, Window.BtnNarration, Window.BtnIntelligence, 
+                    Window.BtnPreferences, Window.BtnAccount, Window.BtnLibrary
+                };
 
-                SetButtonInactive(Window.BtnAccount);
-                SetButtonInactive(Window.BtnLibrary);
+                foreach (var b in allButtons)
+                {
+                    if (b != null) SetButtonInactive(b);
+                }
 
                 // Show selected
                 if (header != null) header.Visibility = Visibility.Visible;

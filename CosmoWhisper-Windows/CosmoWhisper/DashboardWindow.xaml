@@ -21,6 +21,53 @@
         PreviewKeyDown="Window_PreviewKeyDown">
 
     <Window.Resources>
+        <Style x:Key="LibraryTileButton" TargetType="Button">
+            <Setter Property="Background" Value="#10FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#20FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="20" Padding="{TemplateBinding Padding}">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#1AFFFFFF"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#40FFFFFF"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.02" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.02" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#25FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style x:Key="SidebarButton" TargetType="Button">
 
@@ -154,6 +201,10 @@
 
                             </Trigger>
 
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Active">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#30FFFFFF"/>
+                                <Setter TargetName="AccentLine" Property="Opacity" Value="1"/>
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
 
                     </ControlTemplate>
@@ -169,49 +220,27 @@
         <!-- Nearly Invisible ScrollBar Style -->
 
         <Style TargetType="ScrollBar">
-
-            <Setter Property="Width" Value="2"/>
-
+            <Setter Property="Width" Value="10"/>
             <Setter Property="Background" Value="Transparent"/>
-
             <Setter Property="Template">
-
                 <Setter.Value>
-
                     <ControlTemplate TargetType="ScrollBar">
-
                         <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="Transparent">
-
                             <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsEnabled}">
-
                                 <Track.Thumb>
-
-                                    <Thumb Background="#10FFFFFF" Opacity="0.1">
-
+                                    <Thumb Background="#40FFFFFF" Opacity="0.3">
                                         <Thumb.Template>
-
                                             <ControlTemplate TargetType="Thumb">
-
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="1" Margin="0"/>
-
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Margin="1,0"/>
                                             </ControlTemplate>
-
                                         </Thumb.Template>
-
                                     </Thumb>
-
                                 </Track.Thumb>
-
                             </Track>
-
                         </Grid>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
 
 
@@ -519,49 +548,25 @@
 
 
                             <!-- Premium Logo Section (Pinned Top) -->
-
-                            <StackPanel Grid.Row="0" Margin="10,20,20,20">
-
-                                <Image Source="sidebar_logo.png" Width="42" Height="42" HorizontalAlignment="Left" Margin="22,0,0,12" RenderOptions.BitmapScalingMode="HighQuality">
-
+                            <StackPanel Grid.Row="0" Margin="0,30,0,20" HorizontalAlignment="Center">
+                                <Image Source="sidebar_logo.png" Width="60" Height="60" HorizontalAlignment="Center" Margin="0,0,0,12" RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Effect>
-
                                         <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
-
                                     </Image.Effect>
-
                                 </Image>
-
-                                <StackPanel Margin="22,0,8,0">
-
-                                    <StackPanel Orientation="Horizontal">
-
-                                        <TextBlock Text="Cosmo" FontSize="22" FontWeight="ExtraBold" Foreground="#00F7FF">
-
-                                            <TextBlock.Effect>
-
-                                                <DropShadowEffect Color="#00F7FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-
-                                            </TextBlock.Effect>
-
-                                        </TextBlock>
-
-                                        <TextBlock Text="Whisper" FontSize="22" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
-
-                                            <TextBlock.Effect>
-
-                                                <DropShadowEffect Color="#BF5AF2" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-
-                                            </TextBlock.Effect>
-
-                                        </TextBlock>
-
-                                    </StackPanel>
-
-                                    <Border Height="2" Width="40" Background="#4000F7FF" HorizontalAlignment="Left" Margin="2,4,0,0" CornerRadius="1"/>
-
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Cosmo" FontSize="22" FontWeight="ExtraBold" Foreground="#00F7FF">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="#00F7FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock Text="Whisper" FontSize="22" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="#BF5AF2" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
                                 </StackPanel>
-
+                                <Border Height="2" Width="40" Background="#4000F7FF" HorizontalAlignment="Center" Margin="0,4,0,0" CornerRadius="1"/>
                             </StackPanel>
 
 
@@ -660,7 +665,7 @@
 
                                     <!-- Preferences Group + Appearance Hooked In -->
 
-                                    <Button x:Name="BtnPreferences" Style="{StaticResource SidebarButton}" Click="Preferences_Click">
+                                    <Button x:Name="BtnPreferences" Style="{StaticResource SidebarButton}" Click="Preferences_Click" MouseRightButtonDown="Preferences_MouseRightButtonDown">
 
                                         <StackPanel Orientation="Horizontal">
 
@@ -678,30 +683,22 @@
 
 
 
-                                    <Button x:Name="BtnLibrary" Style="{StaticResource SidebarButton}" Click="Library_Click">
 
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F4DA;" Foreground="#5E5CE6" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
 
 
 
                                     <Button x:Name="BtnAccount" Style="{StaticResource SidebarButton}" Click="Account_Click">
-
                                         <StackPanel Orientation="Horizontal">
-
                                             <TextBlock Text="&#x1F464;" Foreground="#0A84FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
                                             <TextBlock Text="Account" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
                                         </StackPanel>
+                                    </Button>
 
+                                    <Button x:Name="BtnLibrary" Style="{StaticResource SidebarButton}" Click="Library_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#x1F4DA;" Foreground="#FF2D55" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </StackPanel>
                                     </Button>
 
                                 </StackPanel>
@@ -844,7 +841,7 @@
 
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.19.2-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="Version 2.2.37.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
 
                                 <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
 
@@ -1121,13 +1118,40 @@
 
                             <!-- Preferences Header -->
 
-                            <StackPanel x:Name="PreferencesHeader" Visibility="Collapsed">
+                            <Grid x:Name="PreferencesHeader" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="Preferences" Foreground="White" FontSize="36" FontWeight="Bold"/>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Preferences" Foreground="White" FontSize="36" FontWeight="Bold"/>
+                                    <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="16"/>
+                                </StackPanel>
 
-                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="16"/>
-
-                            </StackPanel>
+                                <Button Grid.Column="1" Click="Dashboard_Click" VerticalAlignment="Top" HorizontalAlignment="Right" Cursor="Hand" Margin="0,5,80,0">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                             <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
+                                                 <StackPanel Orientation="Horizontal">
+                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                                 </StackPanel>
+                                             </Border>
+                                             <ControlTemplate.Triggers>
+                                                 <Trigger Property="IsMouseOver" Value="True">
+                                                      <Setter TargetName="bdr" Property="Background" Value="#40FFFFFF"/>
+                                                      <Setter TargetName="bdr" Property="Effect">
+                                                          <Setter.Value>
+                                                              <DropShadowEffect Color="#FFD700" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                                                          </Setter.Value>
+                                                      </Setter>
+                                                 </Trigger>
+                                             </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
 
 
 
@@ -1167,7 +1191,7 @@
 
                             <!-- VIEW 1: PRODUCTIVITY DASHBOARD -->
 
-                            <ScrollViewer x:Name="DashboardView" VerticalScrollBarVisibility="Hidden">
+                            <ScrollViewer x:Name="DashboardView" VerticalScrollBarVisibility="Auto">
 
                                 <StackPanel>
 
@@ -2433,31 +2457,49 @@
                                         <TextBlock Text="&#x1F511; OpenAI API Key (Required for Paid Neural Voices)" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
                                         <Grid>
-
                                             <Grid.ColumnDefinitions>
-
                                                 <ColumnDefinition Width="*"/>
-
                                                 <ColumnDefinition Width="Auto"/>
-
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
                                             <Border Background="#15FFFFFF" CornerRadius="8" Padding="15,10">
-
                                                 <PasswordBox x:Name="TxtApiKey" PasswordChar="*" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="16"/>
-
                                             </Border>
 
-                                            <Button Grid.Column="1" Content="Get Key" Margin="12,0,0,0" Background="#20FFFFFF" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold">
+                                            <!-- Save Button -->
+                                            <Button Grid.Column="1" Click="SaveApiKey_Click" Margin="8,0,0,0" Background="#10B981" Foreground="White" BorderThickness="0" Padding="12,8" ToolTip="Save Identity &amp; Sync Key">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                            <TextBlock Text="💾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
 
+                                            <!-- Delete Button -->
+                                            <Button Grid.Column="2" Click="DeleteApiKey_Click" Margin="8,0,0,0" Background="#F43F5E" Foreground="White" BorderThickness="0" Padding="12,8" ToolTip="Forget Everything (Delete Key)">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                            <TextBlock Text="🗑️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+
+                                            <!-- Get Key Link -->
+                                            <Button Grid.Column="3" Click="GetOpenAIKey_Click" Margin="8,0,0,0" Background="#3B82F6" Foreground="White" BorderThickness="0" Padding="15,8" FontWeight="SemiBold">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                            <TextBlock Text="Get Key ↗" Foreground="White"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
                                         </Grid>
 
                                         <TextBlock Text="Your key is stored locally on this device." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,5,0,0"/>
@@ -2511,7 +2553,7 @@
 
                             <!-- VIEW 5: INTELLIGENCE -->
 
-                            <ScrollViewer x:Name="IntelligenceView" VerticalScrollBarVisibility="Hidden" Visibility="Collapsed">
+                            <ScrollViewer x:Name="IntelligenceView" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
 
                                 <StackPanel>
 
@@ -2559,25 +2601,52 @@
 
                                                 <TextBlock Text="&#x1F511; OpenAI API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
 
-                                                <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
 
-                                                    <Grid>
+                                                    <Border Grid.Row="0" Grid.Column="0" Background="#15FFFFFF" CornerRadius="8" Padding="5" Margin="0,0,0,5">
+                                                        <PasswordBox x:Name="TxtOpenAIApiKey_Int" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
+                                                    </Border>
 
-                                                         <Grid.ColumnDefinitions>
+                                                    <Button Grid.Row="0" Grid.Column="1" Click="SaveApiKey_Click" Margin="8,0,0,5" Background="#10B981" Foreground="White" BorderThickness="0" Padding="12,8" ToolTip="Save Key">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                    <TextBlock Text="💾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
 
-                                                             <ColumnDefinition Width="*"/>
+                                                    <Button Grid.Row="0" Grid.Column="2" Click="DeleteApiKey_Click" Margin="8,0,0,5" Background="#F43F5E" Foreground="White" BorderThickness="0" Padding="12,8" ToolTip="Delete Key">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                    <TextBlock Text="🗑️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
 
-                                                             <ColumnDefinition Width="Auto"/>
-
-                                                         </Grid.ColumnDefinitions>
-
-                                                         <PasswordBox x:Name="TxtOpenAIApiKey_Int" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
-
-                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
-
-                                                    </Grid>
-
-                                                </Border>
+                                                    <Button Grid.Row="0" Grid.Column="3" Click="GetOpenAIKey_Click" Margin="8,0,0,5" Background="#20FFFFFF" Foreground="White" BorderThickness="0" Padding="12,8" ToolTip="Get Key">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                    <TextBlock Text="🔗" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
+                                                </Grid>
 
                                             </StackPanel>
 
@@ -2773,7 +2842,7 @@
 
                             <!-- VIEW 6: VOCABULARY -->
 
-                            <ScrollViewer x:Name="VocabularyView" VerticalScrollBarVisibility="Hidden" Visibility="Collapsed">
+                            <ScrollViewer x:Name="VocabularyView" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
                                 <StackPanel>
                                     <!-- Hints -->
                                     <Grid Margin="0,0,0,5">
@@ -3504,105 +3573,7 @@
 
 
 
-                            <!-- VIEW 9: LIBRARY (CLOUD) -->
 
-                            <ScrollViewer x:Name="CloudLibraryView" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden">
-
-                                <StackPanel>
-
-                                    <Border Background="#252A3D" CornerRadius="20" Padding="40" Margin="0,0,0,30">
-
-                                        <StackPanel HorizontalAlignment="Center">
-
-                                            <TextBlock Text="&#x1F310;" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-
-                                            <TextBlock Text="Cloud Library" Foreground="White" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
-                                            <TextBlock Text="Explore the full master list of commands online." Foreground="White" Opacity="0.6" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-
-
-
-                                            <Button Content="Open Master Commands List" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="30,15" Width="380" FontWeight="Bold" Cursor="Hand" Click="OpenLibraryWeb_Click">
-
-                                                <Button.Template>
-
-                                                    <ControlTemplate TargetType="Button">
-
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
-
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                                                        </Border>
-
-                                                    </ControlTemplate>
-
-                                                </Button.Template>
-
-                                            </Button>
-
-
-
-                                            <TextBlock Text="Includes system triggers, formatting rules, and AI personas." Foreground="White" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,0"/>
-
-                                        </StackPanel>
-
-                                    </Border>
-
-
-
-                                    <Grid>
-
-                                        <Grid.ColumnDefinitions>
-
-                                            <ColumnDefinition Width="*"/>
-
-                                            <ColumnDefinition Width="20"/>
-
-                                            <ColumnDefinition Width="*"/>
-
-                                        </Grid.ColumnDefinitions>
-
-
-
-                                        <!-- Quick Link 1 -->
-
-                                        <Border Grid.Column="0" Background="#15FFFFFF" CornerRadius="15" Padding="25" Cursor="Hand" MouseLeftButtonDown="VisitDocs_Click">
-
-                                            <StackPanel>
-
-                                                <TextBlock Text="&#x1F4D6;" FontSize="24" Margin="0,0,0,10"/>
-
-                                                <TextBlock Text="User Manual" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
-
-                                                <TextBlock Text="Learn how to master dictation." Foreground="White" Opacity="0.5" FontSize="12" TextWrapping="Wrap"/>
-
-                                            </StackPanel>
-
-                                        </Border>
-
-
-
-                                        <!-- Quick Link 2 -->
-
-                                        <Border Grid.Column="2" Background="#15FFFFFF" CornerRadius="15" Padding="25" Cursor="Hand" MouseLeftButtonDown="VisitGitHub_Click">
-
-                                            <StackPanel>
-
-                                                <TextBlock Text="&#x1F4BB;" FontSize="24" Margin="0,0,0,10"/>
-
-                                                <TextBlock Text="Open Source" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
-
-                                                <TextBlock Text="View source and contribute." Foreground="White" Opacity="0.5" FontSize="12" TextWrapping="Wrap"/>
-
-                                            </StackPanel>
-
-                                        </Border>
-
-                                    </Grid>
-
-                                </StackPanel>
-
-                            </ScrollViewer>
 
 
 
@@ -3776,7 +3747,7 @@
 
                                                         <Style TargetType="Border">
 
-                                                            <Setter Property="CornerRadius" Value="6"/>
+                                                            <Setter Property="CornerRadius" Value="8"/>
 
                                                         </Style>
 
@@ -3790,6 +3761,28 @@
 
                                     </Border>
 
+
+
+                                    <!-- Support & Setup -->
+
+                                    <StackPanel Margin="0,30,0,20">
+
+                                        <Button Content="Run Setup Again" HorizontalAlignment="Left" Background="Transparent" Foreground="#60FFFFFF" BorderThickness="0" FontSize="12" Click="RestartSetup_Click">
+
+                                            <Button.Template>
+
+                                                <ControlTemplate TargetType="Button">
+
+                                                    <TextBlock Text="{TemplateBinding Content}" TextDecorations="Underline" Cursor="Hand" Opacity="0.5"/>
+
+                                                </ControlTemplate>
+
+                                            </Button.Template>
+
+                                        </Button>
+
+                                    </StackPanel>
+
                                 </StackPanel>
 
                             </ScrollViewer>
@@ -3797,7 +3790,7 @@
 
 
                             <!-- VIEW 11: LOGIN -->
-                            <ScrollViewer x:Name="LoginView" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden">
+                            <ScrollViewer x:Name="LoginView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                                 <StackPanel VerticalAlignment="Center" Margin="0,50,0,0">
                                     <Border Background="#252A3D" CornerRadius="20" Padding="40" HorizontalAlignment="Center" Width="400">
                                         <StackPanel>
@@ -3825,23 +3818,69 @@
                                                 </Button.Template>
                                             </Button>
 
-                                            <!-- Google Login Temporarily Disabled for Store Submission (Backend Route Pending)
-                                            <Button Margin="0,15,0,0" Height="50" Background="White" Foreground="Black" BorderThickness="0" FontWeight="SemiBold" Cursor="Hand" Click="GoogleLogin_Click">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
-                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                <TextBlock Text="G" Foreground="#4285F4" FontWeight="Bold" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                                <TextBlock Text="Continue with Google" Foreground="Black" VerticalAlignment="Center" FontSize="14"/>
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                            -->
-
                                             <Button Content="Create an Account" Background="Transparent" Foreground="{DynamicResource ThemeGlowBrush}" BorderThickness="0" Margin="0,20,0,0" FontSize="12" Cursor="Hand" Click="SignUp_Click"/>
                                         </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- VIEW 12: LIBRARY -->
+                            <ScrollViewer x:Name="CloudLibraryView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="30">
+                                    <TextBlock Text="Explore the Cosmo Space" Foreground="White" FontSize="26" FontWeight="ExtraBold" Margin="0,0,0,5"/>
+                                    <TextBlock Text="Discover tools, shared workflows, and neural voices from the cloud." Foreground="White" Opacity="0.5" FontSize="14" Margin="0,0,0,35" TextWrapping="Wrap"/>
+
+                                    <UniformGrid Columns="2" Margin="0,0,0,30">
+                                        <!-- Tile 1: Voices -->
+                                        <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="0,0,10,15" Tag="/features#voices">
+                                            <StackPanel>
+                                               <TextBlock Text="🌌" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="Neural Voices" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                               <TextBlock Text="Browse 50+ studio-quality AI voices for narration." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Tile 2: Commands -->
+                                        <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="10,0,0,15" Tag="/features#commands">
+                                            <StackPanel>
+                                               <TextBlock Text="🤖" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="Command Depot" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                               <TextBlock Text="Pre-built workflows for coding, emails, and data." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Tile 3: FAQ -->
+                                        <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="0,15,10,0" Tag="/faq">
+                                            <StackPanel>
+                                               <TextBlock Text="📖" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="Knowledge Base" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                               <TextBlock Text="Learn advanced tips and technical setup guides." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Tile 4: Community -->
+                                        <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="10,15,0,0" Tag="/discord">
+                                            <StackPanel>
+                                               <TextBlock Text="🛸" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="Cosmo Community" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                               <TextBlock Text="Join shared discussions and shape the future of AI." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </UniformGrid>
+
+                                    <!-- Sync Banner -->
+                                    <Border Background="#15FFFFFF" CornerRadius="16" Padding="25" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Cloud Sync Active" Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
+                                                <TextBlock Text="Your personal vocabulary and commands are automatically synced with your account." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="☁️" FontSize="24" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                                        </Grid>
                                     </Border>
                                 </StackPanel>
                             </ScrollViewer>
@@ -4145,6 +4184,160 @@
         </Grid>
 
 
+
+        <!-- ONBOARDING OVERLAY -->
+        <Grid x:Name="OverlayOnboarding" Visibility="Collapsed" Opacity="0" Panel.ZIndex="250">
+            <Border Background="#CC000000">
+                <Border.Effect>
+                    <BlurEffect Radius="20"/>
+                </Border.Effect>
+            </Border>
+
+            <Border x:Name="OnboardingBorder" Width="600" MinHeight="540" Height="Auto" MaxHeight="650" Background="#1A1C30" CornerRadius="30" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" Color="Black" Opacity="0.6" ShadowDepth="0"/>
+                </Border.Effect>
+                
+                <Grid>
+                    <!-- STEP 1: WELCOME -->
+                    <Grid x:Name="StepWelcome" Visibility="Visible">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="✨" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Welcome to CosmoWhisper" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="The most powerful voice interface for Windows. Ready to transform how you work?" Foreground="White" Opacity="0.7" FontSize="16" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,40"/>
+                            
+                            <Button Content="Get Started" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            
+                            <Button Content="Skip Onboarding" Click="OnboardingSkip_Click" Background="Transparent" Foreground="White" Opacity="0.4" Margin="0,15,0,0" Cursor="Hand" BorderThickness="0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 2: MICROPHONE -->
+                    <Grid x:Name="StepMic" Visibility="Collapsed">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="🎙️" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Voice Check" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Select your primary microphone and adjust sensitivity." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,30"/>
+                            
+                            <Border Background="#10FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,15">
+                                <ComboBox x:Name="ComboOnboardingMics" Foreground="White" Background="Transparent" BorderThickness="0" FontSize="14"/>
+                            </Border>
+                            
+                            <Grid Margin="0,0,0,30">
+                                <TextBlock Text="Sensitivity" Foreground="White" Opacity="0.5" FontSize="12"/>
+                                <Slider x:Name="SldOnboardingSensitivity" Margin="0,20,0,0" Maximum="100" Value="2"/>
+                            </Grid>
+
+                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="50" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="16" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 3: ACTIVATION -->
+                    <Grid x:Name="StepActivation" Visibility="Collapsed">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="⚡" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Quick Activation" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Press F9 to activate the voice interface. You can change this shortcut in settings later." Foreground="White" Opacity="0.7" FontSize="18" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
+                            
+                            <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" HorizontalAlignment="Center">
+                                <TextBlock Text="F9" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="36" FontWeight="ExtraBold"/>
+                            </Border>
+
+                            <Button Content="Next: Smart Features" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand" Margin="0,40,0,0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 4: VOCABULARY -->
+                    <Grid x:Name="StepVocabulary" Visibility="Collapsed">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="🌌" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Train Your AI" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Add names, technical jargon, and acronyms to your personal Vocabulary. CosmoWhisper learns your language for 100% accuracy." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
+                            
+                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 5: INTELLIGENCE -->
+                    <Grid x:Name="StepIntelligence" Visibility="Collapsed">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="🤖" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Intelligent Actions" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="It's more than dictation. Use AI to rewrite emails, fix grammar, or summarize documents instantly with voice commands." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
+                            
+                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 6: LIBRARY -->
+                    <Grid x:Name="StepLibrary" Visibility="Collapsed">
+                        <StackPanel VerticalAlignment="Center" Margin="50">
+                            <TextBlock Text="🛸" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Global Command Center" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Sync your commands to the cloud and browse the community library for powerful pre-built workflows." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
+                            
+                            <Button Content="Finish Setup" Click="OnboardingComplete_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
 
         <Grid x:Name="UniversalDialog" Visibility="Collapsed" Opacity="0" Panel.ZIndex="200">
 

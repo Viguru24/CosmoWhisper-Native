@@ -50,19 +50,24 @@ namespace CosmoWhisper.Controllers
                 Window.ComboVoice.Items.Add(new ComboBoxItem 
                 { 
                     Content = v.DisplayName.Contains("George") ? $"👑 {v.DisplayName} (Default)" : $"✨ {v.DisplayName}", 
-                    Tag = v.DisplayName 
+                    Tag = v.Id // Use unique ID for technical precision
                 });
             }
 
             var p = PreferenceManager.Shared.Preferences;
             bool selectionMade = false;
             
+            // Try to restore user preference
             if (!string.IsNullOrEmpty(p.SelectedVoice))
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
                 {
                     if (item.Tag?.ToString() == p.SelectedVoice)
                     {
+                        // If it's a neural voice but we have no key, don't auto-select it
+                        bool isNeural = !item.Content.ToString().Contains("✨") && !item.Content.ToString().Contains("👑");
+                        if (isNeural && string.IsNullOrWhiteSpace(p.OpenAIApiKey)) continue;
+
                         Window.ComboVoice.SelectedItem = item;
                         selectionMade = true;
                         break;
@@ -70,19 +75,23 @@ namespace CosmoWhisper.Controllers
                 }
             }
             
+            // If No Preference OR Neural Voice failed (no key), Force Fallback to George
             if (!selectionMade)
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
                 {
-                    if (item.Tag?.ToString().Contains("George") == true)
+                    string content = item.Content?.ToString() ?? "";
+                    if (content.Contains("George") || content.Contains("👑"))
                     {
                         Window.ComboVoice.SelectedItem = item;
+                        p.SelectedVoice = item.Tag?.ToString() ?? ""; // Sync preference
                         selectionMade = true;
                         break;
                     }
                 }
             }
 
+            // Absolute fallback to first item
             if (!selectionMade && Window.ComboVoice.Items.Count > 0) 
                 Window.ComboVoice.SelectedIndex = 0;
         }
@@ -159,19 +168,19 @@ namespace CosmoWhisper.Controllers
 
                 if (Window.ComboVoice.SelectedItem is ComboBoxItem item)
                 {
-                    voice = item.Tag?.ToString() ?? "alloy";
+                    voice = (item.Tag?.ToString() ?? "alloy").Trim();
                     string content = item.Content?.ToString() ?? "";
                     isLocal = content.Contains("✨") || content.Contains("👑");
+                    DiagnosticManager.Shared.Log($"PlaySample UI Selection: '{content}' (Tag='{voice}'), isLocal={isLocal}", "VOICE");
                 }
 
-                DiagnosticManager.Shared.Log($"PlaySample: Voice={voice}, Local={isLocal}, Text='{text.Substring(0, Math.Min(text.Length, 30))}...'", "VOICE");
-
-                // Use the key from Preferences directly to ensure sync between views
-                string apiKey = PreferenceManager.Shared.Preferences.OpenAIApiKey;
+                // Reference preferences directly to ensure we have the latest Saved key
+                var p = PreferenceManager.Shared.Preferences;
+                string apiKey = p.OpenAIApiKey?.Trim() ?? "";
 
                 if (!isLocal && string.IsNullOrWhiteSpace(apiKey))
                 {
-                    _ = CosmoMessage.Show("OpenAI Key Required", "Neural voices (like Alloy) require an OpenAI API Key. Please enter one in the Intelligence settings or select a local voice (with \u2728 or \uD83D\uDC51).", "\uD83D\uDD11");
+                    _ = CosmoMessage.Show("OpenAI Key Required", "Neural voices (like Alloy or Nova) require an OpenAI API Key.\n\nPlease enter your key and click the 💾 Save button first.", "\uD83D\uDD11");
                     return;
                 }
 
@@ -185,8 +194,20 @@ namespace CosmoWhisper.Controllers
                     using (var synth = new SpeechSynthesizer())
                     {
                         var voices = SpeechSynthesizer.AllVoices;
-                        var selectedVoice = voices.FirstOrDefault(v => v.DisplayName == voice || v.Id == voice);
-                        if (selectedVoice != null) synth.Voice = selectedVoice;
+                        // Prioritize ID match, then DisplayName, then partial name
+                        var selectedVoice = voices.FirstOrDefault(v => v.Id == voice) 
+                                         ?? voices.FirstOrDefault(v => v.DisplayName == voice)
+                                         ?? voices.FirstOrDefault(v => v.DisplayName.Contains(voice, StringComparison.OrdinalIgnoreCase));
+                                         
+                        if (selectedVoice != null) 
+                        {
+                            synth.Voice = selectedVoice;
+                            DiagnosticManager.Shared.Log($"Voice Success: Loaded {selectedVoice.DisplayName}", "VOICE");
+                        }
+                        else
+                        {
+                            DiagnosticManager.Shared.Log($"Voice Warning: Could not find '{voice}', using system default", "WARN");
+                        }
 
                         try
                         {
@@ -220,7 +241,23 @@ namespace CosmoWhisper.Controllers
                 if (audioFile.StartsWith("Error:"))
                 {
                     Window.BtnPlaySample.Content = "❌ Failed";
-                    _ = CosmoMessage.Show("Speech Error", audioFile, "🔊");
+                    
+                    if (audioFile.Contains("insufficient_quota"))
+                    {
+                        _ = CosmoMessage.Show("Credits Required", 
+                            "It looks like your OpenAI account has run out of credits.\n\nTo use neural high-fidelity voices, please add a small balance (e.g. $5) to your OpenAI Billing Dashboard.", 
+                            "\uD83D\uDCA2");
+                    }
+                    else if (audioFile.Contains("invalid_api_key"))
+                    {
+                        _ = CosmoMessage.Show("Invalid API Key", 
+                            "The OpenAI API key you entered is not being recognized.\n\nPlease double-check the key in Voice Studio and click Save again.", 
+                            "\u26A0\uFE0F");
+                    }
+                    else
+                    {
+                        _ = CosmoMessage.Show("Speech Error", audioFile, "🔊");
+                    }
                     await Task.Delay(2000);
                 }
                 else

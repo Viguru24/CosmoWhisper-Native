@@ -1,41 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Package
-  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  IgnorableNamespaces="uap rescap desktop">
-
-  <Identity
-    Name="MicroMeadow.CosmoWhisper"
-    Publisher="CN=E79B034B-3211-490A-96BE-648E426FE339"
-    Version="2.2.19.2"
-    ProcessorArchitecture="x64" />
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" IgnorableNamespaces="uap rescap desktop">
+  <Identity Name="MicroMeadow.CosmoWhisper" Publisher="CN=E79B034B-3211-490A-96BE-648E426FE339" Version="2.2.37.0" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>CosmoWhisper</DisplayName>
     <PublisherDisplayName>Micro Meadow</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
-
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
   </Dependencies>
-
   <Resources>
-    <Resource Language="en-US"/>
+    <Resource Language="en-US" />
   </Resources>
-
   <Applications>
-    <Application Id="App"
-      Executable="CosmoWhisperNative.exe"
-      EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements
-        DisplayName="CosmoWhisper"
-        Description="Voice productivity suite. Free version includes 20 mins/month of dictation. Upgrade for unlimited access."
-        BackgroundColor="#333333"
-        Square150x150Logo="Images\Square150x150Logo.png"
-        Square44x44Logo="Images\Square44x44Logo.png">
+    <Application Id="App" Executable="CosmoWhisperNative.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="CosmoWhisper" Description="Voice productivity suite. Free version includes 20 mins/month of dictation. Upgrade for unlimited access." BackgroundColor="#000000" Square150x150Logo="Images\Square150x150Logo.png" Square44x44Logo="Images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Images\SplashScreen.png" />
       </uap:VisualElements>
@@ -46,7 +25,6 @@
       </Extensions>
     </Application>
   </Applications>
-
   <Capabilities>
     <Capability Name="internetClient" />
     <rescap:Capability Name="runFullTrust" />

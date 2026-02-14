@@ -8,10 +8,15 @@ $PayloadDir = "$PackageDir\Payload"
 $ImagesDir = "$PayloadDir\Images"
 $MakeAppx = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\makeappx.exe"
 $SignTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe"
-$CertName = "CosmoWhisper_SelfSigned"
+
 $CertPass = "CosmoDev123!" # Password for signing cert
 $CertPublisher = "CN=E79B034B-3211-490A-96BE-648E426FE339"
 $CertSubject = $CertPublisher
+
+# 0. AUTOMATED VERSION SYNC (The "Rule")
+Write-Host "0. Synchronizing Versions..." -ForegroundColor Cyan
+& "$RepoRoot\update_version.ps1"
+if ($LASTEXITCODE -ne 0) { throw "Version sync failed!" }
 
 # Ensure clean state
 if (Test-Path $PayloadDir) { Remove-Item $PayloadDir -Recurse -Force }
@@ -27,14 +32,15 @@ Copy-Item "$PackageDir\Package.appxmanifest" "$PayloadDir\AppxManifest.xml"
 Write-Host "2. Generating Assets from app.ico..." -ForegroundColor Cyan
 Add-Type -AssemblyName System.Drawing
 
-# Find source icon (we know it's in Deploy/app_files/app.ico based on earlier checks)
-$IconSource = Get-ChildItem -Path "$RepoRoot\CosmoWhisper-Windows\Deploy\app_files" -Filter "app.ico" -Recurse | Select-Object -First 1
-if (-not $IconSource) {
-    Write-Error "Could not find app.ico!"
+# Use master_logo.png as the source for high-quality assets
+$SourceImagePath = "$RepoRoot\master_logo.png"
+
+if (-not (Test-Path $SourceImagePath)) {
+    Write-Error "Could not find master_logo.png at $SourceImagePath!"
 }
 
-$Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($IconSource.FullName)
-$Bitmap = $Icon.ToBitmap()
+Write-Host "Using high-quality source: $SourceImagePath" -ForegroundColor Green
+$Bitmap = [System.Drawing.Bitmap]::FromFile($SourceImagePath)
 
 function Resize-Image {
     param($InputImage, $Width, $Height, $OutputPath, $Fit = $false)
@@ -44,8 +50,8 @@ function Resize-Image {
     $Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
 
     if ($Fit) {
-        # Fill background with App Theme Color (#333333) to prevent transparency issues on tiles
-        $Brush = New-Object System.Drawing.SolidBrush([System.Drawing.ColorTranslator]::FromHtml("#333333"))
+        # Fill background with App Theme Color (#000000) to match the master logo
+        $Brush = New-Object System.Drawing.SolidBrush([System.Drawing.ColorTranslator]::FromHtml("#000000"))
         $Graphics.FillRectangle($Brush, 0, 0, $Width, $Height)
 
         # Calculate best fit ratio
@@ -106,9 +112,34 @@ else {
     Write-Host "NEW Certificate created and exported to PFX." -ForegroundColor Yellow
 }
 
+
 # Sign
 & $SignTool sign /fd SHA256 /a /f $PfxPath /p $CertPass $MsixPath
 if ($LASTEXITCODE -ne 0) { throw "SignTool failed!" }
 
 Write-Host "SUCCESS! MSIX Package Created at: $MsixPath" -ForegroundColor Green
-Write-Host "NOTE: To install, you MUST trust the certificate first. Right-click .msix -> Properties -> Digital Signatures -> Details -> View Certificate -> Install Certificate -> Local Machine -> "Trusted Root Certification Authorities"." -ForegroundColor Yellow
+
+Write-Host "5. Installing Certificate (Trying auto-install)..." -ForegroundColor Cyan
+try {
+    # Install to CurrentUser (no admin needed, but not universally trusted like LocalMachine)
+    # The trick for side-loading is installing into Trusted Root CA of the MACHINE or USER.
+    # We will try installing to CurrentUser\Root which is allowed without admin elevation (sometimes),
+    # but for true side-loading on Windows on many configs, LocalMachine\Root is required.
+    
+    # Try importing directly
+    Write-Host "Importing to Trusted Root..."
+    Import-Certificate -FilePath $PfxPath -CertStoreLocation Cert:\CurrentUser\Root -Verbose
+    Import-Certificate -FilePath $PfxPath -CertStoreLocation Cert:\CurrentUser\TrustedPeople -Verbose
+    
+    Write-Host "Certificate installed! You should be able to install the MSIX now." -ForegroundColor Green
+}
+catch {
+    Write-Warning "Auto-install of certificate failed (likely needs Admin rights)."
+    Write-Host "MANUAL STEP REQUIRED:" -ForegroundColor Yellow
+    Write-Host "1. Double-click '$PfxPath'"
+    Write-Host "2. Select 'Current User' or 'Local Machine'"
+    Write-Host "3. Password is: $CertPass"
+    Write-Host "4. Place in 'Trusted Root Certification Authorities'"
+}
+
+Start-Process explorer.exe "/select,$MsixPath"
