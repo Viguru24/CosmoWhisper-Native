@@ -15,16 +15,28 @@ namespace CosmoWhisper.Services
     {
         public static AIService Shared { get; } = new AIService();
         private readonly HttpClient _httpClient;
-        private string ChatUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
         private const string DirectUrl = "https://api.groq.com/openai/v1/audio/transcriptions";
         private const string DirectChatUrl = "https://api.groq.com/openai/v1/chat/completions";
+        private const string FirebaseProxyUrl = "https://cosmowhisper-app.web.app/api";
+        
+        private string ChatUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
         private string ProxyUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
         private bool _useProxy = false; // "Sticky" proxy mode if direct fails
         private bool _useChatProxy = false;
 
         public AIService()
         {
-            _httpClient = new HttpClient();
+            // Configure HttpClientHandler to use system proxy (including VPN)
+            var handler = new HttpClientHandler
+            {
+                UseProxy = true,
+                Proxy = System.Net.WebRequest.GetSystemWebProxy(),
+                PreAuthenticate = true,
+                UseDefaultCredentials = true
+            };
+            
+            _httpClient = new HttpClient(handler);
+            _httpClient.Timeout = TimeSpan.FromSeconds(60); // Increase timeout for VPN scenarios
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
             RefreshConfig();
 
@@ -81,18 +93,35 @@ namespace CosmoWhisper.Services
                 return form;
             }
 
-            // Try Direct first
-            using (var directContent = CreateContent())
+            // Try Direct first (unless we are in sticky proxy mode)
+            if (!_useProxy)
             {
-                System.Diagnostics.Debug.WriteLine($"[transcribe] Trying Direct: {DirectUrl}");
-                string result = await ExecuteWithFallback(DirectUrl, directContent, true);
-                
-                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
-                
-                System.Diagnostics.Debug.WriteLine($"[transcribe] Direct failed ({result}). Trying Proxy...");
+                using (var directContent = CreateContent())
+                {
+                    System.Diagnostics.Debug.WriteLine($"[transcribe] Trying Direct: {DirectUrl}");
+                    string result = await ExecuteWithFallback(DirectUrl, directContent, true);
+                    
+                    if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                    
+                    System.Diagnostics.Debug.WriteLine($"[transcribe] Direct failed ({result}). Switching to Sticky Proxy Mode...");
+                    _useProxy = true; // Stick to proxy for this session
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[transcribe] Sticky Proxy Mode Active. Skipping Direct.");
             }
 
-            // Fallback to Proxy with FRESH content
+            // Fallback 1: Firebase Proxy (Fastest / CDN)
+            using (var firebaseContent = CreateContent())
+            {
+                string firebaseTranscribeUrl = $"{FirebaseProxyUrl}/audio/transcriptions";
+                string result = await ExecuteWithFallback(firebaseTranscribeUrl, firebaseContent, false);
+                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                System.Diagnostics.Debug.WriteLine($"[transcribe] Firebase Proxy failed ({result}). Trying Render Proxy...");
+            }
+
+            // Fallback 2: Render Proxy (Original Backend)
             using (var proxyContent = CreateContent())
             {
                  return await ExecuteWithFallback(ProxyUrl, proxyContent, false);
@@ -228,15 +257,24 @@ namespace CosmoWhisper.Services
 
             System.Diagnostics.Debug.WriteLine($"[Chat] Sending to: {DirectChatUrl}");
 
-            // Try Direct first, then Proxy
-            string result = await ExecuteWithFallback(DirectChatUrl, content, true);
-            if (result.StartsWith("Error:") && !result.Contains("Canceled"))
+            // Try Direct first (unless we are in sticky proxy mode)
+            if (!_useProxy)
             {
-                System.Diagnostics.Debug.WriteLine("[AIService] Chat Direct failed. Trying Proxy...");
-                System.Diagnostics.Debug.WriteLine($"[Chat] Sending to: {ChatUrl}");
-                return await ExecuteWithFallback(ChatUrl, JsonContent.Create(payload), false);
+                string result = await ExecuteWithFallback(DirectChatUrl, content, true);
+                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                
+                System.Diagnostics.Debug.WriteLine("[AIService] Chat Direct failed. Switching to Sticky Proxy Mode...");
+                _useProxy = true;
             }
-            return result;
+
+            System.Diagnostics.Debug.WriteLine("[AIService] Using Proxies (Firebase/Render)...");
+            string firebaseChatUrl = $"{FirebaseProxyUrl}/chat/completions";
+            string fbResult = await ExecuteWithFallback(firebaseChatUrl, JsonContent.Create(payload), false);
+            
+            if (!fbResult.StartsWith("Error:") && !fbResult.Contains("Canceled")) return fbResult;
+
+            System.Diagnostics.Debug.WriteLine("[AIService] Firebase Chat failed. Trying Render Proxy...");
+            return await ExecuteWithFallback(ChatUrl, JsonContent.Create(payload), false);
         }
 
         private string GetPersonalityHint(string personality)

@@ -5,8 +5,10 @@ namespace CosmoWhisper.Managers
     public enum UserTier
     {
         Free,
-        Personal,
-        Professional
+        Personal, // Legacy
+        Pro,      // New Standard
+        Ultimate, // New Power User
+        Professional // Legacy
     }
 
     public class SubscriptionManager
@@ -17,9 +19,14 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                var tier = PreferenceManager.Shared.Preferences.UserTier.ToLower();
-                if (tier == "personal") return UserTier.Personal;
-                if (tier == "professional" || tier == "pro") return UserTier.Professional;
+                var tier = PreferenceManager.Shared.Preferences?.UserTier?.ToLower() ?? "free";
+                
+                if (tier == "ultimate") return UserTier.Ultimate;
+                if (tier == "professional") return UserTier.Ultimate; // Legacy mapping
+                
+                if (tier == "pro") return UserTier.Pro;
+                if (tier == "personal") return UserTier.Pro; // Legacy mapping
+
                 return UserTier.Free;
             }
         }
@@ -31,8 +38,10 @@ namespace CosmoWhisper.Managers
                 if (PreferenceManager.Shared.Preferences.IsStoreVersion) return "Store Edition (Lite)";
                 return CurrentTier switch
                 {
-                    UserTier.Personal => "Personal Plan",
-                    UserTier.Professional => "Professional Plan",
+                    UserTier.Ultimate => "Ultimate Plan",
+                    UserTier.Professional => "Ultimate Plan",
+                    UserTier.Pro => "Pro Plan",
+                    UserTier.Personal => "Pro Plan",
                     _ => "Free Tier"
                 };
             }
@@ -40,23 +49,24 @@ namespace CosmoWhisper.Managers
 
         public string TierIcon => PreferenceManager.Shared.Preferences.IsStoreVersion ? "🛒" : CurrentTier switch
         {
-            UserTier.Personal => "👤",
-            UserTier.Professional => "👑",
-            _ => "⚡"
+            UserTier.Ultimate => "🚀",
+            UserTier.Professional => "🚀",
+            UserTier.Pro => "⚡",
+            UserTier.Personal => "⚡",
+            _ => "🌱"
         };
 
         public bool IsUnlimited => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
 
         // Feature Gating
-        public bool HasUltraAccuracy => CurrentTier == UserTier.Professional;
-        public bool HasScreenOCR => CurrentTier == UserTier.Professional;
-        public bool HasPrioritySupport => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
+        public bool HasUltraAccuracy => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
+        public bool HasScreenOCR => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
+        public bool HasPrioritySupport => IsUnlimited;
 
-        public int MonthlyLimitMinutes => (PreferenceManager.Shared.Preferences.IsStoreVersion) ? 20 : CurrentTier switch
+        public int MonthlyLimitMinutes => (PreferenceManager.Shared.Preferences.IsStoreVersion) ? 60 : CurrentTier switch
         {
-            UserTier.Personal => 999999, // Essentially unlimited
-            UserTier.Professional => 999999,
-            _ => 20
+            UserTier.Free => 60,
+            _ => 999999 // All paid plans are unlimited
         };
     }
 }
