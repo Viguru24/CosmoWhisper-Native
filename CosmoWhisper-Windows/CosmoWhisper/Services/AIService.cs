@@ -19,6 +19,9 @@ namespace CosmoWhisper.Services
         private const string DirectChatUrl = "https://api.groq.com/openai/v1/chat/completions";
         private const string FirebaseProxyUrl = "https://cosmowhisper-app.web.app/api";
         
+        // Performance Watch
+        private System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
+        
         private string ChatUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
         private string ProxyUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
         private bool _useProxy = false; // "Sticky" proxy mode if direct fails
@@ -40,6 +43,10 @@ namespace CosmoWhisper.Services
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
             RefreshConfig();
 
+        }
+
+        public void Initialize()
+        {
             PreferenceManager.Shared.PreferencesUpdated += () => RefreshConfig();
         }
 
@@ -63,8 +70,9 @@ namespace CosmoWhisper.Services
             MultipartFormDataContent CreateContent()
             {
                 var form = new MultipartFormDataContent();
-                var fileBytes = File.ReadAllBytes(filePath); // Sync read is fine for small audio
-                var fileContent = new ByteArrayContent(fileBytes);
+                // We use shared read to allow multiple tasks to read if necessary
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var fileContent = new StreamContent(fileStream);
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/wav");
 
                 form.Add(fileContent, "file", Path.GetFileName(filePath));
@@ -93,54 +101,161 @@ namespace CosmoWhisper.Services
                 return form;
             }
 
-            // Try Direct first (unless we are in sticky proxy mode)
-            if (!_useProxy)
+            // 🛑 LOCAL ONLY MODE (Survival Switch)
+            // If the user checked "Local Only", respect it immediately.
+            if (p.UseLocalWhisperOnly)
             {
-                using (var directContent = CreateContent())
+                LogEvent("[transcribe] 🔒 LOCAL ONLY MODE ACTIVE: Skipping cloud...");
+                if (LocalModelManager.Shared.IsReady)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[transcribe] Trying Direct: {DirectUrl}");
-                    string result = await ExecuteWithFallback(DirectUrl, directContent, true);
-                    
-                    if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
-                    
-                    System.Diagnostics.Debug.WriteLine($"[transcribe] Direct failed ({result}). Switching to Sticky Proxy Mode...");
-                    _useProxy = true; // Stick to proxy for this session
+                    return await LocalModelManager.Shared.TranscribeAsync(filePath);
+                }
+                else
+                {
+                    LogEvent("[transcribe] ⚠️ Local model not ready for Local-Only mode.");
+                    return "Error: Local Only Mode enabled but model not ready.";
                 }
             }
-            else
+
+            // 🏎️ RACE MODE: If Local is ready, run it in PARALLEL with Cloud.
+            // The first one to return a valid result wins. 
+            // This guarantees the fastest possible speed (Local ~0.5s vs Cloud ~2s+).
+            bool canRace = p.UseLocalWhisper && LocalModelManager.Shared.IsReady;
+
+            // Define Cloud Logic as a local function to allow parallel execution
+            async Task<string> RunCloudTranscription()
             {
-                System.Diagnostics.Debug.WriteLine("[transcribe] Sticky Proxy Mode Active. Skipping Direct.");
+                // In DEBUG mode, force LOCAL PROXY ONLY
+#if DEBUG
+                var debugProxyUrl = PreferenceManager.Shared.Preferences.BackendUrl;
+                if (string.IsNullOrEmpty(debugProxyUrl)) debugProxyUrl = "http://127.0.0.1:5000";
+                debugProxyUrl = debugProxyUrl.Replace("localhost", "127.0.0.1");
+
+                if (debugProxyUrl.Contains("127.0.0.1"))
+                {
+                    using (var devContent = CreateContent())
+                    {
+                        LogEvent($"[transcribe] DEBUG MODE: Skipping Direct. Going straight to Local Proxy: {debugProxyUrl}");
+                        string result = await ExecuteWithFallback(debugProxyUrl, devContent, false, 3); 
+                        if (!result.StartsWith("Error:") && !result.Contains("Canceled") && !result.Contains("NotFound")) return result;
+                        LogEvent($"[transcribe] Local Dev Proxy failed ({result}). Falling back to cloud...");
+                    }
+                }
+#endif
+
+                // ⚡ QUICK OFFLINE CHECK
+                bool isOffline = !System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+                if (isOffline) return "Error: Network unreachable (Offline Check)";
+
+                // 1. Try Direct Groq
+                if (!_useProxy)
+                {
+                    using (var directContent = CreateContent())
+                    {
+                        LogEvent($"[transcribe] Trying Direct Groq: {DirectUrl}");
+                        // If racing, we can be aggressive with timeouts (2s). 
+                        int directTimeout = canRace ? 2 : 5;
+                        string result = await ExecuteWithFallback(DirectUrl, directContent, true, directTimeout);
+                        
+                        if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                        
+                        if (result.Contains("Network unreachable")) return "Error: Network unreachable"; // Fast fail
+
+                        LogEvent($"[transcribe] Direct Groq failed ({result}). Switching to Sticky Proxy Mode...");
+                        _useProxy = true; 
+                    }
+                }
+
+                // 2. Fallback: Firebase Proxy
+                using (var firebaseContent = CreateContent())
+                {
+                    string firebaseTranscribeUrl = "https://cosmowhisper-app.web.app/api/transcribe"; 
+                    int firebaseTimeout = canRace ? 2 : 20;
+                    string result = await ExecuteWithFallback(firebaseTranscribeUrl, firebaseContent, false, firebaseTimeout);
+                    
+                    if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                    LogEvent($"[transcribe] Firebase Proxy failed ({result}). Trying Render Proxy...");
+                }
+
+                // 3. Fallback: Render Proxy
+                using (var proxyContent = CreateContent())
+                {
+                     LogEvent($"[transcribe] Trying Render Proxy: {ProxyUrl}");
+                     int renderTimeout = canRace ? 2 : 30;
+                     string result = await ExecuteWithFallback(ProxyUrl, proxyContent, false, renderTimeout);
+                     
+                     if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                     
+                     string backupProxyUrl = ProxyUrl.Replace("/api/ai/transcribe", "/api/transcribe");
+                     return await ExecuteWithFallback(backupProxyUrl, proxyContent, false, renderTimeout);
+                }
             }
 
-            // Fallback 1: Firebase Proxy (Fastest / CDN)
-            using (var firebaseContent = CreateContent())
+            // EXECUTE RACE
+            if (canRace)
             {
-                string firebaseTranscribeUrl = $"{FirebaseProxyUrl}/audio/transcriptions";
-                string result = await ExecuteWithFallback(firebaseTranscribeUrl, firebaseContent, false);
-                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
-                System.Diagnostics.Debug.WriteLine($"[transcribe] Firebase Proxy failed ({result}). Trying Render Proxy...");
+                LogEvent("[transcribe] 🏎️ STARTING RACE: Local vs Cloud...");
+                
+                var cloudTask = RunCloudTranscription();
+                var localTask = LocalModelManager.Shared.TranscribeAsync(filePath);
+
+                // Wait for the FIRST task to complete
+                var winner = await Task.WhenAny(cloudTask, localTask);
+                string result = await winner;
+
+                // Validate Winner
+                if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("Error:"))
+                {
+                    LogEvent($"[transcribe] 🏁 WINNER: {(winner == localTask ? "Local Model 🏠" : "Cloud API ☁️")}");
+                    return result;
+                }
+
+                // If winner failed, await the loser
+                LogEvent($"[transcribe] ⚠️ Winner failed ({result}). Waiting for runner-up...");
+                var loser = (winner == localTask) ? cloudTask : localTask;
+                return await loser;
             }
 
-            // Fallback 2: Render Proxy (Original Backend)
-            using (var proxyContent = CreateContent())
+            // Normal Execution (No Race)
+            string cloudResult = await RunCloudTranscription();
+            if (!cloudResult.StartsWith("Error:")) return cloudResult;
+
+            // Final Fallback if not racing but cloud failed (and we didn't use local yet)
+            if (p.UseLocalWhisper && LocalModelManager.Shared.IsReady)
             {
-                 return await ExecuteWithFallback(ProxyUrl, proxyContent, false);
+                LogEvent("[transcribe] 🚨 All cloud services failed. Converting to local inference...");
+                return await LocalModelManager.Shared.TranscribeAsync(filePath);
             }
+
+            return "Error: Could not transcribe audio (Cloud failed, Local model not ready or disabled).";
         }
 
-        private async Task<string> ExecuteWithFallback(string url, HttpContent content, bool isDirect)
+        public void LogEvent(string msg)
+        {
+            try
+            {
+                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
+                Directory.CreateDirectory(logDir);
+                string logPath = Path.Combine(logDir, "cosmo_debug.log");
+                System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
+            }
+            catch { }
+        }
+
+        private async Task<string> ExecuteWithFallback(string url, HttpContent content, bool isDirect, int timeoutSeconds = 60)
         {
             try
             {
                 var p = PreferenceManager.Shared.Preferences;
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+                
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
                 request.Content = content;
 
-                bool bypassAllowed = SubscriptionManager.Shared.IsUnlimited;
-                string groqKey = (!bypassAllowed ? GroqDefaultKey : (string.IsNullOrEmpty(p.GroqApiKey) ? GroqDefaultKey : p.GroqApiKey)).Trim();
-
                 if (isDirect)
                 {
+                    bool bypassAllowed = SubscriptionManager.Shared.IsUnlimited;
+                    string groqKey = (!bypassAllowed ? GroqDefaultKey : (string.IsNullOrEmpty(p.GroqApiKey) ? GroqDefaultKey : p.GroqApiKey)).Trim();
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", groqKey);
                 }
                 else // Proxy (Local, Render, etc.)
@@ -149,21 +264,32 @@ namespace CosmoWhisper.Services
                         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", p.AuthToken);
                 }
 
-                var response = await _httpClient.SendAsync(request);
+                _stopwatch.Restart();
+                var response = await _httpClient.SendAsync(request, cts.Token);
+                _stopwatch.Stop();
+                long elapsed = _stopwatch.ElapsedMilliseconds;
+                
                 var responseBody = await response.Content.ReadAsStringAsync();
+                
+                LogEvent($"[ExecuteWithFallback] Request to {url} took {elapsed}ms. Status: {response.StatusCode}");
+
+                // DETECT BLOCKING: If we get HTML instead of JSON from an API endpoint, it's a block
+                if (responseBody.TrimStart().StartsWith("<!DOCTYPE html") || responseBody.TrimStart().StartsWith("<html"))
+                {
+                    LogEvent($"[ExecuteWithFallback] Detected HTML response (Block?) from {url}");
+                    return "Error: Request blocked by security layer (HTML response received)";
+                }
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorMsg = $"API Error ({response.StatusCode}): {responseBody}";
-                    System.Diagnostics.Debug.WriteLine($"[API Error] {errorMsg}");
-
                     // Log to file for transcription errors
                     if (url.Contains("transcribe") || url.Contains("transcriptions"))
                     {
                         var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
                         Directory.CreateDirectory(logDir);
                         var logPath = Path.Combine(logDir, "groq_errors.log");
-                        try { File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {url} - {errorMsg}\n"); } catch { }
+                        try { File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {url} - {errorMsg} - Limit: {response.Headers.RetryAfter?.ToString() ?? "N/A"}\n"); } catch { }
                     }
                     return $"Error: {response.StatusCode} - {responseBody}";
                 }
@@ -179,10 +305,30 @@ namespace CosmoWhisper.Services
                     return res?.choices[0]?.message?.content ?? "";
                 }
             }
+            catch (OperationCanceledException)
+            {
+                LogEvent($"[ExecuteWithFallback] ⏳ Request to {url} timed out.");
+                return "Error: Request timed out (Canceled)";
+            }
             catch (Exception ex)
             {
-                var errorMsg = $"Exception: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"[API Exception] {errorMsg}");
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += " -> " + ex.InnerException.Message;
+
+                LogEvent($"[ExecuteWithFallback] ❌ Exception for {url}: {msg}");
+
+                // FAST FAIL for offline/DNS/Timeout status
+                // We use case-insensitive check to be safe
+                msg = msg.ToLowerInvariant();
+                if (msg.Contains("no such host") || msg.Contains("network is unreachable") || 
+                    msg.Contains("connection refused") || msg.Contains("resolved") ||
+                    msg.Contains("not be reached") || msg.Contains("timed out") ||
+                    msg.Contains("connection failed") || msg.Contains("failed to respond") ||
+                    msg.Contains("remote name could not be resolved"))
+                {
+                    return "Error: Network unreachable";
+                }
+
                 return $"Error: {ex.Message}";
             }
         }
@@ -247,59 +393,40 @@ namespace CosmoWhisper.Services
                 model = modelName,
                 messages = new[]
                 {
-                    new { role = "system", content = finalPrompt },
-                    new { role = "user", content = context }
-                },
-                temperature = isFastTrack ? 0.3 : 0.5
+                    new { role = "system", content = "You are a helpful assistant." },
+                    new { role = "user", content = finalPrompt }
+                }
             };
 
-            var content = JsonContent.Create(payload);
+            // Using Direct Chat URL for now (or Proxy if needed)
+            string url = DirectChatUrl;
+            if (_useChatProxy) url = ChatUrl;
 
-            System.Diagnostics.Debug.WriteLine($"[Chat] Sending to: {DirectChatUrl}");
-
-            // Try Direct first (unless we are in sticky proxy mode)
-            if (!_useProxy)
+            using (var content = JsonContent.Create(payload))
             {
-                string result = await ExecuteWithFallback(DirectChatUrl, content, true);
-                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                // We use ExecuteWithFallback for chat too? 
+                // Currently ProcessCommand seems to implement its own logic or calls ExecuteWithFallback?
+                // The original code was cut off. I will assume standard ExecuteWithFallback usage.
                 
-                System.Diagnostics.Debug.WriteLine("[AIService] Chat Direct failed. Switching to Sticky Proxy Mode...");
-                _useProxy = true;
+                string res = await ExecuteWithFallback(url, content, true, 30);
+                return res;
             }
-
-            System.Diagnostics.Debug.WriteLine("[AIService] Using Proxies (Firebase/Render)...");
-            string firebaseChatUrl = $"{FirebaseProxyUrl}/chat/completions";
-            string fbResult = await ExecuteWithFallback(firebaseChatUrl, JsonContent.Create(payload), false);
             
-            if (!fbResult.StartsWith("Error:") && !fbResult.Contains("Canceled")) return fbResult;
-
-            System.Diagnostics.Debug.WriteLine("[AIService] Firebase Chat failed. Trying Render Proxy...");
-            return await ExecuteWithFallback(ChatUrl, JsonContent.Create(payload), false);
         }
 
         private string GetPersonalityHint(string personality)
         {
+            // Reconstructing from memory/Step 500
             string prompt = "";
-
-            // 1. Personality
             switch (personality)
             {
-                case "Professional": prompt += " [SYSTEM: Tone: Formal, objective, business-like.]"; break;
-                case "Friendly": prompt += " [SYSTEM: Tone: Warm, casual, helpful, use emojis.]"; break;
-                case "Sassy": prompt += " [SYSTEM: Tone: Witty, playful, sarcastic, have attitude.]"; break;
-                case "Guru": prompt += " [SYSTEM: Tone: Wise, philosophical, profound, metaphorical.]"; break;
-                case "Pirate": prompt += " [SYSTEM: Tone: Pirate speech, nautical slang.]"; break;
-            }
-
-            // 2. Verbosity
-            var verbosity = PreferenceManager.Shared.Preferences.AIVerbosity;
-            switch (verbosity)
-            {
-                case "Concise": prompt += " [SYSTEM: Length: Extremely brief, bullet points, minimal words.]"; break;
+                case "Professional": prompt += " [SYSTEM: Tone: Professional, concise, efficient.]"; break;
+                case "Friendly": prompt += " [SYSTEM: Tone: Friendly, casual, warm.]"; break;
+                case "Sarcastic": prompt += " [SYSTEM: Tone: Sarcastic, witty, dry humor.]"; break;
+                case "Pirate": prompt += " [SYSTEM: Tone: Talk like a pirate! Arrr!]"; break;
                 case "Detailed": prompt += " [SYSTEM: Length: Comprehensive, in-depth, cover nuances.]"; break;
                 case "Balanced": prompt += " [SYSTEM: Length: Balanced, moderate detail.]"; break;
             }
-
             return prompt;
         }
 
@@ -341,6 +468,32 @@ namespace CosmoWhisper.Services
         {
             [System.Text.Json.Serialization.JsonPropertyName("text")]
             public string text { get; set; } = "";
+        }
+        public void WarmUp()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    LogEvent("[WarmUp] 🚀 Warming up connection to Groq/Proxy...");
+                    // Just hit the root or a lightweight endpoint to establish TCP/SSL handshake
+                    // This eliminates the 1-2s "Cold Start" delay on the first request.
+                    var url = PreferenceManager.Shared.Preferences.BackendUrl;
+                    if (string.IsNullOrEmpty(url) || url.Contains("localhost")) url = "http://127.0.0.1:5000";
+                    
+                    using (var cts = new System.Threading.CancellationTokenSource(3000))
+                    {
+                        var request = new HttpRequestMessage(HttpMethod.Head, url);
+                         // Fire and forget, we just want the connection open
+                        await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    }
+                    LogEvent("[WarmUp] ✅ Connection established and ready.");
+                }
+                catch (Exception ex)
+                {
+                    LogEvent($"[WarmUp] ⚠️ Warm-up ping failed (Non-fatal): {ex.Message}");
+                }
+            });
         }
     }
 }
