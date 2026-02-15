@@ -11,13 +11,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.2.38.0</Version>
+    <Version>2.2.43.0</Version>
 
     <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Whisper.net" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime.Cuda" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +46,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Managers\VocabularyDefaults.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(NuGetPackageRoot)whisper.net.runtime\1.9.0\build\win-x64\whisper.dll">
+      <Link>whisper.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

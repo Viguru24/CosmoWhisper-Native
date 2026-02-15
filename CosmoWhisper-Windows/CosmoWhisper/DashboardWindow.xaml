@@ -1,4 +1,4 @@
-<Window x:Class="CosmoWhisper.DashboardWindow"
+﻿<Window x:Class="CosmoWhisper.DashboardWindow"
 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 
@@ -43,11 +43,20 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Border" Property="Background" Value="#1AFFFFFF"/>
                                 <Setter TargetName="Border" Property="BorderBrush" Value="#40FFFFFF"/>
+                                <Setter TargetName="Border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#00F7FF" BlurRadius="25" ShadowDepth="0" Opacity="0.4"/>
+                                    </Setter.Value>
+                                </Setter>
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.02" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.02" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.03" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.03" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
@@ -396,6 +405,45 @@
         </Style>
 
 
+
+        <Style x:Key="PremiumTileStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1AFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#20FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#60FFFFFF"/>
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.04" Duration="0:0:0.25">
+                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.04" Duration="0:0:0.25">
+                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.2"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.2"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
         <Style TargetType="Menu">
 
@@ -841,7 +889,7 @@
 
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.38.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="Version 2.2.43.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
 
                                 <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
 
@@ -1022,7 +1070,7 @@
                                         <ControlTemplate TargetType="Button">
                                              <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
                                                  <StackPanel Orientation="Horizontal">
-                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="ðŸš€" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                      <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                                  </StackPanel>
                                              </Border>
@@ -1073,7 +1121,7 @@
                                         <ControlTemplate TargetType="Button">
                                              <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
                                                  <StackPanel Orientation="Horizontal">
-                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="ðŸš€" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                      <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                                  </StackPanel>
                                              </Border>
@@ -1134,7 +1182,7 @@
                                         <ControlTemplate TargetType="Button">
                                              <Border x:Name="bdr" Background="#20FFFFFF" CornerRadius="15" Padding="15,8">
                                                  <StackPanel Orientation="Horizontal">
-                                                     <TextBlock Text="🚀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="ðŸš€" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                      <TextBlock Text="Return" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                                  </StackPanel>
                                              </Border>
@@ -1188,6 +1236,15 @@
                         <!-- Content Area -->
 
                         <Grid Grid.Row="1">
+                            <Grid.Resources>
+                                <Style TargetType="ScrollViewer">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="1" ScaleY="1" CenterX="400" CenterY="300"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Grid.Resources>
 
                             <!-- VIEW 1: PRODUCTIVITY DASHBOARD -->
 
@@ -1223,12 +1280,26 @@
                                     </Border>
 
                                     <!-- Pro Banner -->
-                                    <Border x:Name="ProBanner" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1.2" Margin="0,0,0,30">
-
+                                    <Border x:Name="ProBanner" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderThickness="1.5" Margin="0,0,0,30">
+                                        <Border.BorderBrush>
+                                            <LinearGradientBrush x:Name="ProBorderGradient" StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="{DynamicResource ThemeAccentColor}" Offset="0"/>
+                                                <GradientStop Color="#55FFFFFF" Offset="0.5"/>
+                                                <GradientStop Color="#BF5AF2" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.BorderBrush>
+                                        <Border.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <PointAnimation Storyboard.TargetName="ProBorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:4" AutoReverse="True"/>
+                                                        <PointAnimation Storyboard.TargetName="ProBorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:4" AutoReverse="True"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Border.Triggers>
                                         <Border.Effect>
-
-                                            <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="15" ShadowDepth="0" Opacity="0.15"/>
-
+                                            <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="20" ShadowDepth="0" Opacity="0.2"/>
                                         </Border.Effect>
 
                                         <Grid Margin="25">
@@ -1412,7 +1483,6 @@
                                         </Border>
 
                                     </Grid>
-
                                 </StackPanel>
 
                             </ScrollViewer>
@@ -1457,7 +1527,7 @@
 
                                     <!-- World Eater (Select All) -->
 
-                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" Style="{StaticResource PremiumTileStyle}" Margin="0,0,10,10">
 
                                         <Border.Background>
 
@@ -1487,7 +1557,7 @@
 
                                     <!-- Apocalypse (Delete All) -->
 
-                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" Style="{StaticResource PremiumTileStyle}" Margin="0,0,10,10">
 
                                         <Border.Background>
 
@@ -1517,7 +1587,7 @@
 
                                     <!-- The Cloner (Copy) -->
 
-                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" Style="{StaticResource PremiumTileStyle}" Margin="0,0,10,10">
 
                                         <Border.Background>
 
@@ -1547,7 +1617,7 @@
 
                                     <!-- Manifest (Paste) -->
 
-                                    <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                    <Border Width="220" Height="130" Style="{StaticResource PremiumTileStyle}" Margin="0,0,10,10">
 
                                         <Border.Background>
 
@@ -1611,7 +1681,7 @@
 
                                 <TextBlock Text="&#x1F680; Portal Gun" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
-                                <TextBlock Text="Say 'Open [App]' to teleport instantly." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
+                                <TextBlock Text="Say &quot;Open [App]&quot; to teleport instantly." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
 
                                 <WrapPanel Margin="0,0,0,30">
 
@@ -1753,7 +1823,7 @@
 
                                 <TextBlock Text="&#x1F310; Hyperspace" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
-                                <TextBlock Text="Say 'Visit [Site]' to engage warp drive." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
+                                <TextBlock Text="Say &quot;Visit [Site]&quot; to engage warp drive." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
 
                                 <WrapPanel Margin="0,0,0,30">
 
@@ -2131,7 +2201,7 @@
 
                                             <TextBlock Text="The Chronomancer" Foreground="White" FontSize="18" FontWeight="Bold"/>
 
-                                            <TextBlock Text="Trigger: 'Date' / 'Time'" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
+                                            <TextBlock Text="Trigger: 'Date' / &quot;Time&quot;" Foreground="White" Opacity="0.8" FontSize="11" Margin="0,4,0,0" FontStyle="Italic"/>
 
                                             <TextBlock Text="Timestamp reality. Mark this moment in history." Foreground="White" Opacity="0.9" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
@@ -2417,7 +2487,7 @@
 
                                                 <TextBlock Text="PRO TIP: High-Quality Free &amp; Neural Voices" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
 
-                                                <TextBlock Text="Use Premier (✨) for best-in-class free local voices or use an OpenAI API key for Neural (🌐) high-fidelity AI voices." Foreground="White" Opacity="0.7" FontSize="14" TextWrapping="Wrap"/>
+                                                <TextBlock Text="Use Premier (âœ¨) for best-in-class free local voices or use an OpenAI API key for Neural (ðŸŒ) high-fidelity AI voices." Foreground="White" Opacity="0.7" FontSize="14" TextWrapping="Wrap"/>
 
                                             </StackPanel>
 
@@ -2441,7 +2511,7 @@
                                     </Border>
 
                                     <!-- Output Device -->
-                                    <TextBlock Text="🔈 Output Device" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+                                    <TextBlock Text="ðŸ”ˆ Output Device" Foreground="White" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
                                     <Border Background="#10FFFFFF" CornerRadius="10" Padding="5" Margin="0,0,0,25">
                                         <ComboBox x:Name="ComboOutput" Foreground="White" BorderThickness="0" FontSize="16" Padding="10" SelectionChanged="ComboOutput_SelectionChanged">
                                             <!-- Dynamic Devices Loaded in Code Behind -->
@@ -2473,7 +2543,7 @@
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                            <TextBlock Text="💾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                                            <TextBlock Text="ðŸ’¾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Button.Template>
@@ -2484,7 +2554,7 @@
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                            <TextBlock Text="🗑️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                                            <TextBlock Text="ðŸ—‘ï¸" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Button.Template>
@@ -2495,7 +2565,7 @@
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                            <TextBlock Text="Get Key ↗" Foreground="White"/>
+                                                            <TextBlock Text="Get Key â†—" Foreground="White"/>
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Button.Template>
@@ -2528,7 +2598,7 @@
                                             </Border>
 
                                             <Grid Grid.Row="2">
-                                                <Button x:Name="BtnPlaySample" Content="▶ Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,16" MinHeight="54" FontSize="16" FontWeight="Bold" Click="BtnPlaySample_Click">
+                                                <Button x:Name="BtnPlaySample" Content="â–¶ Play Sample" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Padding="0,16" MinHeight="54" FontSize="16" FontWeight="Bold" Click="BtnPlaySample_Click">
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
                                                             <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
@@ -2557,6 +2627,36 @@
 
                                 <StackPanel>
 
+                                     <!-- Inference Mode -->
+                                     <TextBlock Text="Inference Mode" Foreground="White" FontWeight="Bold" Margin="0,0,0,15"/>
+                                     
+                                     <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                                         <Grid>
+                                             <Grid.ColumnDefinitions>
+                                                 <ColumnDefinition Width="Auto"/>
+                                                 <ColumnDefinition Width="*"/>
+                                                 <ColumnDefinition Width="Auto"/>
+                                             </Grid.ColumnDefinitions>
+                                             
+                                             <Border Background="#1000F7FF" Width="42" Height="42" CornerRadius="10" Margin="0,0,15,0">
+                                                 <TextBlock x:Name="LocalOverlayIcon" Text="&#x1F310;" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Foreground="#00F7FF"/>
+                                             </Border>
+                                             
+                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                 <TextBlock x:Name="LocalModeStatusTitle" Text="Cloud-Optimized (Hybrid)" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                                 <TextBlock x:Name="LocalModeStatusDesc" Text="Uses super-fast Groq API with local fallback." Foreground="White" Opacity="0.5" FontSize="11" Margin="0,2,0,0"/>
+                                             </StackPanel>
+                                             
+                                             <Border x:Name="ToggleLocalOnly" Grid.Column="2" MouseLeftButtonDown="ToggleLocalOnly_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#15FFFFFF" Cursor="Hand" BorderBrush="#20FFFFFF" BorderThickness="1">
+                                                 <Ellipse x:Name="LocalOnlyIndicator" Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="2">
+                                                     <Ellipse.Effect>
+                                                         <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="White" Opacity="0.3"/>
+                                                     </Ellipse.Effect>
+                                                 </Ellipse>
+                                             </Border>
+                                         </Grid>
+                                     </Border>
+
                                     <!-- AI Provider -->
 
                                     <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
@@ -2564,12 +2664,12 @@
                                         <StackPanel>
 
                                             <!-- Header -->
-                                            <TextBlock Text="🔌 Bring Your Own Intelligence" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,0,5"/>
+                                            <TextBlock Text="ðŸ”Œ Bring Your Own Intelligence" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,0,5"/>
                                             <TextBlock Text="Enter an API Key (Groq recommended) for enhanced processing." Foreground="White" Opacity="0.6" FontSize="12" Margin="0,0,0,20" TextWrapping="Wrap"/>
 
                                             <!-- API Key Input -->
                                             <StackPanel x:Name="PanelGroqKey">
-                                                <TextBlock Text="🔑 API Key" Foreground="White" Opacity="0.8" Margin="0,0,0,10" FontWeight="SemiBold"/>
+                                                <TextBlock Text="ðŸ”‘ API Key" Foreground="White" Opacity="0.8" Margin="0,0,0,10" FontWeight="SemiBold"/>
 
                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
 
@@ -2585,7 +2685,7 @@
 
                                                          <PasswordBox x:Name="TxtGroqApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
 
-                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                         <TextBlock Grid.Column="1" Text="ðŸ”’" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
                                                     </Grid>
 
@@ -2621,7 +2721,7 @@
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                    <TextBlock Text="💾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                    <TextBlock Text="ðŸ’¾" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                                                                 </Border>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -2631,7 +2731,7 @@
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                    <TextBlock Text="🗑️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                    <TextBlock Text="ðŸ—‘ï¸" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                                                                 </Border>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -2641,7 +2741,7 @@
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                    <TextBlock Text="🔗" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                                                    <TextBlock Text="ðŸ”—" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                                                                 </Border>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -2656,7 +2756,7 @@
 
                                             <StackPanel x:Name="PanelAnthropicKey" Visibility="Collapsed">
 
-                                                <TextBlock Text="🔑 Anthropic API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
+                                                <TextBlock Text="ðŸ”‘ Anthropic API Key" Foreground="White" Opacity="0.6" Margin="0,15,0,10" FontWeight="SemiBold"/>
 
                                                 <Border Background="#15FFFFFF" CornerRadius="8" Padding="5">
 
@@ -2672,7 +2772,7 @@
 
                                                          <PasswordBox x:Name="TxtAnthropicApiKey" Background="Transparent" BorderThickness="0" Foreground="White" Padding="10" PasswordChar="*"/>
 
-                                                         <TextBlock Grid.Column="1" Text="🔒" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                         <TextBlock Grid.Column="1" Text="ðŸ”’" Foreground="#F5A623" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
                                                     </Grid>
 
@@ -2724,7 +2824,7 @@
 
                                              
 
-                                             <TextBlock x:Name="TxtGroqSuccess" Text="✅ Groq Premium Access Enabled" Foreground="#2ECC71" FontSize="11" Margin="0,2,0,0" Visibility="Collapsed"/>
+                                             <TextBlock x:Name="TxtGroqSuccess" Text="âœ… Groq Premium Access Enabled" Foreground="#2ECC71" FontSize="11" Margin="0,2,0,0" Visibility="Collapsed"/>
 
                                              <!-- Toggle Button (appears when unlocked) -->
                                              <Grid x:Name="ToggleAccessPanel" Margin="0,10,0,0" Visibility="Collapsed">
@@ -3181,8 +3281,29 @@
                                                      <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
 
                                                   </Border>
+                                               </Grid>
 
-                                              </Grid>
+
+                                               <Separator Opacity="0.1" Margin="0,15"/>
+
+                                               <Grid>
+
+                                                   <StackPanel>
+
+                                                       <TextBlock Text="Enable Local Fallback" Foreground="White" FontWeight="SemiBold"/>
+
+                                                       <TextBlock Text="Use local models if the cloud is unavailable or slow." Foreground="White" Opacity="0.5" FontSize="12"/>
+
+                                                   </StackPanel>
+
+                                                    <Border x:Name="ToggleLocalWhisper" MouseLeftButtonDown="ToggleLocalWhisper_Click" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource ThemeAccentBrush}" Cursor="Hand">
+
+                                                       <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Right" Margin="2"/>
+
+                                                    </Border>
+
+                                               </Grid>
+
 
                                           </StackPanel>
 
@@ -3236,7 +3357,7 @@
 
                                          <TextBlock Text="&#x1F512; Security &amp; Backup" Foreground="White" FontWeight="Bold" FontSize="20" Margin="0,0,0,5"/>
 
-                                         <TextBlock Text="A 'Vault' is a total snapshot of your environment. We secure:" Foreground="White" Opacity="0.7" FontSize="15" Margin="0,0,0,15"/>
+                                         <TextBlock Text="A &quot;Vault&quot; is a total snapshot of your environment. We secure:" Foreground="White" Opacity="0.7" FontSize="15" Margin="0,0,0,15"/>
 
                                          
 
@@ -3834,7 +3955,7 @@
                                         <!-- Tile 1: Voices -->
                                         <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="0,0,10,15" Tag="/features#voices">
                                             <StackPanel>
-                                               <TextBlock Text="🌌" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="ðŸŒŒ" FontSize="32" Margin="0,0,0,12"/>
                                                <TextBlock Text="Neural Voices" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
                                                <TextBlock Text="Browse 50+ studio-quality AI voices for narration." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
@@ -3843,7 +3964,7 @@
                                         <!-- Tile 2: Commands -->
                                         <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="10,0,0,15" Tag="/features#commands">
                                             <StackPanel>
-                                               <TextBlock Text="🤖" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="ðŸ¤–" FontSize="32" Margin="0,0,0,12"/>
                                                <TextBlock Text="Command Depot" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
                                                <TextBlock Text="Pre-built workflows for coding, emails, and data." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
@@ -3852,7 +3973,7 @@
                                         <!-- Tile 3: FAQ -->
                                         <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="0,15,10,0" Tag="/faq">
                                             <StackPanel>
-                                               <TextBlock Text="📖" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="ðŸ“–" FontSize="32" Margin="0,0,0,12"/>
                                                <TextBlock Text="Knowledge Base" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
                                                <TextBlock Text="Learn advanced tips and technical setup guides." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
@@ -3861,7 +3982,7 @@
                                         <!-- Tile 4: Community -->
                                         <Button Style="{StaticResource LibraryTileButton}" Click="VisitLibrary_Click" Margin="10,15,0,0" Tag="/discord">
                                             <StackPanel>
-                                               <TextBlock Text="🛸" FontSize="32" Margin="0,0,0,12"/>
+                                               <TextBlock Text="ðŸ›¸" FontSize="32" Margin="0,0,0,12"/>
                                                <TextBlock Text="Cosmo Community" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
                                                <TextBlock Text="Join shared discussions and shape the future of AI." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
@@ -3879,7 +4000,7 @@
                                                 <TextBlock Text="Cloud Sync Active" Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
                                                 <TextBlock Text="Your personal vocabulary and commands are automatically synced with your account." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap"/>
                                             </StackPanel>
-                                            <TextBlock Grid.Column="1" Text="☁️" FontSize="24" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                                            <TextBlock Grid.Column="1" Text="â˜ï¸" FontSize="24" VerticalAlignment="Center" Margin="20,0,0,0"/>
                                         </Grid>
                                     </Border>
                                 </StackPanel>
@@ -4202,7 +4323,7 @@
                     <!-- STEP 1: WELCOME -->
                     <Grid x:Name="StepWelcome" Visibility="Visible">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="✨" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="âœ¨" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Welcome to CosmoWhisper" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="The most powerful voice interface for Windows. Ready to transform how you work?" Foreground="White" Opacity="0.7" FontSize="16" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,40"/>
                             
@@ -4231,7 +4352,7 @@
                     <!-- STEP 2: MICROPHONE -->
                     <Grid x:Name="StepMic" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🎙️" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="ðŸŽ™ï¸" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Voice Check" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="Select your primary microphone and adjust sensitivity." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,30"/>
                             
@@ -4259,7 +4380,7 @@
                     <!-- STEP 3: ACTIVATION -->
                     <Grid x:Name="StepActivation" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="⚡" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="âš¡" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Quick Activation" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="Press F9 to activate the voice interface. You can change this shortcut in settings later." Foreground="White" Opacity="0.7" FontSize="18" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
                             
@@ -4282,7 +4403,7 @@
                     <!-- STEP 4: VOCABULARY -->
                     <Grid x:Name="StepVocabulary" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🌌" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="ðŸŒŒ" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Train Your AI" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="Add names, technical jargon, and acronyms to your personal Vocabulary. CosmoWhisper learns your language for 100% accuracy." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
                             
@@ -4301,7 +4422,7 @@
                     <!-- STEP 5: INTELLIGENCE -->
                     <Grid x:Name="StepIntelligence" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🤖" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="ðŸ¤–" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Intelligent Actions" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="It's more than dictation. Use AI to rewrite emails, fix grammar, or summarize documents instantly with voice commands." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
                             
@@ -4320,7 +4441,7 @@
                     <!-- STEP 6: LIBRARY -->
                     <Grid x:Name="StepLibrary" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🛸" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="ðŸ›¸" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                             <TextBlock Text="Global Command Center" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                             <TextBlock Text="Sync your commands to the cloud and browse the community library for powerful pre-built workflows." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
                             
