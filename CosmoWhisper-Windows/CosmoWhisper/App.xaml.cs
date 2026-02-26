@@ -14,22 +14,46 @@ namespace CosmoWhisper;
 public partial class App : System.Windows.Application
 {
     private TrayManager? _trayManager;
+    private static System.Threading.Mutex? _mutex;
+    private const string MutexName = "CosmoWhisper_Native_Mutex";
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _mutex = new System.Threading.Mutex(true, MutexName, out bool createdNew);
+        if (!createdNew)
+        {
+            // If we have protocol args, they'll be handled by the other instance if we can pipe them,
+            // but for now just prevent double-launch during restores.
+            System.Windows.MessageBox.Show("CosmoWhisper is already running.", "Instance Check");
+            Shutdown();
+            return;
+        }
+
+        base.OnStartup(e);
+
         // 0. Initialize Diagnostic Flight Recorder
         _ = DiagnosticManager.Shared;
 
         // 1. Register the protocol handler (idempotent)
         Managers.ProtocolHandler.Register();
 
-        // Warm up Services Early
+        // Start background tasks
+        // Initialize services in order
         _ = Task.Run(() =>
         {
             try 
             { 
+                // Initialize Prefs first
+                _ = PreferenceManager.Shared;
+                
+                // Then Local Model
+                LocalModelManager.Shared.Initialize();
+                
+                // Then AI Service
+                AIService.Shared.Initialize();
+                AIService.Shared.WarmUp();
+                
                 _ = SoundManager.Shared;
-                _ = AIService.Shared;
                 _ = CommandController.Shared;
             } 
             catch { }
@@ -40,7 +64,7 @@ public partial class App : System.Windows.Application
         {
             foreach (var arg in e.Args)
             {
-                if (arg.StartsWith("cosmowhisper://"))
+                if (arg.StartsWith("CosmoWhisper://"))
                 {
                     Managers.ProtocolHandler.Handle(arg);
                 }
@@ -62,6 +86,9 @@ public partial class App : System.Windows.Application
         // 3. Initialize System Tray Manager
         _trayManager = new TrayManager();
         _trayManager.Initialize();
+
+        // 4. Start Support Ticket Monitoring (Gravity Claw)
+        new SupportMonitorManager().Initialize();
 
         _trayManager.ShowDashboardRequested += () =>
         {
@@ -119,7 +146,14 @@ public partial class App : System.Windows.Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayManager?.Dispose();
+        if (_mutex != null)
+        {
+            try { _mutex.ReleaseMutex(); } catch { }
+            _mutex.Dispose();
+        }
         base.OnExit(e);
     }
 }
+
+
 
