@@ -22,7 +22,7 @@ namespace CosmoWhisper.Managers
         public void UpdateBaseAddress()
         {
             string url = PreferenceManager.Shared.Preferences.BackendUrl;
-            if (string.IsNullOrEmpty(url)) url = "https://cosmowhisper-app.onrender.com";
+            if (string.IsNullOrEmpty(url)) url = "https://CosmoWhisper.com";
             if (!url.EndsWith("/")) url += "/";
 
             try
@@ -93,6 +93,87 @@ namespace CosmoWhisper.Managers
             return (false, "Unknown error");
         }
 
+        public async Task<(bool success, string message)> RequestMagicCode(string email)
+        {
+            try
+            {
+                var payload = new { email };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _client.PostAsync("api/auth/request-otp", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, "Code sent!");
+                }
+                else
+                {
+                    try
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
+                        return (false, error?.error ?? "Request failed");
+                    }
+                    catch
+                    {
+                        return (false, "Request failed: " + response.ReasonPhrase);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, "Connection Error: " + ex.Message);
+            }
+        }
+
+        public async Task<(bool success, string message)> VerifyMagicCode(string email, string code)
+        {
+            try
+            {
+                var payload = new { email, code };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _client.PostAsync("api/auth/verify-otp", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<LoginResponse>(responseString, _jsonOptions);
+
+                    if (result != null)
+                    {
+                        var p = PreferenceManager.Shared.Preferences;
+                        p.AuthToken = result.token;
+                        p.UserTier = result.user.tier;
+                        p.IsAIUnlocked = result.user.tier != "free";
+                        p.UserEmail = result.user.email;
+                        PreferenceManager.Shared.Save();
+                        return (true, "Login Successful");
+                    }
+                }
+                else
+                {
+                     try
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
+                        return (false, error?.error ?? "Verification failed");
+                    }
+                    catch
+                    {
+                        return (false, "Verification failed: " + response.ReasonPhrase);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, "Connection Error: " + ex.Message);
+            }
+            return (false, "Unknown Error");
+        }
+
         public async Task<bool> SyncStatus()
         {
             try
@@ -141,6 +222,54 @@ namespace CosmoWhisper.Managers
                 return false;
             }
         }
+
+        public async Task<SupportActivityResponse?> GetSupportTicketActivity()
+        {
+            try
+            {
+                SetAuthHeader();
+                var response = await _client.GetAsync("api/tickets/all");
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var tickets = JsonSerializer.Deserialize<SupportTicket[]>(responseString, _jsonOptions);
+                    
+                    if (tickets != null && tickets.Length > 0)
+                    {
+                        int openCount = 0;
+                        string latestId = "";
+                        foreach(var t in tickets) {
+                           if(t.Status == "open") openCount++;
+                        }
+                        
+                        return new SupportActivityResponse { 
+                            OpenCount = openCount, 
+                            LatestTicketId = tickets[0].Id.ToString(),
+                            LatestTicketMessage = tickets[0].Message
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Support Activity Error: {ex.Message}");
+            }
+            return null;
+        }
+    }
+
+    public class SupportTicket
+    {
+        public int Id { get; set; }
+        public string Status { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class SupportActivityResponse
+    {
+        public int OpenCount { get; set; }
+        public string LatestTicketId { get; set; }
+        public string LatestTicketMessage { get; set; }
     }
 
     public class LoginResponse
@@ -168,3 +297,5 @@ namespace CosmoWhisper.Managers
         public string error { get; set; }
     }
 }
+
+
