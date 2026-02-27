@@ -52,3 +52,5 @@ while ($i -lt $lines.Count) {
 
 $newLines | Set-Content $xamlPath -Encoding UTF8
 Write-Output "Button styles fixed with explicit TextBlock for hover contrast."
+
+

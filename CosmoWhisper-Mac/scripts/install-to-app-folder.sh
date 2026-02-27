@@ -8,3 +8,5 @@ sudo cp -R "$APP_PATH" /Applications/
 sudo xattr -rd com.apple.quarantine /Applications/CosmoWhisper.app
 echo "✅ Done! Opening CosmoWhisper..."
 open /Applications/CosmoWhisper.app
+
+

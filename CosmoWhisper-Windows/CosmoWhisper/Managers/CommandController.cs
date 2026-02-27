@@ -35,9 +35,9 @@ namespace CosmoWhisper.Managers
             {"outlook", "https://outlook.live.com"},
             {"twitch", "https://twitch.tv"},
             {"youtube", "https://youtube.com"},
-            {"cosmowhisper", "https://cosmowhisper-app.web.app"},
-            {"library", "https://cosmowhisper-app.web.app/features"},
-            {"commands", "https://cosmowhisper-app.web.app/features"}
+            {"cosmowhisper", "https://cosmowhisper.com"},
+            {"library", "https://cosmowhisper.com/features"},
+            {"commands", "https://cosmowhisper.com/features"}
         };
 
         private readonly Dictionary<string, string> _appShortcuts = new()
@@ -114,8 +114,8 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("paste mode", "use paste mode")) { return true; }
 
             // --- 2. TEXT FORMATTING ---
-            if (IsTriggered("uppercase", "all caps")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
-            if (IsTriggered("lowercase", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
+            if (IsTriggered("uppercase", "upper case", "all caps", "i'll put case", "apple case", "up a case")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
+            if (IsTriggered("lowercase", "lower case", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
             if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case. Output ONLY the text.", usePersonality: false); return true; }
 
             if (cmd == "select all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); return true; }
@@ -146,7 +146,14 @@ namespace CosmoWhisper.Managers
                 return true;
             }
 
-            // --- 4. SYSTEM ---
+            // --- 3.5 SCREENSHOTS ---
+            if (IsTriggered("screenshot", "take screenshot", "take screen shot", "take screen show", "screen clip", "snipping tool", "capture screen"))
+            {
+                Process.Start(new ProcessStartInfo { FileName = "ms-screenclip:", UseShellExecute = true });
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
             // --- 4. SYSTEM ---
             if (IsTriggered("insert date", "todays date", "current date"))
             {
@@ -249,7 +256,7 @@ namespace CosmoWhisper.Managers
             if (cmd.StartsWith("ask "))
             {
                 string question = text.Substring(text.ToLower().IndexOf("ask ") + 4);
-                _ = ProcessAI(question, "You are a helpful assistant. Answer concisely.");
+                _ = ProcessAI("You are a helpful assistant. Answer concisely.", question);
                 CommandExecuted?.Invoke(); return true;
             }
 
@@ -267,14 +274,14 @@ namespace CosmoWhisper.Managers
                 CommandExecuted?.Invoke(); 
                 return true; 
             }
-            if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to spanish")) { await ProcessAIOnSelection("Translate the following text into Spanish."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to french")) { await ProcessAIOnSelection("Translate the following text into French."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("bullet points", "make bullet list")) { await ProcessAIOnSelection("Convert this text into a clean bulleted list using '•'. Output ONLY the list.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive."); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning. Output ONLY the fixed text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to spanish")) { await ProcessAIOnSelection("Translate the following text into Spanish. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to french")) { await ProcessAIOnSelection("Translate the following text into French. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("bullet points", "make bullet list", "organize", "organize this")) { await ProcessAIOnSelection("Format the following text into a logical bulleted list using '•'. Identify distinct concepts, sentences, or items, but do NOT simply make every single word a separate bullet point. Output ONLY the formatted list.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy. Output ONLY the condensed text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive. Output ONLY the expanded text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
 
             // --- 8. OPEN ACCESSIBILITY ---
             if (IsTriggered("read this", "read that", "read the", "read selection", "speak this", "say this")) { await ReadSelection(); CommandExecuted?.Invoke(); return true; }
@@ -591,3 +598,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

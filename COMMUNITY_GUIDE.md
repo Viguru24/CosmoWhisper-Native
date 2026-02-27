@@ -6,7 +6,7 @@ This document serves as the official blueprint for the CosmoWhisper community, s
 The hub for users, developers, and power users.
 
 *   **Invite Link:** [https://discord.gg/w2TE3Zzk](https://discord.gg/w2TE3Zzk)
-*   **Ownership:** `cosmowhisper.app@gmail.com`
+*   **Ownership:** `CosmoWhisper.app@gmail.com`
 
 ### Server Structure & Purpose
 
@@ -42,7 +42,7 @@ The hub for users, developers, and power users.
 > 
 > **Quick Start:**
 > 1. Read the **Rules** in <#rules>.
-> 2. Get the latest build from [cosmowhisper-app.web.app](https://cosmowhisper-app.web.app).
+> 2. Get the latest build from [cosmowhisper.com](https://cosmowhisper.com).
 > 3. Share your workflow in <#general-chat>.
 > 
 > *Type at the speed of thought.* 🚀
@@ -52,7 +52,7 @@ The hub for users, developers, and power users.
 > This is the spot for general talk about CosmoWhisper and AI productivity. 
 > 
 > 🛠️ **Current Focus:** Optimizing Mica UI and VPN Smart Proxies.
-> 🌐 [Website](https://cosmowhisper-app.web.app) \| 📚 [FAQ](https://cosmowhisper-app.web.app/faq)
+> 🌐 [Website](https://cosmowhisper.com) \| 📚 [FAQ](https://cosmowhisper.com/faq)
 
 ---
 
@@ -60,3 +60,6 @@ The hub for users, developers, and power users.
 *   **Voice:** Professional, efficient, futuristic, and helpful.
 *   **Aesthetics:** Dark mode, glassmorphism, and minimal clean lines.
 *   **Key Phrase:** "Transcribe anywhere. Instantly."
+
+
+

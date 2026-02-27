@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# COSMOWHISPER PERMISSION REPAIR & FORCE TRIGGER
+# CosmoWhisper PERMISSION REPAIR & FORCE TRIGGER
 # This script resets TCC and attempts to force-trigger prompts.
 
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_PATH="/Users/louisdesouza/Library/Developer/Xcode/DerivedData/CosmoWhisper-frekypqxjdjctxcgjrpyqbdfqsba/Build/Products/Debug/CosmoWhisper.app"
 
 echo "🎯 Targeting: $APP_PATH"
@@ -48,3 +48,5 @@ echo "1. Look for CosmoWhisper in the list."
 echo "2. If it's there but OFF, turn it ON."
 echo "3. If it's NOT there, drag the app from the Finder window I just opened into the list."
 open -R "$APP_PATH"
+
+

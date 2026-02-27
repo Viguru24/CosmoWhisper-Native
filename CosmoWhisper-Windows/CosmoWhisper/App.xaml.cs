@@ -64,7 +64,7 @@ public partial class App : System.Windows.Application
         {
             foreach (var arg in e.Args)
             {
-                if (arg.StartsWith("CosmoWhisper://"))
+                if (arg.StartsWith("cosmowhisper://", StringComparison.OrdinalIgnoreCase))
                 {
                     Managers.ProtocolHandler.Handle(arg);
                 }

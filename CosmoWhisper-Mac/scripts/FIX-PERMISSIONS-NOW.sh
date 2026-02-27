@@ -4,7 +4,7 @@ echo "🛑 Killing CosmoWhisper..."
 pkill -9 CosmoWhisper || true
 
 APP_PATH="/Applications/CosmoWhisper.app"
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 
 echo "🧹 Clearing privacy database for $BUNDLE_ID..."
 # Reset Accessibility
@@ -29,3 +29,5 @@ echo "----------------------------------------------------------------"
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
 sleep 2
 open "$APP_PATH"
+
+

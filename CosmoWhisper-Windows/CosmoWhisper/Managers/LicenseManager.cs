@@ -10,6 +10,7 @@ namespace CosmoWhisper.Managers
     public class LicenseStatus
     {
         public string tier { get; set; } = "free";
+        public string email { get; set; }
         public double usageMinutes { get; set; }
         public int limitMinutes { get; set; }
         public bool isOverLimit { get; set; }
@@ -45,8 +46,9 @@ namespace CosmoWhisper.Managers
                     if (status != null)
                     {
                         prefs.UserTier = prefs.IsStoreVersion ? "free" : status.tier;
+                        if (!string.IsNullOrEmpty(status.email)) prefs.UserEmail = status.email;
                         prefs.UsageMinutes = status.usageMinutes;
-                        prefs.UsageLimitMinutes = prefs.IsStoreVersion ? 20 : status.limitMinutes;
+                        prefs.UsageLimitMinutes = prefs.IsStoreVersion ? 60 : status.limitMinutes;
                         prefs.IsAIUnlocked = !status.isOverLimit;
 
                         PreferenceManager.Shared.Save();
@@ -65,7 +67,19 @@ namespace CosmoWhisper.Managers
         public async Task ReportUsageAsync(double durationSeconds)
         {
             var prefs = PreferenceManager.Shared.Preferences;
-            if (string.IsNullOrEmpty(prefs.LicenseToken)) return;
+            if (string.IsNullOrEmpty(prefs.LicenseToken))
+            {
+                // Unauthenticated Local Usage Tracking
+                if (prefs.LastLocalResetMonth != DateTime.Now.Month)
+                {
+                    prefs.UsageMinutes = 0;
+                    prefs.LastLocalResetMonth = DateTime.Now.Month;
+                }
+                
+                prefs.UsageMinutes += (durationSeconds / 60.0);
+                PreferenceManager.Shared.Save();
+                return;
+            }
 
             try
             {
@@ -92,3 +106,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

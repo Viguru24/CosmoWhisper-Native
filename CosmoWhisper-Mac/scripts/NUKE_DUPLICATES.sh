@@ -38,3 +38,5 @@ echo "✨ Duplicates removed."
 echo "👉 Now, go to System Settings -> Privacy & Security -> Accessibility"
 echo "👉 REMOVE (using the minus button) any 'CosmoWhisper' entries."
 echo "👉 Re-open /Applications/CosmoWhisper.app and add it fresh."
+
+

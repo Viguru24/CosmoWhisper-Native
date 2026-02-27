@@ -54,3 +54,5 @@ echo "✅ SUCCESS! Professional Universal DMG Created."
 echo "📍 Path: $DMG_PATH"
 echo "💻 Works on: Intel Macs AND Apple Silicon (M1/M2/M3) Macs."
 echo "------------------------------------------------"
+
+

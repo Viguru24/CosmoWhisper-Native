@@ -29,3 +29,5 @@ By using `NAudio.WaveOutEvent`, we bypass the newer WinRT "UWP" audio layers whi
 
 ## 3. Usage
 The chimes are now fully automatic. As long as "Interaction Sounds" are enabled in the Dashboard, the app will handle the routing and volume enforcement silently in the background.
+
+

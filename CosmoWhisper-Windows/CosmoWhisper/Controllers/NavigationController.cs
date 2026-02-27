@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using Button = System.Windows.Controls.Button;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
+using System.Linq;
 using CosmoWhisper.Managers;
 
 namespace CosmoWhisper.Controllers
@@ -152,8 +154,28 @@ namespace CosmoWhisper.Controllers
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                 };
+                
+                // connected scale animation
+                var scaleX = new DoubleAnimation(0.97, 1.0, TimeSpan.FromMilliseconds(450)) { EasingFunction = new BackEase { Amplitude = 0.2, EasingMode = EasingMode.EaseOut } };
+                var scaleY = new DoubleAnimation(0.97, 1.0, TimeSpan.FromMilliseconds(450)) { EasingFunction = new BackEase { Amplitude = 0.2, EasingMode = EasingMode.EaseOut } };
+
                 view.BeginAnimation(UIElement.OpacityProperty, fadeIn);
                 view.BeginAnimation(FrameworkElement.MarginProperty, slideUp);
+
+                if (view.RenderTransform is ScaleTransform st)
+                {
+                    st.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
+                    st.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
+                }
+                else if (view.RenderTransform is TransformGroup tg)
+                {
+                    var stInGroup = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
+                    if (stInGroup != null)
+                    {
+                        stInGroup.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
+                        stInGroup.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
+                    }
+                }
 
                 // Ensure the view scrolls to the top when switched
                 if (view is ScrollViewer sv)
@@ -176,3 +198,5 @@ namespace CosmoWhisper.Controllers
         }
     }
 }
+
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+APP_BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 
 echo "🛠️  Resetting Privacy Permissions for $APP_BUNDLE_ID..."
 
@@ -19,3 +19,5 @@ tccutil reset Microphone "$APP_BUNDLE_ID"
 echo "✅ Permissions reset."
 echo ""
 echo "👉 Now launch CosmoWhisper.app and it should ask for permissions again."
+
+

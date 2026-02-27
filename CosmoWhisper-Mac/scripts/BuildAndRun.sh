@@ -17,3 +17,5 @@ xattr -rd com.apple.quarantine /Applications/CosmoWhisper.app
 
 echo "🚀 Launching..."
 open /Applications/CosmoWhisper.app
+
+

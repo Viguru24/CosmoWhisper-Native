@@ -44,7 +44,7 @@ namespace CosmoWhisper.Managers
 
         public static void Handle(string url)
         {
-            if (string.IsNullOrEmpty(url) || !url.StartsWith(ProtocolName + "://")) return;
+            if (string.IsNullOrEmpty(url) || !url.StartsWith(ProtocolName + "://", StringComparison.OrdinalIgnoreCase)) return;
 
             try
             {
@@ -83,16 +83,7 @@ namespace CosmoWhisper.Managers
                             });
                         }
                     }
-                    else if (action.Equals("configure", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var groqKey = GetQueryParam(query, "groq");
-                        if (!string.IsNullOrEmpty(groqKey))
-                        {
-                            PreferenceManager.Shared.Preferences.GroqApiKey = groqKey;
-                            PreferenceManager.Shared.Save();
-                            _ = CosmoMessage.Show("Configuration Synced", "Groq API Key synced from website!", "☁️");
-                        }
-                    }
+
                     else if (action.Equals("license", StringComparison.OrdinalIgnoreCase))
                     {
                         string token = GetQueryParam(query, "token");
@@ -138,3 +129,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

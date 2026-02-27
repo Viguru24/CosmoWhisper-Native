@@ -40,3 +40,5 @@ If you want to proceed, here is the plan:
 ## Verdict
 **Green Light.** 🟢
 It is a perfect candidate for a "Universal Purchase" (buy once, get Mac + iOS). The iOS app would feel more like a "Keyboard utility" than a floating window, but the *brain*—the AI transcription and modification—would be identical.
+
+

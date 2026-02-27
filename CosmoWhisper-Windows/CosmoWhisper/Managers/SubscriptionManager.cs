@@ -19,13 +19,17 @@ namespace CosmoWhisper.Managers
         {
             get
             {
+                var email = PreferenceManager.Shared.Preferences?.UserEmail?.ToLower();
+                if (email == "louisdesouza@gmail.com")
+                    return UserTier.Ultimate;
+                    
                 var tier = PreferenceManager.Shared.Preferences?.UserTier?.ToLower() ?? "free";
                 
-                if (tier == "ultimate") return UserTier.Ultimate;
-                if (tier == "professional") return UserTier.Ultimate; // Legacy mapping
+                if (tier == "ultimate" || tier == "admin") return UserTier.Ultimate;
+                if (tier == "professional") return UserTier.Ultimate; 
                 
                 if (tier == "pro") return UserTier.Pro;
-                if (tier == "personal") return UserTier.Pro; // Legacy mapping
+                if (tier == "personal") return UserTier.Pro; 
 
                 return UserTier.Free;
             }
@@ -56,17 +60,27 @@ namespace CosmoWhisper.Managers
             _ => "🌱"
         };
 
-        public bool IsUnlimited => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
+        public bool IsUnlimited => PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "louisdesouza@gmail.com" || (!PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free);
 
         // Feature Gating
         public bool HasUltraAccuracy => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
         public bool HasScreenOCR => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
         public bool HasPrioritySupport => IsUnlimited;
 
-        public int MonthlyLimitMinutes => (PreferenceManager.Shared.Preferences.IsStoreVersion) ? 60 : CurrentTier switch
+        public int MonthlyLimitMinutes 
         {
-            UserTier.Free => 60,
-            _ => 999999 // All paid plans are unlimited
-        };
+            get
+            {
+                if (PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "louisdesouza@gmail.com") return 999999;
+                
+                return (PreferenceManager.Shared.Preferences?.IsStoreVersion == true) ? 60 : CurrentTier switch
+                {
+                    UserTier.Free => 60,
+                    _ => 999999 // All paid plans are unlimited
+                };
+            }
+        }
     }
 }
+
+

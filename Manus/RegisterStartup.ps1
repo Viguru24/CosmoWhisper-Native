@@ -21,3 +21,5 @@ $Shortcut.WorkingDirectory = "c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhis
 $Shortcut.Save()
 
 Write-Host "Manus Startup Shortcut created at: $ShortcutPath"
+
+

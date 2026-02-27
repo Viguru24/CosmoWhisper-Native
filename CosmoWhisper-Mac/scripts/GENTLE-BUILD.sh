@@ -38,3 +38,5 @@ xattr -rd com.apple.quarantine "$INSTALL_PATH" 2>/dev/null || true
 # 6. Launch
 echo "🚀 Launching..."
 open "$INSTALL_PATH"
+
+

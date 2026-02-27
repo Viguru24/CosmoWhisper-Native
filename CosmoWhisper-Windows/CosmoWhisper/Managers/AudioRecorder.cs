@@ -21,6 +21,7 @@ namespace CosmoWhisper.Managers
         public event Action<bool>? IsRecordingChanged;
         public event Action<float>? AudioLevelChanged;
         public event Action<string>? TranscriptionReceived;
+        public event Action<string, long>? TranscriptionSourceReceived;
         public event Action<string>? ErrorOccurred;
 
         private WaveInEvent? _waveIn;
@@ -76,7 +77,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 _waveIn = new WaveInEvent();
-                _waveIn.WaveFormat = new WaveFormat(44100, 1); // 44.1kHz Mono
+                _waveIn.WaveFormat = new WaveFormat(16000, 1); // 16kHz Mono (Optimized for Whisper/VPN)
                 _waveIn.DataAvailable += WaveIn_DataAvailable;
                 _waveIn.RecordingStopped += WaveIn_RecordingStopped;
 
@@ -298,9 +299,25 @@ namespace CosmoWhisper.Managers
             // Usage Limit
             var p = PreferenceManager.Shared.Preferences;
             var sub = SubscriptionManager.Shared;
-            if (p.UsageMinutes >= sub.MonthlyLimitMinutes)
+            
+            // Check if user is over limit AND not on an unlimited plan
+            if (!sub.IsUnlimited && p.UsageMinutes >= sub.MonthlyLimitMinutes)
             {
-                _ = CosmoMessage.Show("Limit Reached", "Monthly limit reached. Visit cosmowhisper-app.web.app for unlimited.", "⏳");
+                System.Windows.Application.Current.Dispatcher.Invoke(async () =>
+                {
+                    bool upgrade = await CosmoMessage.Show("Limit Reached", 
+                        "You've reached your monthly transcription limit. Upgrade to a Pro plan for unlimited usage and elite features.", 
+                        "🚀", true, "Upgrade Now");
+                    
+                    if (upgrade)
+                    {
+                        try
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://cosmowhisper.com/pricing") { UseShellExecute = true });
+                        }
+                        catch { }
+                    }
+                });
                 return;
             }
 
@@ -408,6 +425,9 @@ namespace CosmoWhisper.Managers
                 TranscriptionReceived?.Invoke($"Thinking...");
                 string text = await AIService.Shared.Transcribe(filePath);
 
+                // Notify UI of source and timing
+                TranscriptionSourceReceived?.Invoke(AIService.Shared.LastTranscriptionSource, AIService.Shared.LastTranscriptionTime);
+
                 if (text.StartsWith("Error:"))
                 {
                     DiagnosticManager.Shared.Log($"Transcription API Error: {text}", "ERROR");
@@ -434,10 +454,14 @@ namespace CosmoWhisper.Managers
 
                             if (prefs.AutoCopy) System.Windows.Application.Current.Dispatcher.Invoke(() => System.Windows.Clipboard.SetText(corrected));
 
+                            // Decide if we add a trailing space
+                            bool isSoloCorrection = VocabularyManager.Shared.IsSoloCorrection(corrected);
+                            string finalOutput = isSoloCorrection ? corrected : corrected + " ";
+
                             if (prefs.InsertionMode == InsertionMethod.DirectTyping)
-                                await InputController.Shared.TypeText(corrected + " ", prefs.AutoSubmit);
+                                await InputController.Shared.TypeText(finalOutput, prefs.AutoSubmit);
                             else
-                                await InputController.Shared.PasteText(corrected + " ", prefs.AutoSubmit, prefs.RestoreClipboard);
+                                await InputController.Shared.PasteText(finalOutput, prefs.AutoSubmit, prefs.RestoreClipboard);
                         }
                     }
                     else
@@ -506,8 +530,11 @@ namespace CosmoWhisper.Managers
                 IntPtr h = GetForegroundWindow();
                 if (h == IntPtr.Zero) return "Desktop";
                 uint p; GetWindowThreadProcessId(h, out p);
-                return Process.GetProcessById((int)p).ProcessName;
-            } catch { return "Unknown"; }
+                string name = Process.GetProcessById((int)p).ProcessName;
+                if (name.Contains("CosmoWhisperNative", StringComparison.OrdinalIgnoreCase)) return "";
+                return name;
+            }
+            catch { return ""; }
         }
     }
 }

@@ -15,3 +15,5 @@ $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 [System.IO.File]::WriteAllText($xamlPath, $newContent, $utf8WithBom)
 
 Write-Output "Fixed PasswordChar encoding issues and set to safe asterisk."
+
+

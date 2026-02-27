@@ -15,3 +15,5 @@ fi
 
 echo '🚀 Launching RELEASE version...'
 open ./build_local_release/Build/Products/Release/CosmoWhisper.app
+
+

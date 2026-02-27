@@ -57,3 +57,5 @@ Write-Host "Updated setup.iss"
 
 Write-Host "Version Synchronization Complete!" -ForegroundColor Yellow
 exit 0
+
+

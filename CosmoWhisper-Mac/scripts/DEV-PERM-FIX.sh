@@ -3,7 +3,7 @@
 
 PASS="sugmad24"
 IDENTITY="Developer ID Application: Louis de Souza (9AAQ3L289K)"
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 ENTITLEMENTS="./CosmoWhisper/CosmoWhisper.entitlements"
 
 echo "🛑 Stopping app..."
@@ -41,3 +41,5 @@ echo "✅ SUCCESS: The app is now signed with your Developer ID."
 echo "👉 ONE LAST TIME: Go to Accessibility and toggle CosmoWhisper ON."
 echo "👉 After this, it should STAY on even after future builds."
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+

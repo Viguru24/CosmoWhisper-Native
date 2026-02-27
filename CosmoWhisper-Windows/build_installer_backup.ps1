@@ -60,3 +60,5 @@ Write-Host "6. Archived to Deploy: $versionedInstaller" -ForegroundColor Cyan
 
 Write-Host "7. Launching Installer..." -ForegroundColor Green
 Start-Process $versionedInstaller
+
+

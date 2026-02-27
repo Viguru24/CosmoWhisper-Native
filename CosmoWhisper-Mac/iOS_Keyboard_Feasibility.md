@@ -39,3 +39,5 @@ All we need is a **"Utility Keyboard"**:
 
 ## Conclusion
 It is definitely worth doing. Since we aren't building a spell-checking QWERTY keyboard (which is incredibly hard), but rather a "Dictation Station", the difficulty drops significantly.
+
+

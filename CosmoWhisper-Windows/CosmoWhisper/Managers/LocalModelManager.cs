@@ -34,6 +34,7 @@ namespace CosmoWhisper.Managers
 
         private async Task InitializeAsync()
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             LogEvent("[LocalModel] 🚀 Initializing...");
             if (File.Exists(_modelPath))
             {
@@ -42,7 +43,6 @@ namespace CosmoWhisper.Managers
                     // Try to load with GPU acceleration
                     try
                     {
-                        var builder = WhisperFactory.FromPath(_modelPath);
                         // Standard FromPath might not take bool in 1.9.0 directly? 
                         // Actually, looking at docs, it's often RuntimeOptions or Builder.
                         // Let's rely on the Runtime package being present.
@@ -56,7 +56,8 @@ namespace CosmoWhisper.Managers
                         // BUT, we can try to force it via `RuntimeOptions` if that class exists.
                         // Let's assume standard behavior for now to avoid compilation errors if API differs.
                          _factory = WhisperFactory.FromPath(_modelPath);
-                        LogEvent("[LocalModel] ✅ Model loaded successfully (GPU/CPU Auto-detect).");
+                        sw.Stop();
+                        LogEvent($"[LocalModel] ✅ Model loaded successfully (GPU/CPU Auto-detect) in {sw.ElapsedMilliseconds}ms.");
                     }
                     catch (Exception ex)
                     {
@@ -116,7 +117,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public async Task<string> TranscribeAsync(string wavFilePath)
+        public async Task<string> TranscribeAsync(string wavFilePath, string prompt = "", string language = "en")
         {
             if (!IsReady) 
             {
@@ -124,11 +125,13 @@ namespace CosmoWhisper.Managers
                 return "Error: Local model is still downloading.";
             }
 
-            LogEvent($"[LocalModel] 📝 Transcribing {wavFilePath}...");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            LogEvent($"[LocalModel] 📝 Transcribing {wavFilePath} (Language: {language}, Prompt Length: {prompt.Length})...");
             try
             {
                 using (var processor = _factory.CreateBuilder()
-                    .WithLanguage("en")
+                    .WithLanguage(language)
+                    .WithPrompt(prompt)
                     .WithThreads(System.Environment.ProcessorCount) // Use all available cores for maximum speed
                     .Build())
                 {
@@ -141,7 +144,8 @@ namespace CosmoWhisper.Managers
                         }
                         
                         var finalResult = result.Trim();
-                        LogEvent($"[LocalModel] 🗣️ Transcription result: {finalResult}");
+                        sw.Stop();
+                        LogEvent($"[LocalModel] 🗣️ Transcription result in {sw.ElapsedMilliseconds}ms: {finalResult}");
                         return finalResult;
                     }
                 }
@@ -150,6 +154,25 @@ namespace CosmoWhisper.Managers
             {
                 LogEvent($"[LocalModel] ❌ Transcription failed: {ex.Message}");
                 return $"Error: Local transcription failed - {ex.Message}";
+            }
+        }
+
+        public async Task WarmUp()
+        {
+            if (!IsReady) return;
+            try
+            {
+                LogEvent("[LocalModel] 🔥 Warming up model...");
+                // Just create a builder and dispose it to ensure native resources are prepped
+                using (var builder = _factory.CreateBuilder().WithLanguage("en").Build())
+                {
+                    // No-op
+                }
+                LogEvent("[LocalModel] 🔥 Warm-up complete.");
+            }
+            catch (Exception ex)
+            {
+                LogEvent($"[LocalModel] ⚠️ Warm-up error: {ex.Message}");
             }
         }
 
@@ -207,3 +230,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

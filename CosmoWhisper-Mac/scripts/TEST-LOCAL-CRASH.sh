@@ -19,3 +19,5 @@ xcodebuild -project CosmoWhisper.xcodeproj -scheme CosmoWhisper -configuration D
 if [ $? -ne 0 ]; then echo '❌ Build failed'; exit 1; fi
 echo '🚀 Launching Debug version...'
 open ./build_debug/Build/Products/Debug/CosmoWhisper.app
+
+

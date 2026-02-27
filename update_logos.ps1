@@ -63,3 +63,5 @@ if (Test-Path $msixImages) {
 
 $srcImg.Dispose()
 Write-Host "SUCCESS: 11 assets updated with your CW Comet logo." -ForegroundColor Green
+
+

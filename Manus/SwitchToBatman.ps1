@@ -19,3 +19,5 @@ if (Test-Path $BatmanSource) {
 else {
     Write-Error "Batman vocabulary file not found at $BatmanSource"
 }
+
+

@@ -30,3 +30,5 @@ Fix mouse side-button recording in Dashboard, ensure widget Red Orb click reliab
 - App Config: App successfully bound to **Hotkey: 100** (F8).
 - Permissions: TCC Access reset and re-granted.
 - Install: App successfully running from `/Applications`.
+
+

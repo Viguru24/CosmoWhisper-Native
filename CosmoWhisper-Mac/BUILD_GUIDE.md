@@ -52,3 +52,5 @@ The app now uses a secure `VaultManager`. Ensure you are creating backups in **S
 
 **Q: Are we using Manus?**
 No, we are NOT using Manus. We are using **Groq** (specifically the Llama 3 model) for all AI logic and transcription. There is no code related to Manus in this project.
+
+

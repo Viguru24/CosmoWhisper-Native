@@ -15,3 +15,5 @@
 - **Action:** Fixed "Garbled Icons" in Sidebar using XML Hex Entities to ensure correct Unicode rendering.
 - **Action:** Fixed "GUI Scale Persistence" by implementing proper loading logic in `InitializePreferences`.
 - **Action:** Hid "Manus Project Manager" UI section as per user request to remove it from the app interface.
+
+

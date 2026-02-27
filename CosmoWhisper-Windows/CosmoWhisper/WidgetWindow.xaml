@@ -43,13 +43,15 @@
                              From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
         </Storyboard>
 
-        <!-- Sound Wave Animation -->
+        <!-- Sound Wave Animation (Fluid & Glowing) -->
         <Storyboard x:Key="SoundWaveAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="Wave1" Storyboard.TargetProperty="Height" From="8" To="30" Duration="0:0:0.4" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="Wave2" Storyboard.TargetProperty="Height" From="12" To="35" Duration="0:0:0.5" AutoReverse="True" BeginTime="0:0:0.1"/>
-            <DoubleAnimation Storyboard.TargetName="Wave3" Storyboard.TargetProperty="Height" From="16" To="40" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.05"/>
-            <DoubleAnimation Storyboard.TargetName="Wave4" Storyboard.TargetProperty="Height" From="10" To="32" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.15"/>
-            <DoubleAnimation Storyboard.TargetName="Wave5" Storyboard.TargetProperty="Height" From="14" To="38" Duration="0:0:0.55" AutoReverse="True" BeginTime="0:0:0.08"/>
+            <DoubleAnimation Storyboard.TargetName="Wave1" Storyboard.TargetProperty="Height" From="8" To="35" Duration="0:0:0.45" AutoReverse="True"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave2" Storyboard.TargetProperty="Height" From="12" To="45" Duration="0:0:0.55" AutoReverse="True" BeginTime="0:0:0.1"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave3" Storyboard.TargetProperty="Height" From="16" To="55" Duration="0:0:0.65" AutoReverse="True" BeginTime="0:0:0.05"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave4" Storyboard.TargetProperty="Height" From="10" To="38" Duration="0:0:0.5" AutoReverse="True" BeginTime="0:0:0.15"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave5" Storyboard.TargetProperty="Height" From="14" To="48" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.08"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave6" Storyboard.TargetProperty="Height" From="10" To="42" Duration="0:0:0.52" AutoReverse="True" BeginTime="0:0:0.12"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Wave7" Storyboard.TargetProperty="Height" From="6" To="28" Duration="0:0:0.48" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
         </Storyboard>
 
         <!-- AI Thinking Glow -->
@@ -66,6 +68,26 @@
             <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleX" From="1" To="4" Duration="0:0:0.8"/>
             <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleY" From="1" To="4" Duration="0:0:0.8"/>
         </Storyboard>
+
+        <!-- Haptic Jiggle (Physical Feel) -->
+        <Storyboard x:Key="JiggleAnimation">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleX">
+                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="1.05"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="0.95"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleY">
+                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="0.95"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="1.05"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+
+        <!-- Iridescent Border Animation -->
+        <Storyboard x:Key="IridescentAnimation" RepeatBehavior="Forever">
+            <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:3" AutoReverse="True"/>
+            <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:3" AutoReverse="True"/>
+        </Storyboard>
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Margin="10">
@@ -75,20 +97,24 @@
         </Grid.LayoutTransform>
         
         <!-- Capsule Background -->
-        <Border CornerRadius="30" BorderThickness="1" x:Name="MainBorder">
+        <Border CornerRadius="30" BorderThickness="1.5" x:Name="MainBorder">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="MainBorderScale" CenterX="120" CenterY="40"/>
+            </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.4" ShadowDepth="2"/>
+                <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.5" ShadowDepth="0"/>
             </Border.Effect>
             <Border.Background>
                 <RadialGradientBrush GradientOrigin="0.5,0.2" Center="0.5,0.2" RadiusX="1.5" RadiusY="1">
-                    <GradientStop Color="#FF0B1026" Offset="0"/>
-                    <GradientStop Color="#FF050510" Offset="1"/>
+                    <GradientStop Color="#CC0B1026" Offset="0"/>
+                    <GradientStop Color="#CC050510" Offset="1"/>
                 </RadialGradientBrush>
             </Border.Background>
             <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0.1,0.1" EndPoint="0.9,0.9">
-                    <GradientStop Color="#55FFFFFF" Offset="0"/>
-                    <GradientStop Color="#11FFFFFF" Offset="0.5"/>
+                <LinearGradientBrush x:Name="BorderGradient" StartPoint="0.1,0.1" EndPoint="0.9,0.9">
+                    <GradientStop Color="#8800F7FF" Offset="0"/>
+                    <GradientStop Color="#22FFFFFF" Offset="0.3"/>
+                    <GradientStop Color="#88BF5AF2" Offset="0.7"/>
                     <GradientStop Color="#44FFFFFF" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
@@ -224,7 +250,13 @@
                                 <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FFD400" Offset="0"/><GradientStop Color="#FF7A00" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
                             </Rectangle>
                             <Rectangle x:Name="Wave5" Width="4" Height="14" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#7AFF00" Offset="0"/><GradientStop Color="#00FF7A" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#8B5CF6" Offset="0"/><GradientStop Color="#6D28D9" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle x:Name="Wave6" Width="4" Height="10" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
+                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00D4FF" Offset="0"/><GradientStop Color="#007AFF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle x:Name="Wave7" Width="4" Height="6" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
+                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00FFD4" Offset="0"/><GradientStop Color="#00D4FF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
                             </Rectangle>
                         </StackPanel>
                     </Grid>
@@ -268,3 +300,4 @@
         </Border>
     </Grid>
 </Window>
+

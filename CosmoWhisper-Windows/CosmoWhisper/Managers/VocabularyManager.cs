@@ -17,11 +17,7 @@ namespace CosmoWhisper.Managers
 
         public VocabularyManager()
         {
-#if DEBUG
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Dev");
-#else
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-#endif
+            string folder = PreferenceManager.Shared.AppDataFolder;
             Directory.CreateDirectory(folder);
             _filePath = Path.Combine(folder, "vocabulary.json");
             Load();
@@ -162,7 +158,7 @@ namespace CosmoWhisper.Managers
                 _appReplacements.Clear();
                 _appHints = "";
 
-                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "Contexts");
+                string folder = Path.Combine(PreferenceManager.Shared.AppDataFolder, "Contexts");
                 Directory.CreateDirectory(folder);
                 string path = Path.Combine(folder, $"{appName}.json");
 
@@ -208,22 +204,36 @@ namespace CosmoWhisper.Managers
                 string key = kvp.Key;
                 string value = kvp.Value;
                 
-                string pattern = $@"\b{Regex.Escape(key)}(?:\s+(?:is|was|are|were|be|been|being))?\b";
-                var match = Regex.Match(processed, pattern, RegexOptions.IgnoreCase);
-                
-                if (match.Success)
-                    processed = processed.Substring(0, match.Index) + value + processed.Substring(match.Index + match.Length);
-                else
-                    processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
+                processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
             }
 
             return processed;
         }
 
-        // Expose hints for AI Prompt
+        /// <summary>
+        /// Checks if the resulting text consists entirely of an instant correction value.
+        /// Useful for suppressing spaces on passwords/IDs.
+        /// </summary>
+        public bool IsSoloCorrection(string processedText)
+        {
+            if (string.IsNullOrWhiteSpace(processedText)) return false;
+            
+            // Normalize: Trim whitespace and trailing punctuation
+            string normalized = processedText.Trim().TrimEnd('.', ',');
+            
+            // Check against both global and app replacements
+            return Replacements.Values.Any(v => v.Equals(normalized, StringComparison.OrdinalIgnoreCase)) ||
+                   _appReplacements.Values.Any(v => v.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
         public string GetActiveHints()
         {
-            return string.IsNullOrWhiteSpace(_appHints) ? TranscriptionHints : $"{TranscriptionHints}, {_appHints}";
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(TranscriptionHints)) parts.Add(TranscriptionHints.Trim().TrimEnd(','));
+            if (!string.IsNullOrWhiteSpace(_appHints)) parts.Add(_appHints.Trim().TrimEnd(','));
+            return string.Join(", ", parts);
         }
     }
 }
+
+

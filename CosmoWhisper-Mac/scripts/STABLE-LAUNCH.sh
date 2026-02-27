@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# COSMOWHISPER ULTIMATE FIX
+# CosmoWhisper ULTIMATE FIX
 # 1. Kills app
 # 2. Resets permissions for the specific local build path AND bundle ID
 # 3. Copies to /Applications to stabilize path
@@ -14,7 +14,7 @@ pkill -9 CosmoWhisper || true
 # App Variables
 SOURCE_APP="./build_fix/Build/Products/Debug/CosmoWhisper.app"
 DEST_APP="/Applications/CosmoWhisper.app"
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 
 # Clean
 echo "🧹 Cleaning previous installs..."
@@ -55,3 +55,5 @@ echo "3. If it's NOT there, click (+) and select it from Applications."
 echo "---------------------------------------------------"
 sleep 1
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+

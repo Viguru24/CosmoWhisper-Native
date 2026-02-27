@@ -115,3 +115,5 @@ Click the "💡 Load Examples" button in the Vocabulary view to reset to default
 - Longer keys are matched first (prevents partial matches)
 - Trailing helper words are automatically stripped
 - Email corrections and vocabulary work together automatically
+
+

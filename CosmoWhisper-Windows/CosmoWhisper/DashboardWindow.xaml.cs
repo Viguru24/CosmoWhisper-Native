@@ -51,6 +51,15 @@ namespace CosmoWhisper
             try
             {
                 InitializeComponent();
+
+#if DEBUG
+                if (SidebarGearIcon != null) SidebarGearIcon.Foreground = Brushes.Gold; // Yellow
+#else
+                if (SidebarGearIcon != null) SidebarGearIcon.Foreground = Brushes.Gray; // Gray
+#endif
+                if (BtnPreferences != null) BtnPreferences.Visibility = Visibility.Visible;
+
+                DataContext = PreferenceManager.Shared.Preferences;
                 _navigation = new NavigationController(this);
                 _vocabulary = new VocabularyController(this);
                 _prefs = new PreferencesController(this);
@@ -211,7 +220,11 @@ namespace CosmoWhisper
 
         private void Preferences_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
+#if DEBUG
+            _navigation.ShowPreferences();
+#else
             _navigation.ShowDashboard();
+#endif
         }
 
         private void SmartCommands_Click(object sender, RoutedEventArgs e)
@@ -375,13 +388,25 @@ namespace CosmoWhisper
             // Reset state
             _vaultTask?.TrySetCanceled();
             _vaultTask = new TaskCompletionSource<(string? password, string? name)>();
-            TxtVaultName.Text = "";
+            
+            TxtVaultName.Text = $"Backup_{DateTime.Now:yyyyMMdd}";
             TxtVaultPassword.Password = "";
             
             // Dynamic UI
-            TxtVaultTitle.Text = isRestore ? "\uD83D\uDD13 Unlock Your Vault" : "\uD83D\uDD10 Secure Your Vault";
-            LblVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
-            TxtVaultName.Visibility = isRestore ? Visibility.Collapsed : Visibility.Visible;
+            if (TxtVaultTitle != null) TxtVaultTitle.Text = isRestore ? "\uD83D\uDD13 Unlock Your Vault" : "\uD83D\uDD12 Secure Your Vault";
+            
+            if (isRestore)
+            {
+                if (TxtVaultSubtitle != null) TxtVaultSubtitle.Text = "Enter the password to decrypt this backup.";
+                if (LblVaultName != null) LblVaultName.Visibility = Visibility.Collapsed;
+                if (TxtVaultName != null) TxtVaultName.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                if (TxtVaultSubtitle != null) TxtVaultSubtitle.Text = "Enter a password to encrypt your backup (Optional).";
+                if (LblVaultName != null) LblVaultName.Visibility = Visibility.Visible;
+                if (TxtVaultName != null) TxtVaultName.Visibility = Visibility.Visible;
+            }
             
             // Clear any active animations and reset state
             VaultPasswordOverlay.BeginAnimation(OpacityProperty, null);
@@ -393,7 +418,7 @@ namespace CosmoWhisper
 
             VaultPasswordOverlay.Opacity = 0;
             VaultPasswordOverlay.Visibility = Visibility.Visible;
-            VaultPasswordOverlay.IsHitTestVisible = true;
+            VaultPasswordOverlay.IsHitTestVisible = false; // Initially false to prevent race conditions
 
             // Animate In
             var vaultFade = new DoubleAnimation(1, TimeSpan.FromMilliseconds(250)) { EasingFunction = new QuadraticEase() };
@@ -406,10 +431,19 @@ namespace CosmoWhisper
                 st2.BeginAnimation(ScaleTransform.ScaleYProperty, vaultScale);
             }
             
-            // Set focus after allowing a brief moment for visibility
-            await Task.Delay(50);
-            if (isRestore) TxtVaultPassword.Focus();
-            else TxtVaultName.Focus();
+            // Set focus and enable interaction
+            await Task.Delay(200);
+            VaultPasswordOverlay.IsHitTestVisible = true;
+            
+            if (isRestore && TxtVaultPassword != null)
+            {
+                 TxtVaultPassword.Focus();
+            }
+            else if (TxtVaultName != null)
+            {
+                TxtVaultName.Focus();
+                TxtVaultName.SelectAll();
+            }
             
             return await _vaultTask.Task;
         }
@@ -445,6 +479,29 @@ namespace CosmoWhisper
 
         private TaskCompletionSource<bool>? _dialogTask;
         private TaskCompletionSource<string?>? _listDialogTask;
+        private TaskCompletionSource<string?>? _inputDialogTask;
+
+        public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "", string icon = "\uD83D\uDCDD")
+        {
+            _inputDialogTask = new TaskCompletionSource<string?>();
+            TxtDialogTitle.Text = title;
+            TxtDialogMessage.Text = message;
+            TxtDialogIcon.Text = icon;
+            
+            BtnDialogCancel.Visibility = Visibility.Visible;
+            System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
+            BtnDialogConfirm.Content = "OK";
+
+            ListDialogOptions.Visibility = Visibility.Collapsed;
+            TxtDialogInput.Visibility = Visibility.Visible;
+            TxtDialogInput.Text = defaultValue;
+            TxtDialogInput.Focus();
+            TxtDialogInput.SelectAll();
+
+            await AnimateDialogOpen();
+
+            return await _inputDialogTask.Task;
+        }
 
         public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "\uD83D\uDCC2")
         {
@@ -495,23 +552,23 @@ namespace CosmoWhisper
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
         }
 
-        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "\u2728", bool showCancel = false)
+        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "\u2728", bool showCancel = false, string confirmButtonText = "Confirm")
         {
             _dialogTask = new TaskCompletionSource<bool>();
-            TxtDialogTitle.Text = title;
-            TxtDialogMessage.Text = message;
-            TxtDialogIcon.Text = icon;
-            BtnDialogCancel.Visibility = showCancel ? Visibility.Visible : Visibility.Collapsed;
-            BtnDialogConfirm.Content = "Confirm";
-            ListDialogOptions.Visibility = Visibility.Collapsed;
+            if (TxtDialogTitle != null) TxtDialogTitle.Text = title;
+            if (TxtDialogMessage != null) TxtDialogMessage.Text = message;
+            if (TxtDialogIcon != null) TxtDialogIcon.Text = icon;
+            if (BtnDialogCancel != null) BtnDialogCancel.Visibility = showCancel ? Visibility.Visible : Visibility.Collapsed;
+            if (BtnDialogConfirm != null) BtnDialogConfirm.Content = confirmButtonText;
+            if (ListDialogOptions != null) ListDialogOptions.Visibility = Visibility.Collapsed;
             
             if (showCancel)
             {
-                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
+                if (BtnDialogConfirm != null) System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 1);
             }
             else
             {
-                System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 2);
+                if (BtnDialogConfirm != null) System.Windows.Controls.Grid.SetColumnSpan(BtnDialogConfirm, 2);
             }
 
             await AnimateDialogOpen();
@@ -522,17 +579,20 @@ namespace CosmoWhisper
         private async void DialogConfirm_Click(object sender, RoutedEventArgs e)
         {
             string? selected = ListDialogOptions.SelectedItem?.ToString();
+            string? inputResult = TxtDialogInput.Text;
             await HideDialogAsync();
             
-            _dialogTask?.SetResult(true);
-            _listDialogTask?.SetResult(selected);
+            _dialogTask?.TrySetResult(true);
+            _listDialogTask?.TrySetResult(selected);
+            _inputDialogTask?.TrySetResult(inputResult);
         }
 
         private async void DialogCancel_Click(object sender, RoutedEventArgs e)
         {
             await HideDialogAsync();
-            _dialogTask?.SetResult(false);
-            _listDialogTask?.SetResult(null);
+            _dialogTask?.TrySetResult(false);
+            _listDialogTask?.TrySetResult(null);
+            _inputDialogTask?.TrySetResult(null);
         }
 
         private async Task HideDialogAsync()
@@ -554,6 +614,8 @@ namespace CosmoWhisper
 
             await Task.Delay(300);
             UniversalDialog.Visibility = Visibility.Collapsed;
+            TxtDialogInput.Visibility = Visibility.Collapsed;
+            ListDialogOptions.Visibility = Visibility.Collapsed;
             RootContentBorder.Effect = null;
         }
 
@@ -619,12 +681,15 @@ namespace CosmoWhisper
         private void BtnRestore_Click(object sender, RoutedEventArgs e) => _prefs.RestoreBackup();
         private void ToggleManusAgent_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleManusAgent();
         private void ToggleManusNarration_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleManusNarration();
+        private void ToggleLocalWhisper_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLocalWhisper();
+        private void ToggleForceCloudProxy_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleForceCloudProxy();
+        private void ToggleLocalOnly_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLocalOnly();
 
         private void OpenLibraryWeb_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://cosmowhisper-app.web.app/features",
+                FileName = "https://CosmoWhisper.com/features",
                 UseShellExecute = true
             });
         }
@@ -633,7 +698,7 @@ namespace CosmoWhisper
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://cosmowhisper-app.web.app/faq",
+                FileName = "https://CosmoWhisper.com/faq",
                 UseShellExecute = true
             });
         }
@@ -658,28 +723,47 @@ namespace CosmoWhisper
         private void ActivateLicense_Click(object sender, RoutedEventArgs e) => _dashboard.ActivateLicense(TxtLicense.Text);
         private void SignOut_Click(object sender, RoutedEventArgs e) => _dashboard.SignOut();
 
-        private void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/pricing", UseShellExecute = true });
-        private void SignUp_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://cosmowhisper-app.web.app/register", UseShellExecute = true });
+        private void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://CosmoWhisper.com/pricing", UseShellExecute = true });
+        private void SignUp_Click(object sender, RoutedEventArgs e) 
+        {
+            string url = "https://CosmoWhisper.com/register";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
+        }
         
+        private void VisitLibrary_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement el && el.Tag is string path)
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://CosmoWhisper.com" + path, UseShellExecute = true });
+            }
+        }
+
         private void GetFullAccess_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 
-                FileName = "https://cosmowhisper-app.web.app/pricing", 
+                FileName = "https://CosmoWhisper.com/pricing", 
                 UseShellExecute = true 
             });
         }
 
         private void GoogleLogin_Click(object sender, RoutedEventArgs e)
         {
-            // Always use production backend URL for Google Login
-            string url = "https://cosmowhisper-app.onrender.com/";
+            var p = PreferenceManager.Shared.Preferences;
+            string url = p.BackendUrl;
+            if (string.IsNullOrEmpty(url)) url = "https://CosmoWhisper.com";
+            if (!url.EndsWith("/")) url += "/";
             
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 
-                FileName = url + "api/auth/google?platform=windows", 
+                FileName = "https://CosmoWhisper.com/login?platform=windows&action=google", 
                 UseShellExecute = true 
             });
+        }
+
+        private async void MagicLink_Click(object sender, RoutedEventArgs e)
+        {
+             await _dashboard.PerformMagicLogin(TxtLoginEmail.Text);
         }
 
         // Removed Provider logic
@@ -740,7 +824,7 @@ namespace CosmoWhisper
                     CancelVault_Click(null, null);
                     e.Handled = true;
                 }
-                else if (UniversalDialog.Visibility == Visibility.Visible)
+                else if (UniversalDialog.Visibility == Visibility.Visible && UniversalDialog.IsHitTestVisible)
                 {
                     DialogCancel_Click(null, null);
                     e.Handled = true;
@@ -767,12 +851,12 @@ namespace CosmoWhisper
                         OnboardingComplete_Click(null, null);
                     e.Handled = true;
                 }
-                else if (VaultPasswordOverlay.Visibility == Visibility.Visible)
+                else if (VaultPasswordOverlay.Visibility == Visibility.Visible && VaultPasswordOverlay.IsHitTestVisible)
                 {
                     ConfirmVault_Click(null, null);
                     e.Handled = true;
                 }
-                else if (UniversalDialog.Visibility == Visibility.Visible)
+                else if (UniversalDialog.Visibility == Visibility.Visible && UniversalDialog.IsHitTestVisible)
                 {
                     DialogConfirm_Click(null, null);
                     e.Handled = true;
@@ -814,9 +898,14 @@ namespace CosmoWhisper
             var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(500));
             OverlayOnboarding.BeginAnimation(UIElement.OpacityProperty, fadeIn);
 
-            // Setup initial state for onboarding
+            // Populate mics for onboarding
             await _mic.InitializeMicrophones();
             if (SldOnboardingSensitivity != null) SldOnboardingSensitivity.Value = AudioRecorder.Shared.Sensitivity * 100;
+        }
+
+        private void UpdateGroqConfigUI()
+        {
+            // Removed stale onboarding references
         }
 
         private async void OnboardingNext_Click(object sender, RoutedEventArgs e)
@@ -864,7 +953,18 @@ namespace CosmoWhisper
             target.BeginAnimation(UIElement.OpacityProperty, fadeIn);
         }
 
-
+        private void OnboardingGetGroq_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://console.groq.com/keys") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error opening Groq URL: {ex.Message}");
+                _ = CosmoMessage.Show("Error", "Could not open browser. Please visit console.groq.com manually.", "❌");
+            }
+        }
 
         private void OnboardingSkip_Click(object sender, RoutedEventArgs e)
         {
@@ -900,39 +1000,17 @@ namespace CosmoWhisper
             ShowOnboarding();
         }
 
-        private void VisitLibrary_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is string path)
-            {
-                string baseUrl = "https://cosmowhisper-app.web.app";
-                string url = path.StartsWith("http") ? path : baseUrl + path;
-                
-                // Discord is special, usually a full link
-                if (path == "/discord") url = "https://discord.gg/your-invite-link"; // Placeholder, but functional for the logic
-
-                try
-                {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error opening Library URL: {ex.Message}");
-                    _ = CosmoMessage.Show("Link Error", "Could not open the browser. Please check your internet connection.", "❌");
-                }
-            }
-        }
-
         #endregion
 
     }
 
     public static class CosmoMessage
     {
-        public static async Task<bool> Show(string title, string message, string icon = "✨", bool showCancel = false)
+        public static async Task<bool> Show(string title, string message, string icon = "✨", bool showCancel = false, string confirmButtonText = "Confirm")
         {
             if (DashboardWindow.Instance != null)
             {
-                return await DashboardWindow.Instance.ShowDialogAsync(title, message, icon, showCancel);
+                return await DashboardWindow.Instance.ShowDialogAsync(title, message, icon, showCancel, confirmButtonText);
             }
             
             // Fallback for cases where main window isn't loaded
@@ -941,5 +1019,4 @@ namespace CosmoWhisper
         }
     }
 }
-
 

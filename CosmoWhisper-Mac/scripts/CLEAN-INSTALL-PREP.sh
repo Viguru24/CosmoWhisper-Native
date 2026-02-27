@@ -1,5 +1,5 @@
 #!/bin/bash
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_NAME="CosmoWhisper.app"
 
 echo "🧹 STARTING CLEANUP..."
@@ -30,3 +30,5 @@ rm -rf "$HOME/Library/Preferences/$BUNDLE_ID.plist"
 echo "✅ CLEANUP COMPLETE."
 echo "📂 Opening release folder..."
 open release/
+
+

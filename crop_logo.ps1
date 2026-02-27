@@ -37,3 +37,5 @@ $cropped.Dispose()
 $bmp.Dispose()
 
 Write-Host "Success: Image cropped to $cropWidth x $cropHeight and saved to $destPath" -ForegroundColor Green
+
+

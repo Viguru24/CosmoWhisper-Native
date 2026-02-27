@@ -194,3 +194,5 @@ else
 - Default values ensure graceful degradation for new users
 - Position persistence uses -1 as sentinel value for "not set"
 - UI updates are responsive and provide immediate feedback
+
+

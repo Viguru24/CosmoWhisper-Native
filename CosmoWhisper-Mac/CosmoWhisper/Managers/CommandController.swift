@@ -44,9 +44,9 @@ public class CommandController {
         "outlook": "https://outlook.live.com",
         "twitch": "https://twitch.tv",
         "youtube": "https://youtube.com",
-        "cosmowhisper": "https://cosmowhisper-app.web.app",
-        "library": "https://cosmowhisper-app.web.app/features",
-        "commands": "https://cosmowhisper-app.web.app/features"
+        "cosmowhisper": "https://cosmowhisper.com",
+        "library": "https://cosmowhisper.com/features",
+        "commands": "https://cosmowhisper.com/features"
     ]
     
     private let legacyAppShortcuts: [String: String] = [

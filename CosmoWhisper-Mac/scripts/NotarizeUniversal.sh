@@ -5,7 +5,7 @@ TEAM_ID="9AAQ3L289K"
 APPLE_ID="louisdesouza@gmail.com"
 APPLE_PASS="enus-gkwr-gybr-koov"
 IDENTITY="Developer ID Application: Louis de Souza (9AAQ3L289K)"
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_NAME="CosmoWhisper"
 VERSION="2.1.4"
 DMG_NAME="CosmoWhisper_v${VERSION}_Universal.dmg"
@@ -72,3 +72,5 @@ else
     echo "❌ Notarization failed."
     exit 1
 fi
+
+

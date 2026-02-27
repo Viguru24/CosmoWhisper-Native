@@ -27,3 +27,5 @@ echo "You can now reboot and launch it normally."
 echo "ACTION: Open the app -> Toggle Accessibility OFF/ON one last time -> You are free."
 echo "---------------------------------------------------"
 open /Applications/CosmoWhisper.app
+
+

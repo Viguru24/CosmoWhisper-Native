@@ -51,6 +51,9 @@ namespace CosmoWhisper.Controllers
             // Intelligence View Manus Agent (grouped here for simple preference sync)
             if (Window.ToggleManusAgent != null) UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
             if (Window.ToggleManusNarration != null) UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
+            if (Window.ToggleLocalWhisper != null) UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
+            if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
+            UpdateLocalOnlyUI();
 
             UpdateInsertionUI();
 
@@ -171,7 +174,7 @@ namespace CosmoWhisper.Controllers
 
             // Success feedback
             await Window.ShowDialogAsync("API Key Secured", 
-                "Your OpenAI API Key has been successfully saved and synced across all modules.\n\nNeural High-Fidelity voices are now active.", 
+                "Your OpenAI API Key has been successfully saved.\n\nNeural High-Fidelity voices are now active.", 
                 "\u2728");
         }
 
@@ -292,27 +295,33 @@ namespace CosmoWhisper.Controllers
 
             try
             {
-                var (password, name) = await Window.GetVaultPasswordAsync();
-                if (string.IsNullOrEmpty(password)) return;
+                // Prompt for Name AND Password
+                var result = await Window.GetVaultPasswordAsync(false);
+                string? name = result.name;
+                string? password = result.password;
 
-                btn.Content = "??? Securing Vault...";
+                if (string.IsNullOrWhiteSpace(name)) return; // User cancelled
+
+                btn.Content = "\u23F3 Backing Up...";
                 btn.IsEnabled = false;
 
                 var p = PreferenceManager.Shared.Preferences;
                 string destDir = p.BackupDirectory;
                 Directory.CreateDirectory(destDir);
 
-                string vaultPath = await VaultManager.Shared.CreateVaultAsync(name, password, destDir);
+                // Pass password to manager
+                string backupPath = await VaultManager.Shared.CreateBackupAsync(name, password, destDir);
                 
-                await System.Threading.Tasks.Task.Delay(1000);
+                await System.Threading.Tasks.Task.Delay(500);
 
-                btn.Content = "? Vault Secured";
-                long size = new FileInfo(vaultPath).Length;
+                btn.Content = "\u2705 Secured";
+                long size = new FileInfo(backupPath).Length;
                 string sizeDisplay = size < 1024 * 1024 ? $"{(size / 1024.0):F1} KB" : $"{(size / (1024.0 * 1024.0)):F2} MB";
+                string type = string.IsNullOrEmpty(password) ? "Unencrypted ZIP" : "Encrypted Vault";
 
-                await Window.ShowDialogAsync("Vault Created", 
-                    $"Universal Encryption Successful!\n\nVault: {Path.GetFileName(vaultPath)}\nSize: {sizeDisplay}\n\nYour environment is now secured with 256-bit AES.", 
-                    "\uD83D\uDEE1");
+                await Window.ShowDialogAsync("Backup Complete", 
+                    $"Configuration successfully saved!\n\nFile: {Path.GetFileName(backupPath)}\nType: {type}\nSize: {sizeDisplay}", 
+                    "\u2705");
             }
             catch (Exception ex)
             {
@@ -329,7 +338,12 @@ namespace CosmoWhisper.Controllers
 
         public async void RestoreBackup()
         {
-            // Force reset to prevent lockouts, relying on modal UI to prevent re-entry
+            if (_isRestoreInProgress) 
+            {
+                Window.ShowToast("Restore already in progress...", "\u23F3");
+                return;
+            }
+
             _isRestoreInProgress = true; 
 
             try
@@ -339,92 +353,134 @@ namespace CosmoWhisper.Controllers
 
                 if (!Directory.Exists(destDir))
                 {
-                    await Window.ShowDialogAsync("No Backups", "No backup directory found.", "\uD83D\uDCC2");
+                    await Window.ShowDialogAsync("Backup Folder Missing", $"Directory not found: {destDir}\n\nPlease check your backup path in Settings.", "\uD83D\uDCC2");
                     return;
                 }
 
-                var vaults = VaultManager.Shared.GetAvailableVaults(destDir);
-                if (vaults.Count == 0)
+                Window.ShowToast("Scanning Backups...", "\uD83D\uDD0D");
+                var backups = VaultManager.Shared.GetAvailableBackups(destDir);
+                if (backups.Count == 0 || backups == null)
                 {
-                    await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found.", "\uD83D\uDD0D");
+                    await Window.ShowDialogAsync("Backup Not Found", "No backup files found in the backup directory.", "\uD83D\uDD0D");
                     return;
                 }
 
-                string? selectedVaultName = await Window.ShowListDialogAsync("Select Vault", "Choose a restore point:", vaults, "\uD83D\uDEE1");
-                if (string.IsNullOrEmpty(selectedVaultName)) return;
-
-                string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
-
-                var (password, _) = await Window.GetVaultPasswordAsync(true);
-                if (string.IsNullOrEmpty(password)) return;
-
-                // 1. Verify Password First
-                var (isValid, verifyMsg) = await VaultManager.Shared.VerifyVault(selectedVaultPath, password);
-                if (!isValid)
+                string? selectedBackup = await Window.ShowListDialogAsync("Restore Backup", "Select a restore point to apply:", backups, "\u23F3");
+                if (string.IsNullOrEmpty(selectedBackup)) 
                 {
-                    await Window.ShowDialogAsync("Verification Failed", verifyMsg, "\u274C");
                     return;
                 }
 
-                // 2. Warn User about Restart
-                bool confirm = await Window.ShowDialogAsync("Restart Required", 
-                    "To ensure a safe restore, CosmoWhisper must restart.\n\nThe app will close, apply settings, and reopen automatically.", 
-                    "\u26A0\uFE0F", true); // Warning Icon
+                string selectedPath = Path.Combine(destDir, selectedBackup);
                 
-                if (!confirm) return;
+                string password = "";
+                // Check extension
+                if (Path.GetExtension(selectedPath).ToLower() == ".vault")
+                {
+                     // Ask for password
+                     var result = await Window.GetVaultPasswordAsync(true);
+                     if (result.password == null) return; // Cancelled
+                     password = result.password;
+                }
 
-                // 3. Extract to Staging
-                string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedVaultPath, password);
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
+                // 1. Confirm Restore
+                bool confirm = await Window.ShowDialogAsync("Confirm Restore?", 
+                    "Restoring a backup requires an application restart.\n\nCosmoWhisper will close, apply your settings, and launch automatically.\n\nContinue?", 
+                    "\u26A0\uFE0F", true);
+                
+                if (!confirm) 
+                {
+                    return;
+                }
+
+                // 2. Extract to Staging
+                Window.ShowToast("Decrupting & Verifying...", "\uD83D\uDD13");
+                string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedPath, password);
+                
+                if (string.IsNullOrEmpty(stagingPath) || !Directory.Exists(stagingPath))
+                {
+                    throw new Exception("Failed to prepare staging environment.");
+                }
+
+                string appDataPath = PreferenceManager.Shared.AppDataFolder;
                 string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string sessionGuid = Guid.NewGuid().ToString("N").Substring(0, 8);
 
-                // 4. Create & Run PowerShell Helper Script
-                string scriptPath = Path.Combine(Path.GetTempPath(), "cosmo_restore_restart.ps1");
-                string logPath = Path.Combine(Path.GetTempPath(), "CosmoRestoreLog.txt");
+                // 3. Create & Run PowerShell Helper Script
+                string scriptPath = Path.Combine(Path.GetTempPath(), $"cosmo_restore_{sessionGuid}.ps1");
+                string logPath = Path.Combine(Path.GetTempPath(), $"CosmoRestore_{sessionGuid}.log");
                 
                 string scriptContent = $@"
-try {{
-    ""[$(Get-Date)] Starting Restore Process..."" | Out-File '{logPath}'
-    ""[$(Get-Date)] Staging: {stagingPath}"" | Out-File '{logPath}' -Append
-    ""[$(Get-Date)] AppData: {appDataPath}"" | Out-File '{logPath}' -Append
+Add-Type -AssemblyName PresentationFramework
+$ErrorActionPreference = 'Stop'
+$log = '{logPath.Replace("\\", "\\\\")}'
 
+function Log-Msg($msg) {{
+    ""[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"" | Out-File $log -Append
+}}
+
+try {{
+    Log-Msg ""Starting Restore Session {sessionGuid}""
+    Log-Msg ""Source: {stagingPath.Replace("\\", "\\\\")}""
+    Log-Msg ""Target: {appDataPath.Replace("\\", "\\\\")}""
+    Log-Msg ""ExePath: {exePath.Replace("\\", "\\\\")}""
+
+    # 1. Wait for process closure
     Start-Sleep -Seconds 2
+    $fullPath = '{exePath.Replace("\\", "\\\\")}'
+    $pname = [System.IO.Path]::GetFileNameWithoutExtension($fullPath)
     
-    if (Test-Path '{stagingPath}') {{
-        ""[$(Get-Date)] Copying files..."" | Out-File '{logPath}' -Append
-        Copy-Item -Path '{stagingPath}\*' -Destination '{appDataPath}' -Recurse -Force -ErrorAction Stop
-        ""[$(Get-Date)] Copy Complete."" | Out-File '{logPath}' -Append
-    }} else {{
-        ""[$(Get-Date)] ERROR: Staging path not found!"" | Out-File '{logPath}' -Append
+    $retry = 0
+    while ($retry -lt 15) {{
+        $proc = Get-Process $pname -ErrorAction SilentlyContinue
+        if (-not $proc) {{ break }}
+        Log-Msg ""Waiting for $pname to exit (Attempt $retry)...""
+        if ($retry -gt 5) {{ $proc | Stop-Process -Force -ErrorAction SilentlyContinue }}
+        Start-Sleep -Seconds 1
+        $retry++
     }}
 
-    ""[$(Get-Date)] Restarting App: {exePath}"" | Out-File '{logPath}' -Append
-    Start-Process '{exePath}'
+    # COOLDOWN
+    Start-Sleep -Seconds 2
+
+    # 2. Copy Files
+    if (Test-Path '{stagingPath.Replace("\\", "\\\\")}') {{
+        Log-Msg ""Applying files...""
+        Get-ChildItem -Path '{stagingPath.Replace("\\", "\\\\")}' -File | ForEach-Object {{
+            $dest = Join-Path '{appDataPath.Replace("\\", "\\\\")}' $_.Name
+            Copy-Item $_.FullName -Destination $dest -Force
+            Log-Msg ""Restored: $($_.Name)""
+        }}
+    }}
+
+    # 3. Cleanup
+    Remove-Item -Path '{stagingPath.Replace("\\", "\\\\")}' -Recurse -Force -ErrorAction SilentlyContinue
+    
+    # 4. Restart
+    Start-Process -FilePath $fullPath -WorkingDirectory ""$(Split-Path -Path $fullPath)""
+    Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 }} catch {{
-    ""[$(Get-Date)] FATAL ERROR: $_"" | Out-File '{logPath}' -Append
-    [System.Windows.Forms.MessageBox]::Show(""Restore Error: $_"", ""CosmoWhisper Restore"")
+    Log-Msg ""FAILURE: $($_.Exception.Message)""
+    [System.Windows.MessageBox]::Show(""Restore Failed: $($_.Exception.Message)"", ""CosmoWhisper"")
 }}
 ";
-                File.WriteAllText(scriptPath, scriptContent);
+                File.WriteAllText(scriptPath, scriptContent, System.Text.Encoding.UTF8);
 
-                // Run visible for now to debug, but non-blocking
                 var psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                    Arguments = $"-ExecutionPolicy Bypass -NoProfile -File \"{scriptPath}\"",
                     UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden, // Keep hidden but log
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
                 };
 
                 Process.Start(psi);
-
-                // 5. Shutdown App
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Restore Error", ex.Message, "\u274C");
+                await Window.ShowDialogAsync("Restore Failure", $"Error: {ex.Message}", "\u274C");
             }
             finally
             {
@@ -630,7 +686,56 @@ try {{
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
         }
+
+        public void ToggleLocalWhisper()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.UseLocalWhisper = !p.UseLocalWhisper;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
+            Window.ShowToast(p.UseLocalWhisper ? "Local Whisper Enabled" : "Local Whisper Disabled", "🔌");
+        }
+
+        public void ToggleForceCloudProxy()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.ForceCloudProxy = !p.ForceCloudProxy;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
+            Window.ShowToast(p.ForceCloudProxy ? "VPN Mode Enabled" : "VPN Mode Disabled", "🛡️");
+        }
+
+        public void ToggleLocalOnly()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.UseLocalWhisperOnly = !p.UseLocalWhisperOnly;
+            PreferenceManager.Shared.Save();
+            UpdateLocalOnlyUI();
+            Window.ShowToast(p.UseLocalWhisperOnly ? "Survival Mode Enabled" : "Hybrid Mode Enabled", p.UseLocalWhisperOnly ? "🛡️" : "🌐");
+        }
+
+        public void UpdateLocalOnlyUI()
+        {
+            if (Window.ToggleLocalOnly == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            bool isOn = p.UseLocalWhisperOnly;
+
+            // Simple UpdateToggle helper
+            UpdateToggle(Window.ToggleLocalOnly, isOn);
+
+            // Update Text & Icons for premium feel
+            if (Window.LocalModeStatusTitle != null) 
+                Window.LocalModeStatusTitle.Text = isOn ? "Survival Mode: Local Only" : "Cloud-Optimized (Hybrid)";
+
+            if (Window.LocalModeStatusDesc != null)
+                Window.LocalModeStatusDesc.Text = isOn ? "Zero data leaves this machine. AI model running locally." : "Uses super-fast Groq API with local fallback.";
+
+            if (Window.LocalOverlayIcon != null)
+                Window.LocalOverlayIcon.Text = isOn ? "🛡️" : "🌐";
+        }
     }
 }
+
+
 
 

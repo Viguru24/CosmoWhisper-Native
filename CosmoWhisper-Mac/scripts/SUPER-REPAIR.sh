@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# COSMOWHISPER HYPER-REPAIR (SUDO EDITION)
+# CosmoWhisper HYPER-REPAIR (SUDO EDITION)
 # Uses provided password to force-reset macOS permissions.
 
 PASS="sugmad24"
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_PATH="./build_local/Build/Products/Debug/CosmoWhisper.app"
 
 echo "🔥 STARTING HYPER-REPAIR WITH SUDO..."
@@ -50,3 +50,5 @@ echo "-------------------------------------------------------"
 
 sleep 1
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+

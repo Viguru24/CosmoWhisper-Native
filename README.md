@@ -30,3 +30,5 @@ Press **Command + R** (or the Play button).
 
 ## Result
 You will see a perfectly transparent, native widget. No red borders. No Electron memory hogging.
+
+

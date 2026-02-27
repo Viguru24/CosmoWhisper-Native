@@ -2,8 +2,8 @@
 PASS="sugmad24"
 
 echo "🔐 Resetting permissions for CosmoWhisper..."
-echo "$PASS" | sudo -S tccutil reset Accessibility com.cosmowhisper.CosmoWhisper
-echo "$PASS" | sudo -S tccutil reset AppleEvents com.cosmowhisper.CosmoWhisper
+echo "$PASS" | sudo -S tccutil reset Accessibility com.CosmoWhisper.CosmoWhisper
+echo "$PASS" | sudo -S tccutil reset AppleEvents com.CosmoWhisper.CosmoWhisper
 
 echo "🚀 Building fresh version..."
 xcodebuild -project CosmoWhisper.xcodeproj -scheme CosmoWhisper -configuration Debug -derivedDataPath ./build_fix clean build > build_log.txt 2>&1
@@ -29,3 +29,5 @@ echo "$PASS" | sudo -S xattr -rd com.apple.quarantine /Applications/CosmoWhisper
 echo "🚀 Launching..."
 open /Applications/CosmoWhisper.app
 echo "✅ Done! Please check System Settings to re-enable permissions if prompted."
+
+

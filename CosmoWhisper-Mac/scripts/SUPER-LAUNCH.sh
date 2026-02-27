@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# COSMOWHISPER ULTIMATE FIXER
+# CosmoWhisper ULTIMATE FIXER
 # Kill everything, wipe everything, build fresh.
 
 echo "🔥 ULTIMATE FIXER STARTING..."
@@ -51,3 +51,5 @@ echo "---------------------------------------------------"
 echo "✅ ULTIMATE FIX COMPLETE."
 echo "The Dev Skip button should now be visible."
 echo "---------------------------------------------------"
+
+

@@ -12,7 +12,7 @@ We were running an **Electron-based application** (`npm run dev`). This architec
 
 ## 2. The Turning Point: Native Swift Migration
 We made the strategic decision to abandon the web wrapper and build a **100% Native macOS Application** using SwiftUI and AppKit. This solved the core identity crisis:
-*   **Stable Bundle ID**: `com.cosmowhisper.native`
+*   **Stable Bundle ID**: `com.CosmoWhisper.native`
 *   **Compiled Binary**: We are now running a compiled executable (`CosmoWhisper.app`). Once macOS learns to trust this specific binary path, that trust persists across restarts.
 *   **Explicit Entitlements**: We embedded an `Entitlements.plist` file into the build. This is a contract with the OS that explicitly tracks:
     *   `com.apple.security.device.audio-input` (Microphone)
@@ -50,3 +50,5 @@ You now have a production-grade macOS utility.
 *   **Persistent Permissions**.
 
 This architecture is robust, extendable, and respects the user's system resources.
+
+

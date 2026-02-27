@@ -19,9 +19,9 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/CosmoWhisper-*
 
 # 3. Reset Permissions
 echo "🛡️  Resetting TCC Permissions..."
-tccutil reset All com.cosmowhisper.CosmoWhisper || true
-tccutil reset Accessibility com.cosmowhisper.CosmoWhisper || true
-tccutil reset Microphone com.cosmowhisper.CosmoWhisper || true
+tccutil reset All com.CosmoWhisper.CosmoWhisper || true
+tccutil reset Accessibility com.CosmoWhisper.CosmoWhisper || true
+tccutil reset Microphone com.CosmoWhisper.CosmoWhisper || true
 
 # 4. Run Notarization
 echo "🚀 Starting Notarization Pipeline..."
@@ -30,3 +30,5 @@ echo "🚀 Starting Notarization Pipeline..."
 echo "=================================================="
 echo "✅ SEQUENCE COMPLETE"
 echo "=================================================="
+
+

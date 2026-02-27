@@ -17,11 +17,12 @@ namespace CosmoWhisper.Managers
 
         public DiagnosticManager()
         {
-            string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "diagnostics");
-            Directory.CreateDirectory(appData);
+            string appData = PreferenceManager.Shared.AppDataFolder;
+            string diagDir = Path.Combine(appData, "diagnostics");
+            Directory.CreateDirectory(diagDir);
 
-            _logPath = Path.Combine(appData, "live_flight_recorder.log");
-            _snapshotPath = Path.Combine(appData, "last_error_snapshot.json");
+            _logPath = Path.Combine(diagDir, "live_flight_recorder.log");
+            _snapshotPath = Path.Combine(diagDir, "last_error_snapshot.json");
 
             // Direct project root link for the AI to "tail"
             // Using a relative path to the repo root if possible, or just a known location
@@ -90,3 +91,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

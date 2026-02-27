@@ -21,9 +21,9 @@ killall CosmoWhisper 2>/dev/null
 
 # 2. Reset TCC database
 echo "🧹 Clearing macOS permission cache..."
-mysudo tccutil reset Accessibility com.cosmowhisper.CosmoWhisper
-mysudo tccutil reset AppleEvents com.cosmowhisper.CosmoWhisper
-mysudo tccutil reset ScreenCapture com.cosmowhisper.CosmoWhisper
+mysudo tccutil reset Accessibility com.CosmoWhisper.CosmoWhisper
+mysudo tccutil reset AppleEvents com.CosmoWhisper.CosmoWhisper
+mysudo tccutil reset ScreenCapture com.CosmoWhisper.CosmoWhisper
 
 # 3. Build a fresh version
 echo "📦 Building NEW version with UI click fixes..."
@@ -74,3 +74,5 @@ else
     echo "--------------------------------------------------"
     echo "ACTION: Please go to System Settings -> Accessibility and toggle it ON."
 fi
+
+

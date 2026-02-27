@@ -60,6 +60,20 @@ namespace CosmoWhisper.Managers
                 return true;
             }
 
+            // ===== SCREENSHOTS =====
+            if (cmd.Contains("screenshot") || cmd.Contains("screen clip") || cmd.Contains("snipping tool"))
+            {
+                if (cmd.Contains("open") || cmd.Contains("launch"))
+                {
+                     Process.Start(new ProcessStartInfo { FileName = "snippingtool", UseShellExecute = true });
+                }
+                else
+                {
+                     Process.Start(new ProcessStartInfo { FileName = "ms-screenclip:", UseShellExecute = true });
+                }
+                return true;
+            }
+
             // ===== UTILITY =====
             if (cmd == "insert date" || cmd == "todays date" || cmd == "current date")
             {
@@ -129,7 +143,10 @@ namespace CosmoWhisper.Managers
                 { "veracrypt", @"C:\Program Files\VeraCrypt\VeraCrypt.exe" },
                 { "shredder", @"C:\Program Files (x86)\File Shredder\fileshredder.exe" },
                 { "whatsapp", "whatsapp:" },
-                { "whats app", "whatsapp:" }
+                { "whats app", "whatsapp:" },
+                { "snipping tool", "snippingtool" },
+                { "screenshot", "snippingtool" },
+                { "capture", "snippingtool" }
             };
 
             if (apps.TryGetValue(appName, out var target))
@@ -183,9 +200,9 @@ namespace CosmoWhisper.Managers
                 { "gmail", "https://mail.google.com" },
                 { "outlook", "https://outlook.live.com" },
                 { "whatsapp", "https://web.whatsapp.com" },
-                { "cosmowhisper", "https://cosmowhisper-app.web.app" },
-                { "library", "https://cosmowhisper-app.web.app/features" },
-                { "commands", "https://cosmowhisper-app.web.app/features" }
+                { "cosmowhisper", "https://cosmowhisper.com" },
+                { "library", "https://cosmowhisper.com/features" },
+                { "commands", "https://cosmowhisper.com/features" }
             };
 
             if (shortcuts.TryGetValue(site, out var url))
@@ -225,3 +242,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

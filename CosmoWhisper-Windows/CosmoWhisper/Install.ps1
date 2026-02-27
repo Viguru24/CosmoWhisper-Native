@@ -1,4 +1,4 @@
-﻿# CosmoWhisper Installer
+# CosmoWhisper Installer
 $appName = "CosmoWhisper"
 $installPath = "$env:LOCALAPPDATA\$appName"
 
@@ -37,3 +37,5 @@ Write-Host "Location: $installPath"
 Write-Host "`nLaunching $appName..."
 
 Start-Process "$installPath\CosmoWhisperNative.exe"
+
+

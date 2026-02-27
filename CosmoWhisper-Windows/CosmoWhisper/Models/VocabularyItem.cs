@@ -56,3 +56,5 @@ namespace CosmoWhisper.Models
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
+
+

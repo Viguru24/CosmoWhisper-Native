@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "CosmoWhisper"
-#define MyAppVersion "2.2.38"
+#define MyAppVersion "2.2.71"
 #define MyAppPublisher "Viguru24"
-#define MyAppURL "https://cosmowhisper-app.web.app"
+#define MyAppURL "https://cosmowhisper.com"
 #define MyAppExeName "CosmoWhisperNative.exe"
 
 [Setup]
@@ -49,11 +49,14 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Fil
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Registry]
-Root: HKCR; Subkey: "cosmowhisper"; ValueType: string; ValueName: ""; ValueData: "URL:CosmoWhisper Protocol"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "cosmowhisper"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCR; Subkey: "cosmowhisper\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
-Root: HKCR; Subkey: "cosmowhisper\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+Root: HKCR; Subkey: "CosmoWhisper"; ValueType: string; ValueName: ""; ValueData: "URL:CosmoWhisper Protocol"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "CosmoWhisper"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCR; Subkey: "CosmoWhisper\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKCR; Subkey: "CosmoWhisper\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [UninstallDelete]
 Type: files; Name: "{app}\*.*"
 Type: dirifempty; Name: "{app}"
+
+
+

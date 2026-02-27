@@ -75,3 +75,5 @@ namespace CosmoWhisper.Managers
         public List<Macro> GetMacros() => _macros;
     }
 }
+
+

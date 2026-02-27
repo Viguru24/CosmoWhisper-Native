@@ -27,6 +27,8 @@ namespace CosmoWhisper
         private Storyboard _rippleStoryboard;
         private Storyboard _idleBreathingStoryboard;
         private Storyboard _thinkingStoryboard;
+        private Storyboard _jiggleStoryboard;
+        private Storyboard _iridescentStoryboard;
         private SolidColorBrush _cachedWhiteBrush;
         private SolidColorBrush _cachedBlueBrush;
 
@@ -37,7 +39,7 @@ namespace CosmoWhisper
             // Apply Glassmorphism (ITEM 1)
             this.SourceInitialized += (s, e) =>
             {
-                // WindowEffectManager.ApplyEffect(this, BackdropType.Mica); // Disabled to prevent square corners
+                // WindowEffectManager.ApplyEffect(this, BackdropType.Mica); 
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
                 UpdateTopmostState();
@@ -56,9 +58,12 @@ namespace CosmoWhisper
             _rippleStoryboard = (Storyboard)FindResource("RippleAnimation");
             _idleBreathingStoryboard = (Storyboard)FindResource("IdleBreathingAnimation");
             _thinkingStoryboard = (Storyboard)FindResource("ThinkingAnimation");
+            _jiggleStoryboard = (Storyboard)FindResource("JiggleAnimation");
+            _iridescentStoryboard = (Storyboard)FindResource("IridescentAnimation");
 
             // Start animations
             _idleBreathingStoryboard.Begin();
+            _iridescentStoryboard.Begin();
 
             // Capture the bars we created in XAML
             foreach (var child in VisualizerPanel.Children)
@@ -79,6 +84,7 @@ namespace CosmoWhisper
             AudioRecorder.Shared.IsRecordingChanged += OnIsRecordingChanged;
             AudioRecorder.Shared.AudioLevelChanged += OnAudioLevelChanged;
             AudioRecorder.Shared.TranscriptionReceived += OnTranscriptionReceived;
+            AudioRecorder.Shared.TranscriptionSourceReceived += OnTranscriptionSourceReceived;
             AudioRecorder.Shared.ErrorOccurred += OnErrorOccurred;
 
             // Command feedback
@@ -87,6 +93,7 @@ namespace CosmoWhisper
             // Wire up HotKey for push-to-talk
             _hotKeyManager.KeyPressed += () =>
             {
+                LogEvent("Hotkey Pressed: F9");
                 if (!AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StartRecording();
@@ -97,6 +104,7 @@ namespace CosmoWhisper
             };
             _hotKeyManager.KeyReleased += () =>
             {
+                LogEvent("Hotkey Released: F9");
                 if (AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StopRecording();
@@ -107,6 +115,7 @@ namespace CosmoWhisper
             };
             _hotKeyManager.ErrorOccurred += (msg) =>
             {
+                LogEvent($"Hotkey Error: {msg}");
                 Dispatcher.Invoke(() =>
                 {
                     string keyName = PreferenceManager.Shared.Preferences.ActivationKey;
@@ -117,6 +126,7 @@ namespace CosmoWhisper
             // Wire up Mouse Button for push-to-talk
             _mouseButtonManager.ButtonPressed += () =>
             {
+                LogEvent("Mouse Button Pressed");
                 if (!AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StartRecording();
@@ -124,6 +134,7 @@ namespace CosmoWhisper
             };
             _mouseButtonManager.ButtonReleased += () =>
             {
+                LogEvent("Mouse Button Released");
                 if (AudioRecorder.Shared.IsRecording)
                 {
                     AudioRecorder.Shared.StopRecording();
@@ -131,6 +142,7 @@ namespace CosmoWhisper
             };
             _mouseButtonManager.ErrorOccurred += (msg) =>
             {
+                LogEvent($"Mouse Button Error: {msg}");
                 Dispatcher.Invoke(() =>
                 {
                     // Handle mouse button errors silently
@@ -139,6 +151,7 @@ namespace CosmoWhisper
 
             PreferenceManager.Shared.PreferencesUpdated += () =>
             {
+                LogEvent("Preferences Updated");
                 Dispatcher.Invoke(() =>
                 {
                     _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
@@ -154,6 +167,7 @@ namespace CosmoWhisper
 
             this.Closed += (s, e) =>
             {
+                LogEvent("App Shutting Down");
                 SavePosition();
                 _hotKeyManager.Dispose();
                 _mouseButtonManager.Dispose();
@@ -164,26 +178,38 @@ namespace CosmoWhisper
             LoadPosition();
 
 #if DEBUG
-            GearIcon.Fill = Brushes.Orange;
+            GearIcon.Fill = Brushes.Orange; // "Yellow" style
+            LogEvent("Yellow Gear Active (DEBUG)");
+#else
+            GearIcon.Fill = Brushes.Gray; // Gray for Production
+            LogEvent("Gray Gear Active (PRODUCTION)");
 #endif
+            // Ensure gear is visible 
+            if (FindName("GearIcon") is FrameworkElement gear) gear.Visibility = Visibility.Visible;
+            if (GearBg?.Parent is Grid gearGrid) gearGrid.Visibility = Visibility.Visible;
             // Init hotkey hint
             var pref = PreferenceManager.Shared.Preferences;
             if (pref.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {pref.MouseButton}";
             else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
 
             // LOG STARTUP
-            Dispatcher.Invoke(() => {
-                try {
-                    string logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                    System.IO.Directory.CreateDirectory(logDir);
-                    string logPath = System.IO.Path.Combine(logDir, "cosmo_errors.log");
-                    System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - --- APP STARTING v2.2.20 ---\n");
-                } catch { }
-            });
+            LogEvent("--- APP STARTING v2.2.20 ---");
 
             // WARM UP: Initialize audio graph immediately so the first request is instant
             // and the pre-roll buffer starts filling.
             AudioRecorder.Shared.StartMonitoring();
+        }
+
+        private void LogEvent(string msg)
+        {
+            try
+            {
+                string logDir = System.IO.Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
+                System.IO.Directory.CreateDirectory(logDir);
+                string logPath = System.IO.Path.Combine(logDir, "cosmo_debug.log");
+                System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
+            }
+            catch { }
         }
 
         private void LoadPosition()
@@ -212,12 +238,14 @@ namespace CosmoWhisper
                     TxtHotkeyHint.Visibility = Visibility.Collapsed;
                     SoundWavePanel.Visibility = Visibility.Visible;
                     _soundWaveStoryboard.Begin();
+                    _jiggleStoryboard.Begin();
                     SetTheme(Colors.LimeGreen, "");
                 }
                 else
                 {
                     // Hide sound wave, show visualizer
                     _soundWaveStoryboard.Stop();
+                    _jiggleStoryboard.Begin();
                     SoundWavePanel.Visibility = Visibility.Collapsed;
                     VisualizerPanel.Visibility = Visibility.Visible;
                     TxtHotkeyHint.Visibility = Visibility.Visible;
@@ -290,6 +318,34 @@ namespace CosmoWhisper
                 }
 
                 await Task.Delay(2000);
+            });
+        }
+        
+        private void OnTranscriptionSourceReceived(string source, long timeMs)
+        {
+            Dispatcher.Invoke(async () =>
+            {
+                // Update hotkey hint briefly with source stats
+                string icon = source.Contains("Local") ? "🏠" : "☁️";
+                string originalHint = TxtHotkeyHint.Text;
+                
+                TxtHotkeyHint.Text = $"{icon} {source}: {timeMs}ms";
+                TxtHotkeyHint.Opacity = 1.0;
+                TxtHotkeyHint.Foreground = source.Contains("Local") ? Brushes.Cyan : Brushes.White;
+
+                // Brief visual splash
+                if (source.Contains("Local"))
+                {
+                    var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(300)) { AutoReverse = true };
+                    OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                }
+
+                await Task.Delay(3000);
+                
+                // Restore original state
+                TxtHotkeyHint.Text = originalHint;
+                TxtHotkeyHint.Opacity = 0.3;
+                TxtHotkeyHint.Foreground = Brushes.White;
             });
         }
 
@@ -456,3 +512,4 @@ namespace CosmoWhisper
         }
     }
 }
+

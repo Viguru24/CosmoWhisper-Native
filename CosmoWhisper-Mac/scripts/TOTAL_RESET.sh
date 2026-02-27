@@ -27,7 +27,7 @@ find . -maxdepth 3 -name "CosmoWhisper.app" -type d -exec rm -rf {} +
 
 # 4. Clean Permissions
 echo "🛡️  Resetting Privacy Database..."
-tccutil reset All com.cosmowhisper.CosmoWhisper || true
+tccutil reset All com.CosmoWhisper.CosmoWhisper || true
 
 # 5. Clean /Applications (Prepare for fresh install)
 echo "🧹 Cleaning /Applications..."
@@ -36,3 +36,5 @@ rm -rf /Applications/CosmoWhisper.app
 # 6. Rebuild & Reinstall
 echo "🏗️  Starting Fresh Build..."
 ./scripts/FULL-FORCE-FIX.sh
+
+

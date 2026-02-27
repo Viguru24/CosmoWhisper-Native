@@ -7,10 +7,10 @@
 # state to resolve persistent crashes and permission glitches.
 # ==============================================================================
 
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_NAME="CosmoWhisper.app"
 
-echo "🛑 SHUTTING DOWN COSMOWHISPER..."
+echo "🛑 SHUTTING DOWN CosmoWhisper..."
 pkill -9 -f "CosmoWhisper" || true
 
 echo "🔐 NUKING TCC PRIVACY DATABASE..."
@@ -45,3 +45,5 @@ if [ -d "/Applications/$APP_NAME" ]; then
     echo "🚀 Relaunching from /Applications..."
     open "/Applications/$APP_NAME"
 fi
+
+

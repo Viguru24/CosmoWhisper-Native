@@ -54,7 +54,7 @@ namespace CosmoWhisper.Managers
             int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
             if (wordCount < 6 && text.Any(char.IsLetterOrDigit)) 
             {
-                text = Regex.Replace(text, @"[\.\\?!…]+[\s]*$", "");
+                text = Regex.Replace(text, @"[\.,\\?!…]+[\s]*$", "");
             }
 
             return text;
@@ -82,3 +82,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

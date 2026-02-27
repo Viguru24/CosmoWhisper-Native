@@ -6,9 +6,9 @@ pkill -9 CosmoWhisper || true
 
 # 1.5 Clean Gossip Log (Diagnostic Log) AND Recent Activity AND Keychain
 rm -f "$HOME/Library/Application Support/CosmoWhisper/Logs/app.log"
-# defaults delete com.cosmowhisper.CosmoWhisper recentTranscriptions || true
-# defaults delete com.cosmowhisper.CosmoWhisper transcriptionCount || true
-# security delete-generic-password -s "com.cosmowhisper.api" -a "groq" 2>/dev/null || true
+# defaults delete com.CosmoWhisper.CosmoWhisper recentTranscriptions || true
+# defaults delete com.CosmoWhisper.CosmoWhisper transcriptionCount || true
+# security delete-generic-password -s "com.CosmoWhisper.api" -a "groq" 2>/dev/null || true
 
 # 2. Build
 echo "🔨 Building..."
@@ -33,3 +33,5 @@ xattr -rd com.apple.quarantine "$APP_PATH" 2>/dev/null || true
 # 5. Run
 echo "🚀 Launching from build folder..."
 open "$APP_PATH"
+
+

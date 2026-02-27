@@ -35,6 +35,9 @@ namespace CosmoWhisper.Managers
         public string AnthropicApiKey { get; set; } = "";
         public string XAiApiKey { get; set; } = "";
         public string AIModel { get; set; } = "whisper-large-v3";
+        public bool UseLocalWhisper { get; set; } = true; // Enable local Whisper fallback
+        public bool UseLocalWhisperOnly { get; set; } = false; // Force local usage only
+        public bool ForceCloudProxy { get; set; } = false; // Force Cloud Proxy (VPN Mode)
 
         // Setup: Mic ID & Calibration
         public string MicDeviceName { get; set; } = "Default";
@@ -75,17 +78,20 @@ namespace CosmoWhisper.Managers
         // License & Web Control
         public string LicenseToken { get; set; } = "";
         public string AuthToken { get; set; } = "";
-        public string BackendUrl { get; set; } = "https://cosmowhisper-app.onrender.com"; // Updated to actual backend API URL
+        public string BackendUrl { get; set; } = "https://cosmowhisper.com"; // Updated to actual backend API URL
         public string UserEmail { get; set; } = "";
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
-        public int UsageLimitMinutes { get; set; } = 20;
+        public int UsageLimitMinutes { get; set; } = 60;
+        public int LastLocalResetMonth { get; set; } = DateTime.Now.Month;
 
         private bool? _isStoreVersion;
         public bool IsStoreVersion
         {
             get
             {
+                if (UserEmail?.ToLower() == "louisdesouza@gmail.com") return false;
+
                 if (_isStoreVersion.HasValue) return _isStoreVersion.Value;
                 try
                 {
@@ -137,6 +143,7 @@ namespace CosmoWhisper.Managers
             }
         }
         private readonly string _settingsPath;
+        public string AppDataFolder => _appDataFolder;
         private readonly string _appDataFolder;
 
         public event Action? PreferencesUpdated;
@@ -168,14 +175,28 @@ namespace CosmoWhisper.Managers
                 {
                     string json = File.ReadAllText(_settingsPath);
                     Preferences = JsonSerializer.Deserialize<UserPreferences>(json) ?? new UserPreferences();
+
+                    // If restored backup directory doesn't exist (e.g. from another machine), reset to default
+                    if (string.IsNullOrEmpty(Preferences.BackupDirectory) || !Directory.Exists(Preferences.BackupDirectory))
+                    {
+                        Preferences.BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
+                    }
                     
                     // Removed the auto-reset to onrender to allow local development and custom proxies
-#if DEBUG
-                    if (Preferences.BackendUrl == "https://cosmowhisper-app.onrender.com")
+                    // Migration: Fix old render URL or lingering localhost
+                    if (Preferences.BackendUrl.Contains("onrender.com") || Preferences.BackendUrl.Contains("localhost:5000"))
                     {
-                        Preferences.BackendUrl = "http://localhost:5000";
+                        Preferences.BackendUrl = "https://CosmoWhisper.com";
+                        Save();
                     }
-#endif
+
+                    // Migration: Ensure everyone is on the 60-minute limit
+                    if (Preferences.UsageLimitMinutes < 60)
+                    {
+                        Preferences.UsageLimitMinutes = 60;
+                        Save();
+                    }
+
                     PreferencesUpdated?.Invoke();
                 }
                 catch { Preferences = new UserPreferences(); }
@@ -183,9 +204,6 @@ namespace CosmoWhisper.Managers
             else
             {
                 Preferences = new UserPreferences();
-#if DEBUG
-                Preferences.BackendUrl = "http://localhost:5000";
-#endif
             }
         }
 
@@ -216,3 +234,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

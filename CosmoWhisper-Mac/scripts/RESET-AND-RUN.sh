@@ -8,8 +8,8 @@ pkill -9 xcodebuild 2>/dev/null
 
 # 2. Wipe Permissions (The critical step)
 echo "🧹 Wiping Permission Database..."
-tccutil reset Accessibility com.cosmowhisper.CosmoWhisper
-tccutil reset AppleEvents com.cosmowhisper.CosmoWhisper
+tccutil reset Accessibility com.CosmoWhisper.CosmoWhisper
+tccutil reset AppleEvents com.CosmoWhisper.CosmoWhisper
 
 # 3. Clean Install
 echo "🚚 Re-installing App..."
@@ -37,3 +37,5 @@ echo "ACTION: Go to System Settings -> Accessibility."
 echo "If CosmoWhisper is there: Toggle it OFF then ON."
 echo "If not there: It will ask you to add it. Add it and turn ON."
 echo "---------------------------------------------------"
+
+

@@ -38,8 +38,16 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            OutputTextBox.Foreground = Brushes.Red;
-            OutputTextBox.Text = $"ERROR: {error}";
+            if (error.Contains("Access Revoked"))
+            {
+                OutputTextBox.Foreground = Brushes.Red;
+                OutputTextBox.Text = "ACCOUNT PAUSED: Your access to the transcription service has been revoked by the administrator. Please log in again to check your status.";
+            }
+            else
+            {
+                OutputTextBox.Foreground = Brushes.Red;
+                OutputTextBox.Text = $"ERROR: {error}";
+            }
         });
     }
 
@@ -89,3 +97,5 @@ public partial class MainWindow : Window
         });
     }
 }
+
+

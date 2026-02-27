@@ -24,3 +24,5 @@
 - Verify `/Applications/CosmoWhisper.app` integrity.
 - Ensure correct permissions are applied.
 - Close out phase 3.
+
+

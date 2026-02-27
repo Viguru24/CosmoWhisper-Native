@@ -7,7 +7,7 @@ Get-Process "CosmoWhisper" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 2
 
 # 2. Remove Registry Keys
-Remove-Item -Path "HKCU:\Software\Classes\cosmowhisper" -Recurse -ErrorAction SilentlyContinue
+Remove-Item -Path "HKCU:\Software\Classes\CosmoWhisper" -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\CosmoWhisper" -Recurse -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "CosmoWhisper" -ErrorAction SilentlyContinue
 
@@ -27,3 +27,5 @@ Write-Host "Uninstallation Complete. Removing files..."
 Start-Process cmd.exe -ArgumentList "/C timeout /t 3 & rmdir /s /q `"$installPath`"" -WindowStyle Hidden
 
 Exit
+
+

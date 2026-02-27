@@ -12,10 +12,10 @@ The application uses a dynamic, fail-over routing system that "learns" the best 
 The app attempts connections in the following order:
 1.  **Direct (Primary):** `https://api.groq.com`
     *   Lowest latency. Used by default on open networks.
-2.  **Firebase Proxy (VPN Bypass):** `https://cosmowhisper-app.web.app/api`
+2.  **Firebase Proxy (VPN Bypass):** `https://cosmowhisper.com/api`
     *   Routes through Google/Firebase edge nodes (rarely blocked).
     *   Compatible with standard OpenAI SDK paths.
-3.  **Render Backend (Reliability Fallback):** `https://cosmowhisper-app.onrender.com`
+3.  **Render Backend (Reliability Fallback):** `https://CosmoWhisper-app.onrender.com`
     *   Final fallback if the CDN/Proxy layer is unavailable.
 
 ### 2. "Sticky" Proxy Logic
@@ -29,7 +29,7 @@ To prevent the app from feeling "laggy" while waiting for repeated timeouts, we 
 
 ### Native (C#)
 *   **File:** `CosmoWhisper-Windows/CosmoWhisper/Services/AIService.cs`
-*   **Key Constant:** `FirebaseProxyUrl = "https://cosmowhisper-app.web.app/api"`
+*   **Key Constant:** `FirebaseProxyUrl = "https://cosmowhisper.com/api"`
 *   **Behavior:** Tries Direct -> Firebase -> Render.
 
 ### Backend (Node.js/Firebase)
@@ -48,3 +48,6 @@ If you encounter connectivity issues:
 1.  Check the logs in `%AppData%\CosmoWhisper_Native\logs\groq_errors.log`.
 2.  Ensure your VPN allows traffic to `*.web.app`.
 3.  Restart the app to reset "Sticky Mode" if you move to a cleaner network. 
+
+
+

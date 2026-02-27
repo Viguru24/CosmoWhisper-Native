@@ -18,3 +18,5 @@ catch {
     Write-Error "Failed to install certificate: $_"
     Read-Host "Press Enter to exit..."
 }
+
+

@@ -189,6 +189,7 @@ namespace CosmoWhisper.Managers
                     {
                         var p = PreferenceManager.Shared.Preferences;
                         p.UserTier = status.tier;
+                        p.UserEmail = status.email;
                         p.IsAIUnlocked = status.tier != "free";
                         p.UsageMinutes = status.usageMinutes;
                         p.UsageLimitMinutes = status.limitMinutes;
@@ -287,6 +288,7 @@ namespace CosmoWhisper.Managers
     public class StatusResponse
     {
         public string tier { get; set; }
+        public string email { get; set; }
         public double usageMinutes { get; set; }
         public int limitMinutes { get; set; }
         public bool isOverLimit { get; set; }

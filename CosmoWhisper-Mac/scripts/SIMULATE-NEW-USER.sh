@@ -7,11 +7,11 @@
 # brand new user downloading it for the first time.
 # ==============================================================================
 
-BUNDLE_ID="com.cosmowhisper.CosmoWhisper"
+BUNDLE_ID="com.CosmoWhisper.CosmoWhisper"
 APP_NAME="CosmoWhisper.app"
 DMG_NAME="CosmoWhisper_Universal_2.1.0_Notarized.dmg"
 
-echo "🛑 STEP 1: EXITING COSMOWHISPER..."
+echo "🛑 STEP 1: EXITING CosmoWhisper..."
 pkill -9 -f "CosmoWhisper" || true
 
 echo "🗑️  STEP 2: UNINSTALLING PREVIOUS COPIES..."
@@ -45,3 +45,5 @@ else
     echo "❌ ERROR: No notarized DMG found in release/ folder."
     echo "Please run ./scripts/BuildRelease.sh first."
 fi
+
+

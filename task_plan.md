@@ -52,3 +52,5 @@
     - [x] Hide "Manus Project Manager" UI (User Request)
 - [x] **Persistence**
     - [x] Fix GUI Scale not saving/loading Correctly
+
+

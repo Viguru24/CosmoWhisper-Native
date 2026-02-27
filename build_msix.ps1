@@ -97,6 +97,8 @@ if ($LASTEXITCODE -ne 0) { throw "MakeAppx failed!" }
 Write-Host "4. Signing Package..." -ForegroundColor Cyan
 $PfxPath = "$PackageDir\CosmoWhisper_Key.pfx"
 
+if (Test-Path $PfxPath) { Remove-Item $PfxPath -Force } # FORCE REGENERATION to ensure Subject matches Manifest
+
 if (Test-Path $PfxPath) {
     Write-Host "Reusing existing certificate: $PfxPath" -ForegroundColor Gray
 }
@@ -143,3 +145,5 @@ catch {
 }
 
 Start-Process explorer.exe "/select,$MsixPath"
+
+

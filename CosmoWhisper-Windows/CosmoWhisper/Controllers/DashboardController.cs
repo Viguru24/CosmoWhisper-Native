@@ -59,7 +59,13 @@ namespace CosmoWhisper.Controllers
             UpdateDashboardStats();
             if (!string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.AuthToken))
             {
-                await BackendService.Shared.SyncStatus();
+                bool success = await BackendService.Shared.SyncStatus();
+                if (!success)
+                {
+                    // Token is invalid or account may be paused. Force sign out.
+                    SignOut();
+                    _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "🔒");
+                }
                 UpdateDashboardStats();
             }
         }
@@ -126,6 +132,7 @@ namespace CosmoWhisper.Controllers
                 }
 
                 // Account View
+                if (Window.TxtAccountEmail != null) Window.TxtAccountEmail.Text = string.IsNullOrEmpty(p.UserEmail) ? "Not Signed In" : p.UserEmail;
                 if (Window.AccountTierStatus != null) Window.AccountTierStatus.Text = tierName;
                 if (Window.AccountTierIcon != null) Window.AccountTierIcon.Text = tierIcon;
                 if (Window.AccountUsageLabel != null) Window.AccountUsageLabel.Text = isUnlimited ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
@@ -141,6 +148,11 @@ namespace CosmoWhisper.Controllers
                         EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                     };
                     Window.AccountUsageProgressBar.BeginAnimation(FrameworkElement.WidthProperty, animation);
+                }
+
+                if (Window.BtnUpgradeAccount != null)
+                {
+                    Window.BtnUpgradeAccount.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;
                 }
             });
         }
@@ -178,6 +190,40 @@ namespace CosmoWhisper.Controllers
             else
             {
                 _ = CosmoMessage.Show("Login Failed", message, "❌");
+            }
+        }
+
+        public async Task PerformMagicLogin(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _ = CosmoMessage.Show("Validation", "Please enter your email first.", "📧");
+                return;
+            }
+
+            var (success, msg) = await BackendService.Shared.RequestMagicCode(email);
+            if (!success)
+            {
+                _ = CosmoMessage.Show("Error", msg, "❌");
+                return;
+            }
+
+            // Ask user for the code
+            var code = await Window.ShowInputDialogAsync("Security Code", $"Enter the code sent to {email}", "", "🔐");
+            if (string.IsNullOrWhiteSpace(code)) return;
+
+            var (verifySuccess, verifyMsg) = await BackendService.Shared.VerifyMagicCode(email, code);
+
+            if (verifySuccess)
+            {
+                UpdateDashboardStats();
+                Window._navigation.ShowAccount();
+                await BackendService.Shared.SyncStatus();
+                UpdateDashboardStats();
+            }
+            else
+            {
+                _ = CosmoMessage.Show("Login Failed", verifyMsg, "❌");
             }
         }
 
@@ -226,3 +272,5 @@ namespace CosmoWhisper.Controllers
         }
     }
 }
+
+

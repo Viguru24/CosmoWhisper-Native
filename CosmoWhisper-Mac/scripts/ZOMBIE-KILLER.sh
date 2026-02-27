@@ -28,3 +28,5 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/CosmoWhisper-* 2>/dev/null
 
 echo "✅ ALL ZOMBIES PURGED."
 echo "You are now on a clean slate. Run ./SUPER-LAUNCH.sh to build fresh."
+
+
