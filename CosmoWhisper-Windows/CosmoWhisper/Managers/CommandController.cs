@@ -85,7 +85,7 @@ namespace CosmoWhisper.Managers
             // Check for Macros first (ITEM 4)
             if (await MacroManager.Shared.TryExecuteMacro(text)) return true;
 
-            string cmd = Regex.Replace(text.ToLower(), @"[^\w\s\.]", "").Trim();
+            string cmd = Regex.Replace(text.ToLower(), @"[^\w\s]", "").Trim();
 
             if (string.IsNullOrWhiteSpace(cmd)) return false;
 
@@ -113,7 +113,39 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("typing mode", "use typing mode")) { return true; } // Mocked setting
             if (IsTriggered("paste mode", "use paste mode")) { return true; }
 
-            // --- 2. TEXT FORMATTING ---
+            if (IsTriggered("press enter on", "enable press enter", "turn on press enter"))
+            {
+                PreferenceManager.Shared.Preferences.AutoSubmit = true;
+                PreferenceManager.Shared.Save();
+                _ = NarrationManager.Shared.SpeakAsync("Press enter enabled.");
+                CommandExecuted?.Invoke();
+                return true;
+            }
+            if (IsTriggered("press enter off", "disable press enter", "turn off press enter"))
+            {
+                PreferenceManager.Shared.Preferences.AutoSubmit = false;
+                PreferenceManager.Shared.Save();
+                _ = NarrationManager.Shared.SpeakAsync("Press enter disabled.");
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
+            // --- 2. SYSTEM COMMANDS ---
+            if (IsTriggered("settings", "open settings", "windows settings", "system settings"))
+            {
+                Process.Start(new ProcessStartInfo("ms-settings:root") { UseShellExecute = true });
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
+            if (IsTriggered("control panel", "open control panel"))
+            {
+                Process.Start(new ProcessStartInfo("control") { UseShellExecute = true });
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
+            // --- 3. TEXT FORMATTING ---
             if (IsTriggered("uppercase", "upper case", "all caps", "i'll put case", "apple case", "up a case")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
             if (IsTriggered("lowercase", "lower case", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
             if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case. Output ONLY the text.", usePersonality: false); return true; }
