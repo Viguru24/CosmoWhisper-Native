@@ -178,20 +178,11 @@ namespace CosmoWhisper
             LoadPosition();
 
 #if DEBUG
-            GearIcon.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 158, 11)); // Orange (#f59e0b)
-            LogEvent("Orange Gear Active (DEV BUILD)");
+            GearIcon.Fill = Brushes.Orange; // "Yellow" style
+            LogEvent("Yellow Gear Active (DEBUG)");
 #else
-            string asmName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name ?? "";
-            if (asmName.Contains("Personal", StringComparison.OrdinalIgnoreCase))
-            {
-                GearIcon.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(16, 185, 129)); // Green (#10b981)
-                LogEvent("Green Gear Active (PERSONAL BUILD)");
-            }
-            else
-            {
-                GearIcon.Fill = System.Windows.Media.Brushes.Gray; // Grey for Production
-                LogEvent("Gray Gear Active (PRODUCTION)");
-            }
+            GearIcon.Fill = Brushes.Gray; // Gray for Production
+            LogEvent("Gray Gear Active (PRODUCTION)");
 #endif
             // Ensure gear is visible 
             if (FindName("GearIcon") is FrameworkElement gear) gear.Visibility = Visibility.Visible;
@@ -521,4 +512,3 @@ namespace CosmoWhisper
         }
     }
 }
-
