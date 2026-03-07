@@ -757,11 +757,25 @@
 
                             <!-- Footer Section (Pinned Bottom) -->
 
-                            <StackPanel Grid.Row="2" Margin="10,0,20,30">
-
+                            <StackPanel Grid.Row="2" Margin="10,0,10,30">
                                 <Separator Background="#10FFFFFF" Margin="20,0,20,15" Height="1"/>
-
-                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                
+                                <!-- User Profile Information -->
+                                <Border Background="#15FFFFFF" CornerRadius="12" Margin="10,0,10,15" Padding="15,12">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtUserEmail" Text="Not Logged In" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="12" FontWeight="SemiBold" Opacity="0.8" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="Cosmo Account Status" Foreground="White" Opacity="0.4" FontSize="9" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Button Style="{StaticResource SidebarButton}" Click="Discord_Click" ToolTip="Join our Discord community">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#x1F4AC;" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Join Discord" FontSize="14" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
 
                                      <Button Width="24" Height="24" Margin="4" ToolTip="Ocean Blue" Click="ThemeOcean_Click">
 
@@ -888,7 +902,7 @@
                                     </StackPanel>
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.71.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="Version 2.2.83.0-ONLINE" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
 
                                 <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
 
@@ -1089,14 +1103,11 @@
                         <StackPanel Grid.Row="0" Margin="0,0,0,30">
 
                             <!-- Dashboard Header -->
-
-                            <StackPanel x:Name="DashboardHeader">
-
-                                <TextBlock Text="Productivity" Foreground="White" FontSize="32" FontWeight="Bold"/>
-
-                                <TextBlock Text="Your dictation efficiency at a glance." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
+ 
+                                 <StackPanel x:Name="DashboardHeader" Margin="0,0,0,30">
+                                     <TextBlock Text="Productivity" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                     <TextBlock Text="Your dictation efficiency at a glance." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                 </StackPanel>
 
                             
 
@@ -1296,7 +1307,9 @@
 
                                                 
 
-                                                <TextBlock x:Name="TxtUsageStats" Text="1.7 / &#x221E;" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="White" FontWeight="Bold" Margin="250,0,0,0"/>
+                                                <DockPanel LastChildFill="False">
+                                                    <TextBlock x:Name="TxtUsageStats" Text="1.7 / &#x221E;" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="White" FontWeight="Bold" Margin="0,0,0,0"/>
+                                                </DockPanel>
 
                                             </StackPanel>
 
@@ -1802,8 +1815,6 @@
                                         <StackPanel Margin="15" VerticalAlignment="Center">
 
                                             <TextBlock Text="The Oracle" Foreground="White" FontSize="18" FontWeight="Bold"/>
-
-                                            <TextBlock Text="Trigger: 'Visit Google'" Foreground="#60A5FA" FontSize="11" Margin="0,4,0,0" FontWeight="SemiBold"/>
 
                                             <TextBlock Text="Ask questions. Get answers. Know everything." Foreground="White" Opacity="0.8" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
 
@@ -3040,21 +3051,24 @@
                                             
                                             <!-- New Input Left -->
                                             <Grid Grid.Column="0" Margin="10,0,0,0">
-                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" Padding="5"/>
-                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,0,0,0"/>
+                                                <TextBox x:Name="TxtNewKey" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Top" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" Padding="5"/>
+                                                <TextBlock x:Name="PlaceholderKey" Text="When I say..." Foreground="White" Opacity="0.4" VerticalAlignment="Top" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,8,0,0"/>
                                             </Grid>
 
                                             <!-- Arrow -->
-                                            <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" Margin="15,0,15,0" VerticalAlignment="Center" FontSize="20"/>
+                                            <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" Margin="15,10,15,0" VerticalAlignment="Top" FontSize="20"/>
                                             
                                             <!-- New Input Right -->
                                             <Grid Grid.Column="2">
-                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" Padding="5"/>
-                                                <TextBlock x:Name="PlaceholderValue" Text="Replace with..." Foreground="White" Opacity="0.4" VerticalAlignment="Center" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,0,0,0"/>
+                                                <TextBox x:Name="TxtNewValue" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" 
+                                                         VerticalAlignment="Top" FontSize="16" Panel.ZIndex="2" TextChanged="TxtNewInput_TextChanged" 
+                                                         Padding="5" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" MaxHeight="120" VerticalScrollBarVisibility="Auto"/>
+                                                <TextBlock x:Name="PlaceholderValue" Text="Replace with..." Foreground="White" Opacity="0.4" 
+                                                           VerticalAlignment="Top" FontSize="16" Panel.ZIndex="1" IsHitTestVisible="False" Margin="5,8,0,0"/>
                                             </Grid>
 
                                             <!-- Add Button -->
-                                            <Button Grid.Column="3" Click="AddVocabulary_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Width="40" Height="40" Margin="5" FontWeight="SemiBold" Cursor="Hand" ToolTip="Add Correction">
+                                            <Button Grid.Column="3" Click="AddVocabulary_Click" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" Width="40" Height="40" Margin="5" VerticalAlignment="Top" FontWeight="SemiBold" Cursor="Hand" ToolTip="Add Correction">
                                                  <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" CornerRadius="20">
@@ -3080,18 +3094,18 @@
                                                         </Grid.ColumnDefinitions>
                                                         
                                                         <!-- READ MODE -->
-                                                        <Border Grid.Column="0" Background="#15FFFFFF" CornerRadius="8" Padding="12,8" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                                        <Border Grid.Column="0" Background="#15FFFFFF" CornerRadius="8" Padding="12,8" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                                             <TextBlock Text="{Binding Key}" Foreground="White" Opacity="0.8" FontSize="15" TextTrimming="CharacterEllipsis"/>
                                                         </Border>
 
-                                                        <Grid Grid.Column="2" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Center">
+                                                        <Grid Grid.Column="2" Visibility="{Binding ReadModeVisibility}" VerticalAlignment="Top">
                                                             <Border Background="{DynamicResource ThemeGlowBrush}" CornerRadius="8" Opacity="0.15" HorizontalAlignment="Stretch"/>
                                                             <Border Padding="12,8" HorizontalAlignment="Stretch">
-                                                                <TextBlock Text="{Binding Value}" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" FontSize="15" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding Value}" Foreground="{DynamicResource ThemeGlowBrush}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" VerticalAlignment="Center"/>
                                                             </Border>
                                                         </Grid>
 
-                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding ReadModeVisibility}" Margin="10,0,0,0">
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding ReadModeVisibility}" Margin="10,0,0,0" VerticalAlignment="Top">
                                                             <Button Click="EditVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Edit">
                                                                 <Border Background="#15FFFFFF" CornerRadius="8" Width="32" Height="32">
                                                                     <TextBlock Text="&#x270E;" Foreground="White" Opacity="0.8" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
@@ -3107,7 +3121,7 @@
                                                         <!-- EDIT MODE -->
                                                         <TextBox Grid.Column="0" Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
                                                                  Background="#25FFFFFF" BorderThickness="0" Padding="12,8"
-                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center">
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Top">
                                                             <TextBox.Resources>
                                                                 <Style TargetType="Border">
                                                                     <Setter Property="CornerRadius" Value="8"/>
@@ -3117,7 +3131,8 @@
                                                         
                                                         <TextBox Grid.Column="2" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding EditModeVisibility}"
                                                                  Background="#25FFFFFF" BorderThickness="0" Padding="12,8"
-                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Center">
+                                                                 Foreground="White" CaretBrush="White" VerticalAlignment="Top"
+                                                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" MaxHeight="100" VerticalScrollBarVisibility="Auto">
                                                             <TextBox.Resources>
                                                                 <Style TargetType="Border">
                                                                     <Setter Property="CornerRadius" Value="8"/>
@@ -3125,7 +3140,7 @@
                                                             </TextBox.Resources>
                                                         </TextBox>
 
-                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding EditModeVisibility}" Margin="10,0,0,0">
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Visibility="{Binding EditModeVisibility}" Margin="10,0,0,0" VerticalAlignment="Top">
                                                             <Button Click="SaveVocabulary_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,5,0" ToolTip="Save">
                                                                 <Border Background="#204ADE80" CornerRadius="8" Width="32" Height="32">
                                                                     <TextBlock Text="&#x2713;" Foreground="#4ADE80" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -3138,10 +3153,11 @@
                                                             </Button>
                                                         </StackPanel>
 
-                                                        <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" Margin="12,0,12,0" VerticalAlignment="Center" FontSize="18"/>
+                                                        <TextBlock Grid.Column="1" Text="&#x2192;" Foreground="White" Opacity="0.3" VerticalAlignment="Top" Margin="12,12,12,0" FontSize="18"/>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
+
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
@@ -3767,7 +3783,7 @@
 
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
 
-                                                <TextBlock Text="Cosmo User" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                                <TextBlock x:Name="AccountUserName" Text="Cosmo User" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
 
                                                 <TextBlock x:Name="AccountTierStatus" Text="Free Tier" Foreground="#00E676" FontSize="14"/>
 
@@ -3842,31 +3858,24 @@
 
 
                                             <Grid>
-
-                                                <Grid.ColumnDefinitions>
-
-                                                    <ColumnDefinition Width="*"/>
-
-                                                    <ColumnDefinition Width="Auto"/>
-
-                                                </Grid.ColumnDefinitions>
-
-                                                <StackPanel>
-
-                                                    <TextBlock Text="Usage This Month" Foreground="White" FontWeight="SemiBold" Margin="0,20,0,8"/>
-
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                
+                                                <StackPanel Grid.Row="0" Margin="0,15,0,10">
+                                                    <TextBlock Text="Usage This Month" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                                     <TextBlock x:Name="AccountUsageStats" Text="0 / 60 minutes used" Foreground="White" Opacity="0.6" FontSize="12"/>
-
                                                 </StackPanel>
-
+                                                
                                                 <!-- Progress Bar Background -->
-
-                                                <Border Grid.ColumnSpan="2" VerticalAlignment="Bottom" Height="4" Background="#30FFFFFF" CornerRadius="2" Margin="0,25,0,0">
-
-                                                    <Border x:Name="AccountUsageProgressBar" HorizontalAlignment="Left" Width="0" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="2"/>
-
+                                                <Border Grid.Row="1" Height="6" Background="#20FFFFFF" CornerRadius="3" Margin="0,0,0,15">
+                                                    <Border x:Name="AccountUsageProgressBar" HorizontalAlignment="Left" Width="0" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="3">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+                                                        </Border.Effect>
+                                                    </Border>
                                                 </Border>
-
                                             </Grid>
 
                                         </StackPanel>
@@ -3940,7 +3949,6 @@
                                         </Button>
 
                                     </StackPanel>
-
                                 </StackPanel>
 
                             </ScrollViewer>
@@ -3952,93 +3960,37 @@
                                 <StackPanel VerticalAlignment="Center" Margin="0,50,0,0">
                                     <Border Background="#252A3D" CornerRadius="20" Padding="40" HorizontalAlignment="Center" Width="400">
                                         <StackPanel>
-                                            <!-- Removed Duplicate Welcome Back -->
-                                            <TextBlock Text="Email Address" Foreground="White" Opacity="0.7" FontSize="12" Margin="0,0,0,8"/>
-                                            <Border Background="#10FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,20">
-                                                <TextBox x:Name="TxtLoginEmail" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14"/>
-                                            </Border>
+                                             <TextBlock Text="Sign in to CosmoWhisper" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                                             <TextBlock Text="Unlock the power of your voice and sync your data with the cloud." Foreground="White" Opacity="0.7" FontSize="12" Margin="0,0,0,30" TextWrapping="Wrap" TextAlignment="Center"/>
 
-                                            <TextBlock Text="Password" Foreground="White" Opacity="0.7" FontSize="12" Margin="0,0,0,8"/>
-                                            <Border Background="#10FFFFFF" CornerRadius="8" Padding="10" Margin="0,0,0,30">
-                                                <PasswordBox x:Name="TxtLoginPassword" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14"/>
-                                            </Border>
+                                             <!-- Google Login -->
+                                             <Button Click="GoogleLogin_Click" Height="55" Margin="0,0,0,12" Cursor="Hand">
+                                                 <Button.Template>
+                                                      <ControlTemplate TargetType="Button">
+                                                          <Border x:Name="bdr" Background="White" CornerRadius="16" BorderBrush="#20000000" BorderThickness="1">
+                                                              <Grid>
+                                                                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                      <Viewbox Width="24" Height="24" Margin="0,0,12,0">
+                                                                          <Path Data="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.147-1.133 7.973-3.04 1.84-1.92 2.347-4.64 2.347-6.813 0-.68-.067-1.347-.187-1.973h-10.133z" Fill="#4285F4"/>
+                                                                      </Viewbox>
+                                                                      <TextBlock Text="Sign in with Google" Foreground="#1F1F1F" FontSize="16" FontWeight="Bold"/>
+                                                                  </StackPanel>
+                                                              </Grid>
+                                                          </Border>
+                                                          <ControlTemplate.Triggers>
+                                                              <Trigger Property="IsMouseOver" Value="True">
+                                                                  <Setter TargetName="bdr" Property="Background" Value="#F8F9FA"/>
+                                                                  <Setter TargetName="bdr" Property="BorderBrush" Value="#40000000"/>
+                                                              </Trigger>
+                                                              <Trigger Property="IsPressed" Value="True">
+                                                                  <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
+                                                              </Trigger>
+                                                          </ControlTemplate.Triggers>
+                                                      </ControlTemplate>
+                                                 </Button.Template>
+                                             </Button>
 
-                                            <Button Content="Sign In" Height="50" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" BorderThickness="0" FontWeight="Bold" FontSize="16" Cursor="Hand" Click="PerformLogin_Click" Margin="0,0,0,5">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-
-                                            <Grid Margin="0,20">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Border Height="1" Background="#30FFFFFF" VerticalAlignment="Center"/>
-                                                <TextBlock Text="OR" Foreground="White" Opacity="0.5" FontSize="10" Margin="10,0"/>
-                                                <Border Grid.Column="2" Height="1" Background="#30FFFFFF" VerticalAlignment="Center"/>
-                                            </Grid>
-
-                                            <!-- Google Login -->
-                                            <Button Click="GoogleLogin_Click" Height="48" Margin="0,0,0,12" Cursor="Hand">
-                                                <Button.Template>
-                                                     <ControlTemplate TargetType="Button">
-                                                         <Border x:Name="bdr" Background="White" CornerRadius="14" BorderBrush="#20000000" BorderThickness="1">
-                                                             <Grid>
-                                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                     <Viewbox Width="20" Height="20" Margin="0,0,12,0">
-                                                                         <Path Data="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.147-1.133 7.973-3.04 1.84-1.92 2.347-4.64 2.347-6.813 0-.68-.067-1.347-.187-1.973h-10.133z" Fill="#4285F4"/>
-                                                                     </Viewbox>
-                                                                     <TextBlock Text="Continue with Google" Foreground="#1F1F1F" FontSize="15" FontWeight="Bold"/>
-                                                                 </StackPanel>
-                                                             </Grid>
-                                                         </Border>
-                                                         <ControlTemplate.Triggers>
-                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                 <Setter TargetName="bdr" Property="Background" Value="#F8F9FA"/>
-                                                                 <Setter TargetName="bdr" Property="BorderBrush" Value="#40000000"/>
-                                                             </Trigger>
-                                                             <Trigger Property="IsPressed" Value="True">
-                                                                 <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
-                                                             </Trigger>
-                                                         </ControlTemplate.Triggers>
-                                                     </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-
-                                            <!-- Magic Link -->
-                                            <Button Click="MagicLink_Click" Height="48" Margin="0,0,0,10" Cursor="Hand">
-                                                <Button.Template>
-                                                     <ControlTemplate TargetType="Button">
-                                                         <Border x:Name="bdr" Background="#1AFFFFFF" CornerRadius="14" BorderBrush="#30FFFFFF" BorderThickness="1.2">
-                                                              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                 <TextBlock Text="✨" Margin="0,0,12,0" FontSize="18"/>
-                                                                 <TextBlock Text="Sign in with Magic Code" Foreground="White" FontSize="15" FontWeight="SemiBold"/>
-                                                             </StackPanel>
-                                                         </Border>
-                                                         <ControlTemplate.Triggers>
-                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                 <Setter TargetName="bdr" Property="Background" Value="#30FFFFFF"/>
-                                                                 <Setter TargetName="bdr" Property="BorderBrush" Value="#60FFFFFF"/>
-                                                                 <Setter TargetName="bdr" Property="Effect">
-                                                                     <Setter.Value>
-                                                                         <DropShadowEffect Color="White" BlurRadius="15" Opacity="0.2" ShadowDepth="0"/>
-                                                                     </Setter.Value>
-                                                                 </Setter>
-                                                             </Trigger>
-                                                             <Trigger Property="IsPressed" Value="True">
-                                                                 <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
-                                                             </Trigger>
-                                                         </ControlTemplate.Triggers>
-                                                     </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-
+                                             <TextBlock Text="By signing in, you agree to our Terms of Service." Foreground="White" Opacity="0.4" FontSize="10" Margin="0,20,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
                                             <Button Click="SignUp_Click" Height="40" Margin="0,20,0,0" Cursor="Hand">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
@@ -4755,10 +4707,6 @@
     </Grid>
 
 </Window>
-
-
-
-
 
 
 

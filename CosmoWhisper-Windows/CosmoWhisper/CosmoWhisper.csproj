@@ -7,11 +7,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>CosmoWhisperNative</AssemblyName>
+    <AssemblyName Condition="'$(Configuration)' == 'Personal'">CosmoWhisperPersonal</AssemblyName>
+    <AssemblyName Condition="'$(Configuration)' != 'Personal'">CosmoWhisperNative2</AssemblyName>
+    <DefineConstants Condition="'$(Configuration)' == 'Personal'">$(DefineConstants);PERSONAL_BUILD</DefineConstants>
+    <DefineConstants Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'Release'">$(DefineConstants);DEV_BUILD</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.2.71.0</Version>
+    <Version>2.2.74.0</Version>
     <EnableMsixTooling>true</EnableMsixTooling>
     <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
@@ -19,11 +22,13 @@
     <PackageCertificatePassword>password</PackageCertificatePassword>
     <AppxPackageDir>AppPackages</AppxPackageDir>
 
-    <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
+    <StartupObject>CosmoWhisper.Program</StartupObject>
+    <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414;CS0017</NoWarn>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Whisper.net" Version="1.9.0" />
     <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />

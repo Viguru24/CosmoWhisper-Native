@@ -20,12 +20,12 @@ namespace CosmoWhisper.Managers
             get
             {
                 var email = PreferenceManager.Shared.Preferences?.UserEmail?.ToLower();
-                if (email == "louisdesouza@gmail.com")
+                if (email == "bruce.wayne@wayneenterprises.com")
                     return UserTier.Ultimate;
                     
                 var tier = PreferenceManager.Shared.Preferences?.UserTier?.ToLower() ?? "free";
                 
-                if (tier == "ultimate" || tier == "admin") return UserTier.Ultimate;
+                if (tier == "ultimate" || tier == "admin" || tier == "unlimited") return UserTier.Ultimate;
                 if (tier == "professional") return UserTier.Ultimate; 
                 
                 if (tier == "pro") return UserTier.Pro;
@@ -60,7 +60,7 @@ namespace CosmoWhisper.Managers
             _ => "🌱"
         };
 
-        public bool IsUnlimited => PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "louisdesouza@gmail.com" || (!PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free);
+        public bool IsUnlimited => PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com" || (!PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free);
 
         // Feature Gating
         public bool HasUltraAccuracy => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
@@ -71,7 +71,7 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "louisdesouza@gmail.com") return 999999;
+                if (PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com") return 999999;
                 
                 return (PreferenceManager.Shared.Preferences?.IsStoreVersion == true) ? 60 : CurrentTier switch
                 {

@@ -203,6 +203,38 @@ namespace CosmoWhisper.Managers
                 SendKey(0x0D, true);
             }
         }
+        public void SafeSetClipboardText(string text)
+        {
+            try
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    System.Windows.Clipboard.SetText(text);
+                });
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        public string GetActiveProcessName()
+        {
+            try
+            {
+                IntPtr hwnd = GetForegroundWindow();
+                GetWindowThreadProcessId(hwnd, out uint pid);
+                var process = System.Diagnostics.Process.GetProcessById((int)pid);
+                return process.ProcessName;
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
     }
 }
 

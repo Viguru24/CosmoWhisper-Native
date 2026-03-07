@@ -61,8 +61,12 @@ namespace CosmoWhisper.Managers
             get => _isRecording;
             private set
             {
-                _isRecording = value;
-                IsRecordingChanged?.Invoke(value);
+                if (_isRecording != value)
+                {
+                    _isRecording = value;
+                    AppState.Shared.IsRecording = value;
+                    IsRecordingChanged?.Invoke(value);
+                }
             }
         }
 
@@ -293,6 +297,24 @@ namespace CosmoWhisper.Managers
         {
             if (IsRecording) return;
 
+            // 0. BLOCK CHECK (On-Demand re-verification)
+            if (AppState.Shared.IsAccessBlocked)
+            {
+                // If we are marked as blocked, don't just give up. 
+                // Ask the server RIGHT NOW if the admin unblocked us.
+                var result = await BackendService.Shared.SyncStatus();
+                if (result == SyncResult.Success)
+                {
+                    AppState.Shared.IsAccessBlocked = false;
+                    DiagnosticManager.Shared.Log("Access restored via on-demand check.", "AUTH");
+                }
+                else
+                {
+                    ErrorOccurred?.Invoke("Access Revoked: Please contact support or check your account status.");
+                    return;
+                }
+            }
+
             // Wait for any pending stop (e.g. from monitoring)
             if (_waveInStoppingTask != null) await _waveInStoppingTask.Task;
 
@@ -303,19 +325,14 @@ namespace CosmoWhisper.Managers
             // Check if user is over limit AND not on an unlimited plan
             if (!sub.IsUnlimited && p.UsageMinutes >= sub.MonthlyLimitMinutes)
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(async () =>
-                {
-                    bool upgrade = await CosmoMessage.Show("Limit Reached", 
+                _ = Task.Run(async () => {
+                    bool upgrade = await UIEvents.Shared.ShowMessageAsync("Limit Reached", 
                         "You've reached your monthly transcription limit. Upgrade to a Pro plan for unlimited usage and elite features.", 
                         "🚀", true, "Upgrade Now");
                     
                     if (upgrade)
                     {
-                        try
-                        {
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://cosmowhisper.com/pricing") { UseShellExecute = true });
-                        }
-                        catch { }
+                        UIEvents.Shared.OpenUrl("https://cosmowhisper.com/pricing");
                     }
                 });
                 return;
@@ -352,7 +369,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public void StopRecording()
+        public async void StopRecording()
         {
             if (!IsRecording) return;
             IsRecording = false;
@@ -361,6 +378,9 @@ namespace CosmoWhisper.Managers
 
             try
             {
+                // Add padding so Whisper doesn't clip the final syllable (Reduced for speed)
+                await Task.Delay(100);
+
                 _writer?.Flush();
                 _writer?.Close();
                 _writer?.Dispose();
@@ -380,7 +400,7 @@ namespace CosmoWhisper.Managers
                 {
                     double dur = (DateTime.Now - _recordingStartTime).TotalSeconds;
                     _recordingStartTime = DateTime.MinValue;
-                    _ = LicenseManager.Shared.ReportUsageAsync(dur);
+                    _ = BackendService.Shared.ReportUsage((long)(dur * 1000));
                 }
 
                 if (!string.IsNullOrEmpty(_currentFilePath))
@@ -423,6 +443,20 @@ namespace CosmoWhisper.Managers
                 VocabularyManager.Shared.SetContext(app.Split(' ')[0]);
 
                 TranscriptionReceived?.Invoke($"Thinking...");
+                
+                // Track Usage Duration (16kHz, 16-bit, Mono = 32000 bytes/sec)
+                // We subtract the 44-byte WAV header
+                double durationSeconds = (info.Length - 44) / 32000.0;
+                long durationMs = (long)(durationSeconds * 1000);
+                
+                // Report to backend (Fire-and-forget, but tracked)
+                _ = BackendService.Shared.ReportUsage(durationMs);
+
+                // Update local stats for immediate UI feedback
+                var p = PreferenceManager.Shared.Preferences;
+                p.UsageMinutes += (durationSeconds / 60.0);
+                PreferenceManager.Shared.Save();
+
                 string text = await AIService.Shared.Transcribe(filePath);
 
                 // Notify UI of source and timing
@@ -452,11 +486,21 @@ namespace CosmoWhisper.Managers
                             prefs.TotalTimeSavedMinutes += (words / 65.0);
                             PreferenceManager.Shared.Save();
 
-                            if (prefs.AutoCopy) System.Windows.Application.Current.Dispatcher.Invoke(() => System.Windows.Clipboard.SetText(corrected));
+                            if (prefs.AutoCopy) InputController.Shared.SafeSetClipboardText(corrected);
 
                             // Decide if we add a trailing space
                             bool isSoloCorrection = VocabularyManager.Shared.IsSoloCorrection(corrected);
                             string finalOutput = isSoloCorrection ? corrected : corrected + " ";
+
+                            // Word-Specific Spacing logic
+                            string activeApp = InputController.Shared.GetActiveProcessName();
+                            if (activeApp == "WINWORD")
+                            {
+                                // If first character is uppercase/digit and not already preceded by space/newline,
+                                // we might want a leading space? But trailing space is cleaner.
+                                // We'll stick to trailing space but ensure it's ALWAYS present for Word sentences.
+                                if (!isSoloCorrection && !finalOutput.EndsWith(" ")) finalOutput += " ";
+                            }
 
                             if (prefs.InsertionMode == InsertionMethod.DirectTyping)
                                 await InputController.Shared.TypeText(finalOutput, prefs.AutoSubmit);
@@ -513,9 +557,10 @@ namespace CosmoWhisper.Managers
 
         private void LogDebug(string msg)
         {
-            DiagnosticManager.Shared.Log(msg, "DEBUG");
+            DiagnosticManager.Shared.Log(msg, "AUDIO");
             try {
-                string p = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
+                // Point to the correct AppData/Logs folder standardized for the build
+                string p = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
                 Directory.CreateDirectory(p);
                 File.AppendAllText(Path.Combine(p, "audio_debug.txt"), $"{DateTime.Now}: {msg}\n");
             } catch { }

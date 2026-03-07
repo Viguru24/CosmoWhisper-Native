@@ -11,6 +11,7 @@ using ColorConverter = System.Windows.Media.ColorConverter;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using System.Windows.Media.Animation;
+using System.Linq;
 using System.Threading.Tasks;
 using CosmoWhisper.Managers;
 using CosmoWhisper.Services;
@@ -27,51 +28,44 @@ namespace CosmoWhisper.Controllers
         public void Initialize()
         {
             UpdateDashboardStats();
-            PreferenceManager.Shared.PreferencesUpdated += UpdateDashboardStats;
-
-            var p = PreferenceManager.Shared.Preferences;
-            if (!string.IsNullOrEmpty(p.LicenseToken) || !string.IsNullOrEmpty(p.AuthToken))
-            {
-                Task.Run(async () =>
-                {
-                    while (true)
-                    {
-                        try
-                        {
-                            if (!string.IsNullOrEmpty(p.LicenseToken)) await LicenseManager.Shared.SyncStatusAsync();
-                            if (!string.IsNullOrEmpty(p.AuthToken)) await BackendService.Shared.SyncStatus();
-                            UpdateDashboardStats();
-                        }
-                        catch { }
-                        await Task.Delay(TimeSpan.FromMinutes(1)); // More frequent sync for "automatic" feel
-                    }
+            
+            // Subscribe to Domain Events
+            AccountService.Shared.StatsUpdated += () => UpdateDashboardStats();
+            AccountService.Shared.AccessBlocked += () => {
+                Window.Dispatcher.Invoke(() => {
+                    _ = CosmoMessage.Show("Access Paused", "Your access has been paused by an administrator. It will resume automatically when restored.", "🔒");
                 });
-            }
+            };
+            AccountService.Shared.SessionExpired += () => {
+                SignOut();
+                _ = Task.Delay(500).ContinueWith(_ => Window.Dispatcher.Invoke(() => 
+                {
+                    _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "🔒");
+                }));
+            };
+
+            PreferenceManager.Shared.PreferencesUpdated += () => UpdateDashboardStats();
+            
+            AccountService.Shared.StartHeartbeat();
         }
 
         public void Cleanup()
         {
-            PreferenceManager.Shared.PreferencesUpdated -= UpdateDashboardStats;
+            AccountService.Shared.StopHeartbeat();
         }
 
         public async Task CheckAuthStatus()
         {
-            UpdateDashboardStats();
-            if (!string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.AuthToken))
-            {
-                bool success = await BackendService.Shared.SyncStatus();
-                if (!success)
-                {
-                    // Token is invalid or account may be paused. Force sign out.
-                    SignOut();
-                    _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "🔒");
-                }
-                UpdateDashboardStats();
-            }
+            await AccountService.Shared.CheckAuthStatusAsync();
         }
 
         public void UpdateDashboardStats()
         {
+            var p = PreferenceManager.Shared.Preferences;
+            // SAFE CHECK: If we're logged out, don't update UI widgets that are being disposed/removed
+            if (string.IsNullOrEmpty(p.AuthToken) && string.IsNullOrEmpty(p.LicenseToken)) return;
+            if (Window == null) return;
+
             Window.Dispatcher.Invoke(() =>
             {
                 var p = PreferenceManager.Shared.Preferences;
@@ -83,6 +77,12 @@ namespace CosmoWhisper.Controllers
 
                 if (Window.TxtTierStatus != null) Window.TxtTierStatus.Text = tierName;
                 if (Window.TierIcon != null) Window.TierIcon.Text = tierIcon;
+                if (Window.TxtUserEmail != null) 
+                {
+                    if (!string.IsNullOrEmpty(p.UserEmail)) Window.TxtUserEmail.Text = p.UserEmail;
+                    else if (!string.IsNullOrEmpty(p.AuthToken)) Window.TxtUserEmail.Text = "Token Active";
+                    else Window.TxtUserEmail.Text = "Not Logged In";
+                }
                 if (Window.TxtUsageLabel != null) Window.TxtUsageLabel.Text = isUnlimited ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
 
                 if (Window.TxtUsageStats != null)
@@ -131,8 +131,29 @@ namespace CosmoWhisper.Controllers
                     Window.ProBanner.Visibility = isPro ? Visibility.Visible : Visibility.Collapsed;
                 }
 
-                // Account View
-                if (Window.TxtAccountEmail != null) Window.TxtAccountEmail.Text = string.IsNullOrEmpty(p.UserEmail) ? "Not Signed In" : p.UserEmail;
+                // Account View — Profile Card name
+                if (Window.AccountUserName != null)
+                {
+                    if (!string.IsNullOrEmpty(p.UserEmail)) Window.AccountUserName.Text = p.UserEmail;
+                    else if (!string.IsNullOrEmpty(p.AuthToken)) Window.AccountUserName.Text = "Token Active";
+                    else Window.AccountUserName.Text = "Not Logged In";
+                }
+                // Account View — Subscription section
+                if (Window.TxtAccountEmail != null)
+                {
+                    if (!string.IsNullOrEmpty(p.UserEmail))
+                    {
+                        Window.TxtAccountEmail.Text = tierName;
+                    }
+                    else if (!string.IsNullOrEmpty(p.AuthToken))
+                    {
+                        Window.TxtAccountEmail.Text = "Loading...";
+                    }
+                    else
+                    {
+                        Window.TxtAccountEmail.Text = "Not Signed In";
+                    }
+                }
                 if (Window.AccountTierStatus != null) Window.AccountTierStatus.Text = tierName;
                 if (Window.AccountTierIcon != null) Window.AccountTierIcon.Text = tierIcon;
                 if (Window.AccountUsageLabel != null) Window.AccountUsageLabel.Text = isUnlimited ? "Unlimited Access" : $"{p.UsageLimitMinutes - p.UsageMinutes:F1} min remaining";
@@ -162,113 +183,56 @@ namespace CosmoWhisper.Controllers
             var result = await CosmoMessage.Show("Reset Stats", "Are you sure you want to reset all performance stats? This cannot be undone.", "🧹", true);
             if (result)
             {
-                var p = PreferenceManager.Shared.Preferences;
-                p.TotalWords = 0;
-                p.TotalTranscriptions = 0;
-                p.TotalTimeSavedMinutes = 0;
-                PreferenceManager.Shared.Save();
-                UpdateDashboardStats();
+                AccountService.Shared.ResetStats();
             }
         }
-        public async Task PerformLogin(string email, string password)
-        {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            {
-                _ = CosmoMessage.Show("Validation Error", "Please enter both email and password.", "📧");
-                return;
-            }
-
-            var (success, message) = await BackendService.Shared.Login(email, password);
-
-            if (success)
-            {
-                UpdateDashboardStats();
-                Window._navigation.ShowAccount();
-                await BackendService.Shared.SyncStatus();
-                UpdateDashboardStats();
-            }
-            else
-            {
-                _ = CosmoMessage.Show("Login Failed", message, "❌");
-            }
-        }
-
-        public async Task PerformMagicLogin(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                _ = CosmoMessage.Show("Validation", "Please enter your email first.", "📧");
-                return;
-            }
-
-            var (success, msg) = await BackendService.Shared.RequestMagicCode(email);
-            if (!success)
-            {
-                _ = CosmoMessage.Show("Error", msg, "❌");
-                return;
-            }
-
-            // Ask user for the code
-            var code = await Window.ShowInputDialogAsync("Security Code", $"Enter the code sent to {email}", "", "🔐");
-            if (string.IsNullOrWhiteSpace(code)) return;
-
-            var (verifySuccess, verifyMsg) = await BackendService.Shared.VerifyMagicCode(email, code);
-
-            if (verifySuccess)
-            {
-                UpdateDashboardStats();
-                Window._navigation.ShowAccount();
-                await BackendService.Shared.SyncStatus();
-                UpdateDashboardStats();
-            }
-            else
-            {
-                _ = CosmoMessage.Show("Login Failed", verifyMsg, "❌");
-            }
-        }
-
         public async void ActivateLicense(string key)
         {
             if (string.IsNullOrWhiteSpace(key)) return;
 
-            var p = PreferenceManager.Shared.Preferences;
-            string oldToken = p.LicenseToken;
-            p.LicenseToken = key;
-
-            if (key == "COSMO-PRO-TEST")
-            {
-                p.UserTier = "pro";
-                PreferenceManager.Shared.Save();
-                _ = CosmoMessage.Show("Success", "Test License Activated Successfully!", "💎");
-                UpdateDashboardStats();
-                return;
-            }
-
-            // Try to sync with server
-            bool success = await LicenseManager.Shared.SyncStatusAsync();
+            var (success, _) = await AccountService.Shared.ActivateLicenseAsync(key);
+            
             if (success)
             {
                 _ = CosmoMessage.Show("Success", "License Activated Successfully!", "✨");
-                UpdateDashboardStats();
             }
             else
             {
-                p.LicenseToken = oldToken; // Revert
                 _ = CosmoMessage.Show("Error", "Invalid License Key or Server Offline", "❌");
             }
         }
 
         public void SignOut()
         {
-            var p = PreferenceManager.Shared.Preferences;
-            p.LicenseToken = "";
-            p.AuthToken = "";
-            p.UserEmail = "";
-            p.UserTier = "free";
-            PreferenceManager.Shared.Save();
+            DiagnosticManager.Shared.Log("SignOut initiated.", "AUTH");
+            AccountService.Shared.SignOut();
+            
+            // UI Transition
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    var windows = Application.Current.Windows.Cast<Window>().ToList();
+                    foreach (var window in windows)
+                    {
+                        if (window is WidgetWindow widget) widget.Hide();
+                    }
 
-            UpdateDashboardStats();
-            Window._navigation.ShowLogin();
+                    var dashboard = Application.Current.Windows.OfType<DashboardWindow>().FirstOrDefault();
+                    if (dashboard == null) dashboard = new DashboardWindow();
+
+                    if (dashboard._navigation != null)
+                    {
+                        dashboard._navigation.ShowLogin();
+                        dashboard.Show();
+                        dashboard.Activate();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticManager.Shared.Log($"Error during SignOut UI transition: {ex.Message}", "ERROR");
+                }
+            });
         }
     }
 }

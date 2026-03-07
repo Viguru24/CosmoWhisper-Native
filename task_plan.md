@@ -1,56 +1,25 @@
-# Task Plan - CosmoWhisper Native
+# Task Plan - Restoring Final Version and Fixes
 
-**Phase 1: Foundation (The Ghost Machine)**
-- [x] **Project Restructuring**
-    - [x] Move `CosmoWhisper-Windows` to root
-    - [x] Create `Managers`, `Planning`, `File` directories
-    - [x] Initialize Solution
-- [x] **Core Audio Engine**
-    - [x] Port `AudioRecorder.swift` -> `Managers/AudioRecorder.cs` (NAudio)
-    - [x] Verify Mic & Loopback recording
-- [x] **Agentic Core (Manus)**
-    - [x] Implement `ManusAgent.cs`
-    - [x] Implement `PlanningTool.cs`
-    - [x] Implement `FileOperator.cs`
+The goal is to restore the "final" state of the application (Orange theme, specific sounds) while maintaining the build fixes for `CosmoWhisperPersonal.exe`.
 
-**Phase 2: Use Interface**
-- [x] **WPF Setup**
-    - [x] Install Modern WPF Theme
-    - [x] Create Main Window Shell
-- [ ] **View Migration**
-    - [x] DashboardView
-    - [x] IntelligenceView
-    - [x] VocabularyView
-    - [x] SettingsView
-    - [x] MicrophoneView
-    - [x] NarrationView
-    - [ ] HistoryView
-    - [ ] CommandsView
-    - [ ] ContactsView
-    - [ ] AccountView
-    - [ ] LoginView
-    - [ ] LogsView
-    - [ ] OverviewView
-    - [ ] WelcomeView
-    - [ ] LanguageView
-    - [x] ContentView (Main Layout)
+## Phase 1: Research & Diagnosis (DONE)
+- [x] Check git history for "Orange" related changes.
+- [x] Locate theme definitions in `ThemeController.cs`.
+- [x] Compare current `App.xaml` and `WidgetWindow.xaml` with historical backups.
+- [x] Verify SoundManager logic for F9 chimes.
 
-**Phase 3: Integration**
-- [ ] **System Integration**
-    - [x] Tray Icon
-    - [x] Global Hotkeys
-    - [x] Agent Mode (Manus)
-    - [x] Refine Agent Interaction (Fix chatter)
-    - [x] Installer
+## Phase 2: Restoring "Final" Visuals & Sounds
+- [ ] Update `App.xaml` resources to match the "Sunset" (Orange) theme by default or via initialization.
+- [ ] Ensure `SoundManager.cs` is correctly playing `chime_on.wav` and `chime_off.wav`.
+- [ ] Verify `Assets` folder contains the correct sound files.
+- [ ] Ensure `WidgetWindow.xaml.cs` toggle logic uses the correct theme colors.
 
-**Phase 4: Stabilization & Bug Fixes**
-- [x] **Preferences Crash Fix**
-    - [x] Fix `Password=""` XAML error
-    - [x] Restore Manus dependencies to prevent missing class errors
-- [x] **UI Polish**
-    - [x] Fix garbled Unicode icons in Sidebar/Menu
-    - [x] Hide "Manus Project Manager" UI (User Request)
-- [x] **Persistence**
-    - [x] Fix GUI Scale not saving/loading Correctly
+## Phase 3: Build & Deployment Cleanup
+- [ ] Fix the `git push` error (Large files/Commit issues).
+- [ ] Consolidate `CosmoWhisper.csproj` to handle `CosmoWhisperPersonal` vs `CosmoWhisperNative2` cleanly via build configurations.
+- [ ] Update shortcuts on Desktop for both versions.
 
-
+## Phase 4: Final Validation
+- [ ] Run Dev app -> Verify Orange theme + F9 Sounds.
+- [ ] Run Personal app -> Verify Orange theme + F9 Sounds.
+- [ ] Push all fixes to `louis-personal-cosmo-whisper`.

@@ -35,7 +35,7 @@ namespace CosmoWhisper.Managers
         public string AnthropicApiKey { get; set; } = "";
         public string XAiApiKey { get; set; } = "";
         public string AIModel { get; set; } = "whisper-large-v3";
-        public bool UseLocalWhisper { get; set; } = true; // Enable local Whisper fallback
+        public bool UseLocalWhisper { get; set; } = false; // Enable local Whisper fallback (Disabled by default)
         public bool UseLocalWhisperOnly { get; set; } = false; // Force local usage only
         public bool ForceCloudProxy { get; set; } = false; // Force Cloud Proxy (VPN Mode)
 
@@ -78,7 +78,7 @@ namespace CosmoWhisper.Managers
         // License & Web Control
         public string LicenseToken { get; set; } = "";
         public string AuthToken { get; set; } = "";
-        public string BackendUrl { get; set; } = "https://cosmowhisper.com"; // Updated to actual backend API URL
+        public string BackendUrl { get; set; } = "https://api.cosmowhisper.com"; // Production Only
         public string UserEmail { get; set; } = "";
         public string UserTier { get; set; } = "free";
         public double UsageMinutes { get; set; } = 0.0;
@@ -90,7 +90,7 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (UserEmail?.ToLower() == "louisdesouza@gmail.com") return false;
+                if (UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com") return false;
 
                 if (_isStoreVersion.HasValue) return _isStoreVersion.Value;
                 try
@@ -148,16 +148,30 @@ namespace CosmoWhisper.Managers
 
         public event Action? PreferencesUpdated;
 
+        public static bool IsDevelopmentMode()
+        {
+#if DEV_BUILD
+            return true;
+#else
+            return false;
+#endif
+        }
+
         public PreferenceManager()
         {
             try
             {
-#if DEBUG
-                _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Dev");
+                string appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#if DEV_BUILD
+                _appDataFolder = Path.Combine(appDataRoot, "Cosmo_Dev_Sandbox");
 #else
-                _appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Native");
+                _appDataFolder = Path.Combine(appDataRoot, "CosmoWhisper_Personal");
 #endif
-                Directory.CreateDirectory(_appDataFolder);
+
+                if (!Directory.Exists(_appDataFolder))
+                {
+                    Directory.CreateDirectory(_appDataFolder);
+                }
                 _settingsPath = Path.Combine(_appDataFolder, "settings.json");
                 Load();
             }
@@ -182,11 +196,10 @@ namespace CosmoWhisper.Managers
                         Preferences.BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
                     }
                     
-                    // Removed the auto-reset to onrender to allow local development and custom proxies
-                    // Migration: Fix old render URL or lingering localhost
-                    if (Preferences.BackendUrl.Contains("onrender.com") || Preferences.BackendUrl.Contains("localhost:5000"))
+                    // Default Backend URLs
+                    if (string.IsNullOrEmpty(Preferences.BackendUrl))
                     {
-                        Preferences.BackendUrl = "https://CosmoWhisper.com";
+                        Preferences.BackendUrl = IsDevelopmentMode() ? "http://localhost:5000" : "https://api.cosmowhisper.com";
                         Save();
                     }
 

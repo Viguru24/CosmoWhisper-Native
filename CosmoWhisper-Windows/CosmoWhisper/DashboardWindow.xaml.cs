@@ -44,6 +44,9 @@ namespace CosmoWhisper
         private MicrophoneController _mic;
         private ThemeController _theme;
         private DashboardController _dashboard;
+        private TaskCompletionSource<bool>? _dialogTask;
+        private TaskCompletionSource<string?>? _listDialogTask;
+        private TaskCompletionSource<string?>? _inputDialogTask;
 
         public DashboardWindow()
         {
@@ -94,6 +97,9 @@ namespace CosmoWhisper
                 // Init UI values
                 if (SldSensitivity != null) SldSensitivity.Value = AudioRecorder.Shared.Sensitivity * 100;
                 try { _mic.UpdateInteractionSoundsUI(); } catch (Exception ex) { LogCrash($"UpdateSoundsUI Error: {ex.Message}"); }
+                
+                // START HEARTBEAT / BACKGROUND SYNC
+                try { _dashboard.Initialize(); } catch (Exception ex) { LogCrash($"InitDashboard Error: {ex.Message}"); }
 
                 // Ensure default state is Productivity Dashboard
                 if (!PreferenceManager.Shared.Preferences.HasCompletedOnboarding)
@@ -104,6 +110,17 @@ namespace CosmoWhisper
                 {
                     try { _navigation.ShowDashboard(); } catch (Exception ex) { LogCrash($"ShowDashboard Init Error: {ex.Message}"); }
                 }
+
+                // --- UI Event Wireup ---
+                UIEvents.Shared.RequestMessageBox += async (title, msg, icon, showCancel, cancelText) => 
+                {
+                    return await Dispatcher.InvokeAsync(() => ShowDialogAsync(title, msg, icon, showCancel, "OK")).Result;
+                };
+
+                UIEvents.Shared.RequestOpenUrl += (url) => 
+                {
+                    try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+                };
 
                 this.LocationChanged += (s, e) => SavePosition();
                 this.Closing += (s, e) => SavePosition();
@@ -127,7 +144,14 @@ namespace CosmoWhisper
 
         public static void LogCrash(string message)
         {
-            // Logging disabled in production
+            try
+            {
+                string logDir = System.IO.Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
+                System.IO.Directory.CreateDirectory(logDir);
+                string logPath = System.IO.Path.Combine(logDir, "crash.log");
+                System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}\n");
+            }
+            catch { }
         }
 
         private void LoadPosition()
@@ -247,6 +271,22 @@ namespace CosmoWhisper
         private void ThemePurple_Click(object sender, RoutedEventArgs e) => _theme.ApplyPurple();
 
         private void ApplyTheme(string accent, string glow, string secondary, string bgStart, string bgMid, string bgEnd, string surface) => _theme.ApplyTheme(accent, glow, secondary, bgStart, bgMid, bgEnd, surface);
+        
+        private void Discord_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://discord.gg/mb5AUNCr",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                LogCrash($"Discord link error: {ex.Message}");
+            }
+        }
 
         private void Microphone_Click(object sender, RoutedEventArgs e)
         {
@@ -476,10 +516,6 @@ namespace CosmoWhisper
             await HideVaultOverlayAsync();
             _vaultTask?.TrySetResult((null, null));
         }
-
-        private TaskCompletionSource<bool>? _dialogTask;
-        private TaskCompletionSource<string?>? _listDialogTask;
-        private TaskCompletionSource<string?>? _inputDialogTask;
 
         public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "", string icon = "\uD83D\uDCDD")
         {
@@ -719,7 +755,6 @@ namespace CosmoWhisper
 
         // --- Account & Login Logic ---
 
-        private async void PerformLogin_Click(object sender, RoutedEventArgs e) => await _dashboard.PerformLogin(TxtLoginEmail.Text, TxtLoginPassword.Password);
         private void ActivateLicense_Click(object sender, RoutedEventArgs e) => _dashboard.ActivateLicense(TxtLicense.Text);
         private void SignOut_Click(object sender, RoutedEventArgs e) => _dashboard.SignOut();
 
@@ -734,7 +769,8 @@ namespace CosmoWhisper
         {
             if (sender is FrameworkElement el && el.Tag is string path)
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://CosmoWhisper.com" + path, UseShellExecute = true });
+                string url = path.StartsWith("http") ? path : (path == "/discord" ? "https://discord.gg/mb5AUNCr" : "https://CosmoWhisper.com" + path);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
             }
         }
 
@@ -749,22 +785,16 @@ namespace CosmoWhisper
 
         private void GoogleLogin_Click(object sender, RoutedEventArgs e)
         {
-            var p = PreferenceManager.Shared.Preferences;
-            string url = p.BackendUrl;
-            if (string.IsNullOrEmpty(url)) url = "https://CosmoWhisper.com";
-            if (!url.EndsWith("/")) url += "/";
-            
+            string baseUrl = PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/');
+            string authUrl = $"{baseUrl}/api/auth/google";
+
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
             { 
-                FileName = "https://CosmoWhisper.com/login?platform=windows&action=google", 
+                FileName = authUrl, 
                 UseShellExecute = true 
             });
         }
 
-        private async void MagicLink_Click(object sender, RoutedEventArgs e)
-        {
-             await _dashboard.PerformMagicLogin(TxtLoginEmail.Text);
-        }
 
         // Removed Provider logic
         
@@ -863,11 +893,7 @@ namespace CosmoWhisper
                 }
                 else if (LoginView.Visibility == Visibility.Visible)
                 {
-                    if (TxtLoginEmail.IsFocused || TxtLoginPassword.IsFocused)
-                    {
-                        PerformLogin_Click(null, null);
-                        e.Handled = true;
-                    }
+                    // Login view logic removed since auth is out-of-band via browser
                 }
                 else if (AccountView.Visibility == Visibility.Visible)
                 {
@@ -879,7 +905,12 @@ namespace CosmoWhisper
                 }
                 else if (VocabularyView.Visibility == Visibility.Visible)
                 {
-                    if (TxtNewKey.IsFocused || TxtNewValue.IsFocused)
+                    if (TxtNewKey.IsFocused)
+                    {
+                        AddVocabulary_Click(null, null);
+                        e.Handled = true;
+                    }
+                    else if (TxtNewValue.IsFocused && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
                     {
                         AddVocabulary_Click(null, null);
                         e.Handled = true;

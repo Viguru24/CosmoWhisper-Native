@@ -64,3 +64,12 @@ CosmoWhisper-Windows/Deploy/
 *.pdb
 *.zip
 *.vault
+
+# Backups & Temporary Directories
+_ProjectBackups/
+Backups/
+Latest-Green-Build/
+CosmoWhisper-Package/
+*.tmp
+*.wav
+!CosmoWhisper-Windows/CosmoWhisper/Assets/*.wav

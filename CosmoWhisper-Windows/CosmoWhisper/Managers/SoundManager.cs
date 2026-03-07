@@ -88,6 +88,13 @@ namespace CosmoWhisper.Managers
 
                         // 1. Try local bundled professional sounds (F9 on/off)
                         string assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", isStart ? "chime_on.wav" : "chime_off.wav");
+                        
+                        // Try fallback if Assets subfolder is missing but file is in root
+                        if (!File.Exists(assetsPath))
+                        {
+                            assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, isStart ? "chime_on.wav" : "chime_off.wav");
+                        }
+
                         string path = assetsPath;
 
                         // 2. Fallback to Windows official dictation sounds
