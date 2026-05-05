@@ -67,7 +67,7 @@ namespace CosmoWhisper.Services
                     {
                         DiagnosticManager.Shared.Log($"Heartbeat error: {ex.Message}", "ERROR");
                     }
-                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await Task.Delay(TimeSpan.FromSeconds(30));
                 }
                 System.Threading.Interlocked.Exchange(ref _heartbeatGuard, 0);
             });

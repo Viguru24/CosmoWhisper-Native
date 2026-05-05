@@ -1,22 +1,17 @@
-# Findings - Version Mismatch & Missing Assets
+# Research & Findings - Versioning & Fallback Issues
 
-## Theme Mismatch
-- **Target:** Sunset (Orange) theme.
-- **Hex Code:** `#f59e0b` (Accent), `#ec4899` (Glow).
-- **Current state:** `App.xaml` is using Ocean Blue (`#4f46e5`) as default resources.
-- **Discovery:** `ThemeController.cs` has `ApplySunset()` which converts these hex codes. However, it requires a `DashboardWindow` to be initialized or manually called.
+## 1. Version Identification Error
+- **Observation:** User reported the app identifies as "Windows/Store" version.
+- **Root Cause:** `WidgetWindow.xaml.cs` has a hardcoded `#if DEBUG` check. In non-debug builds (like the Personal build), it defaults to `Gray Gear` and logs `PRODUCTION`.
+- **Root Cause 2:** `PreferenceManager.cs` relies on `package.Id.Name.Contains("MicroMeadow.CosmoWhisper")`. If the Personal build manifest wasn't updated, it reports as Store version.
+- **Solution:** Rely on `IsStoreVersion` property which is saved in `settings.json` and already correctly set to `false` in the user's `CosmoWhisper_Personal` profile.
 
-## Sound Assets
-- **Target:** `chime_on.wav` and `chime_off.wav` for F9 recording.
-- **Current state:** `SoundManager.cs` looks for these in the `Assets` folder relative to the EXE.
-- **Error:** If they are missing from the `Assets` folder, it falls back to Windows sounds (`Speech On.wav`), which explains why the user heard "different sound".
+## 2. Groq API Fallback "Not Working"
+- **Observation:** Groq API returns 200 OK in logs, but user perceives failure.
+- **Root Cause:** "Race Mode" in `AIService.cs` picks the first finisher. If Local finishes first with `[BLANK_AUDIO]`, it returns that and discards the Cloud result.
+- **Root Cause 2:** `WidgetWindow.xaml.cs` resets to idle if transcription is empty, giving no feedback that a fallback happened or failed.
+- **Solution:** Filter out `[BLANK_AUDIO]` in the race logic. Force wait for Cloud if Local is empty.
 
-## Git/Branch Status
-- **Head:** `ebc7822` on `louis-personal-cosmo-whisper`.
-- **Conflict:** The branch seems to have old `App.xaml` defaults compared to what was running on the user's desktop previously.
-- **Push Issue:** `git push` fails due to large files (likely binaries in `bin/` or `obj/` that were accidentally tracked or large assets).
-
-## Build Identity
-- **Development:** `CosmoWhisperNative2.exe`
-- **Personal:** `CosmoWhisperPersonal.exe`
-- **Issue:** The `AssemblyName` was flipped back and forth, causing confusion in the build output paths.
+## 3. Environment Isolation
+- **Status:** Verified. `CosmoWhisper_Personal` is being used correctly for settings.
+- **Discovery:** `LOUIS_PERSONAL_COSMO.md` confirms the build uses a unique assembly name `CosmoWhisperPersonal`.

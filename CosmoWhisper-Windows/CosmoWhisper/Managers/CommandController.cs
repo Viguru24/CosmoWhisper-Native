@@ -309,8 +309,22 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning. Output ONLY the fixed text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to spanish")) { await ProcessAIOnSelection("Translate the following text into Spanish. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to french")) { await ProcessAIOnSelection("Translate the following text into French. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
+            // --- 7.5 TRANSLATION (Generic) ---
+            if (cmd.StartsWith("translate to ") || cmd.StartsWith("translate this to ") || 
+                cmd.StartsWith("translate that to ") || cmd.StartsWith("translate it to ") ||
+                cmd.StartsWith("translate into ") || cmd.StartsWith("translate this into "))
+            {
+                string targetLanguage = "";
+                if (cmd.Contains(" to ")) targetLanguage = cmd.Substring(cmd.IndexOf(" to ") + 4).Trim();
+                else if (cmd.Contains(" into ")) targetLanguage = cmd.Substring(cmd.IndexOf(" into ") + 6).Trim();
+
+                if (!string.IsNullOrEmpty(targetLanguage))
+                {
+                    await ProcessAIOnSelection($"Translate the following text into {targetLanguage}. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false);
+                    CommandExecuted?.Invoke();
+                    return true;
+                }
+            }
             if (IsTriggered("bullet points", "make bullet list", "organize", "organize this")) { await ProcessAIOnSelection("Format the following text into a logical bulleted list using '•'. Identify distinct concepts, sentences, or items, but do NOT simply make every single word a separate bullet point. Output ONLY the formatted list.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy. Output ONLY the condensed text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive. Output ONLY the expanded text.", usePersonality: false); CommandExecuted?.Invoke(); return true; }

@@ -3,7 +3,7 @@ setlocal
 title CosmoWhisper Dev Launcher (Publish Mode)
 
 set APP_EXE=CosmoWhisperNative2.exe
-set APP_PATH=%~dp0CosmoWhisper-Windows\CosmoWhisper\bin\DevOutput
+set APP_PATH=c:\CosmoWhisper-Dev-Restore\CosmoWhisper-Windows\CosmoWhisper\bin\x64\Debug\net8.0-windows10.0.19041.0\win-x64
 
 echo [1/3] Terminating any existing CosmoWhisper processes...
 taskkill /F /IM %APP_EXE% /T 2>nul

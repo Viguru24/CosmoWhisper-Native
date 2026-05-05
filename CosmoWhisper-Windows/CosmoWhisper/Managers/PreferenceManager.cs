@@ -153,7 +153,7 @@ namespace CosmoWhisper.Managers
 #if DEV_BUILD
             return true;
 #else
-            return false;
+            return Array.Exists(Environment.GetCommandLineArgs(), arg => arg.Equals("--dev", StringComparison.OrdinalIgnoreCase));
 #endif
         }
 
@@ -197,9 +197,12 @@ namespace CosmoWhisper.Managers
                     }
                     
                     // Default Backend URLs
-                    if (string.IsNullOrEmpty(Preferences.BackendUrl))
+                    bool isDev = IsDevelopmentMode();
+                    if (string.IsNullOrEmpty(Preferences.BackendUrl) || 
+                        (isDev && Preferences.BackendUrl.Contains("cosmowhisper.com")) ||
+                        (!isDev && Preferences.BackendUrl.Contains("localhost")))
                     {
-                        Preferences.BackendUrl = IsDevelopmentMode() ? "http://localhost:5000" : "https://api.cosmowhisper.com";
+                        Preferences.BackendUrl = isDev ? "http://localhost:5000" : "https://api.cosmowhisper.com";
                         Save();
                     }
 
@@ -220,12 +223,16 @@ namespace CosmoWhisper.Managers
             }
         }
 
+        private string _lastSavedJson = "";
         public void Save()
         {
             try
             {
                 string json = JsonSerializer.Serialize(Preferences, new JsonSerializerOptions { WriteIndented = true });
+                if (json == _lastSavedJson) return; // No changes, skip disk I/O
+
                 File.WriteAllText(_settingsPath, json);
+                _lastSavedJson = json;
                 PreferencesUpdated?.Invoke();
             }
             catch { } // logging?

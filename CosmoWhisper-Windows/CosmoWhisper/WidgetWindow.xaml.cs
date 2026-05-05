@@ -195,9 +195,9 @@ namespace CosmoWhisper
             // LOG STARTUP
             LogEvent("--- APP STARTING v2.2.20 ---");
 
-            // WARM UP: Initialize audio graph immediately so the first request is instant
-            // and the pre-roll buffer starts filling.
-            AudioRecorder.Shared.StartMonitoring();
+            // WARM UP: We no longer StartMonitoring() by default to save CPU. 
+            // The hardware will initialize instantly when the hotkey is pressed.
+            // AudioRecorder.Shared.StartMonitoring(); 
         }
 
         private void LogEvent(string msg)

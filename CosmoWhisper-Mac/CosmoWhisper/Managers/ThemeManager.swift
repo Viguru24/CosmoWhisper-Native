@@ -7,20 +7,10 @@ enum AppTheme: String, CaseIterable, Identifiable {
     
     var id: String { self.rawValue }
     
-    var accent: Color {
-        switch self {
-        case .cosmos: return Color(red: 0.4, green: 0.5, blue: 0.9) // Vibrant cyan/teal
-        case .emerald: return Color.green
-        case .monochrome: return Color.white
-        }
+    var accent: Color {\n        switch self {\n        case .cosmos: return Color(red: 0.23, green: 0.51, blue: 0.97) // Vibrant Blue #3B82F6\n        case .emerald: return Color(red: 0.16, green: 0.73, blue: 0.51) // Emerald Green #10B981\n        case .monochrome: return Color.white\n        }\n    }
     }
     
-    var secondaryAccent: Color {
-        switch self {
-        case .cosmos: return Color.purple
-        case .emerald: return Color.teal
-        case .monochrome: return Color.gray
-        }
+    var secondaryAccent: Color {\n        switch self {\n        case .cosmos: return Color(red: 0.55, green: 0.35, blue: 0.96) // Muted Purple #8B5CF6\n        case .emerald: return Color(red: 0.04, green: 0.84, blue: 0.65) // Teal #06D6A0\n        case .monochrome: return Color(white: 0.6)\n        }\n    }
     }
     
     var backgroundColors: [Color] {
@@ -68,3 +58,5 @@ class ThemeManager: ObservableObject {
         Color.white.opacity(0.1)
     }
 }
+
+

@@ -96,8 +96,7 @@ Say **"Open [App]"** or **"Launch [App]"**
 | **"Fix Grammar"** / **"Polish"** / **"Fix This"** | Fixes grammar in selected text |
 | **"Make Professional"** / **"Professionalize"** | Makes text sound professional |
 | **"Make Friendly"** | Makes text sound friendly |
-| **"Translate to Spanish"** | Translates to Spanish |
-| **"Translate to French"** | Translates to French |
+| **"Translate to [Language]"** | Translates selected text into any language |
 | **"Bullet Points"** / **"Make Bullet List"** | Converts to bulleted list |
 | **"Shorter"** / **"Condense"** | Makes text more concise |
 | **"Expand"** / **"Flesh Out"** | Expands text with more detail |

@@ -47,12 +47,6 @@ namespace CosmoWhisper.Managers
             {
                 string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
                 Debug.WriteLine(entry);
-                // Also write to a "volatile" log in the project root for the AI to see easily
-                try 
-                {
-                    File.AppendAllText("cosmo_terminal.log", entry + Environment.NewLine);
-                }
-                catch { }
             }
         }
 
@@ -79,10 +73,8 @@ namespace CosmoWhisper.Managers
                 sb.AppendLine("}");
 
                 File.WriteAllText(_snapshotPath, sb.ToString());
-                // Also copy to root for easy access
-                File.WriteAllText("last_diagnostic_snapshot.json", sb.ToString());
                 
-                Log($"SNAPSHOT TAKEN: Check last_diagnostic_snapshot.json", "CRITICAL");
+                Log($"SNAPSHOT TAKEN: Check {_snapshotPath}", "CRITICAL");
             }
             catch (Exception ex)
             {

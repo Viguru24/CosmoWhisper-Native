@@ -1,7 +1,12 @@
 # CosmoWhisper-Native — Antigravity Rules
 
+## Master Workspaces (STRICT ADHERENCE REQUIRED)
+- **Native Windows App (MASTER)**: `c:\CosmoWhisper-Dev-Restore\CosmoWhisper-Windows`
+- **Project Documentation & Backups**: `c:\CosmoWhisper-Dev-Restore`
+- **Backend & Frontend (Web)**: `c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-App`
+
 ## Project
-This is the CosmoWhisper Windows native application — a C# WPF app paired with a Node.js backend.
+This is the CosmoWhisper Windows native application — the active development occurs in the `CosmoWhisper-Dev-Restore` workspace to maintain audio fidelity and premium UI state.
 
 ## Mandatory Workflow: Planning with Files (Manus-style)
 

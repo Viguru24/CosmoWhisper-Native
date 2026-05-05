@@ -132,7 +132,7 @@ namespace CosmoWhisper.Managers
                 using (var processor = _factory.CreateBuilder()
                     .WithLanguage(language)
                     .WithPrompt(prompt)
-                    .WithThreads(System.Environment.ProcessorCount) // Use all available cores for maximum speed
+                    .WithThreads(Math.Min(4, Math.Max(1, System.Environment.ProcessorCount / 2))) // Cap at 4 to prevent UI starvation
                     .Build())
                 {
                     using (var fileStream = File.OpenRead(wavFilePath))
