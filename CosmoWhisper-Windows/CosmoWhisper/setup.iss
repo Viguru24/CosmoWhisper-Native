@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "CosmoWhisper"
-#define MyAppVersion "2.2.71"
+#define MyAppVersion "2.2.73"
 #define MyAppPublisher "Viguru24"
 #define MyAppURL "https://cosmowhisper.com"
 #define MyAppExeName "CosmoWhisperNative.exe"

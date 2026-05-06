@@ -1,56 +1,42 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct HeroCard: View {
     let emoji: String
     let title: String
     let desc: String
-    
+
+    @ObservedObject var theme = ThemeManager.shared
     @State private var isHovered = false
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(emoji)
-                .font(.system(size: 32))
-                .padding(10)
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(12)
-            
+                .font(.system(size: 28))
+                .padding(8)
+                .background(theme.backgroundElevated)
+                .cornerRadius(10)
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+
                 Text(desc)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12))
+                    .foregroundColor(theme.textSecondary)
+                    .lineLimit(2)
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            ZStack {
-                Color(red: 30/255, green: 41/255, blue: 59/255)
-                
-                if isHovered {
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.blue.opacity(0.6), .purple.opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
-                }
-            }
+        .padding(16)
+        .frame(width: 240)
+        .background(theme.backgroundSurface)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isHovered ? theme.currentTheme.accent.opacity(0.4) : theme.borderColor, lineWidth: 1)
         )
-        .cornerRadius(16)
-        .contentShape(Rectangle()) // Make the entire box clickable
-        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
         .onHover { hovering in
-            withAnimation(.spring(response: 0.3)) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }

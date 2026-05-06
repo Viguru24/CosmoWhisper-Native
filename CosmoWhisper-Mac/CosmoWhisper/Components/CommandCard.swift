@@ -1,77 +1,63 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct CommandCard: View {
     let title: String
     let icon: String
     let triggers: [String]
     let desc: String
-    
+
     @ObservedObject var theme = ThemeManager.shared
     @State private var isHovered = false
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(isHovered ? .white : theme.currentTheme.accent)
-                    .frame(width: 36, height: 36)
-                    .background(isHovered ? theme.accentGradient : LinearGradient(gradient: Gradient(colors: [theme.currentTheme.accent.opacity(0.15), theme.currentTheme.accent.opacity(0.05)]), startPoint: .top, endPoint: .bottom))
-                    .cornerRadius(8)
-                
-                Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
-                
+                    .frame(width: 32, height: 32)
+                    .background(theme.accentGradient)
+                    .cornerRadius(8)
+
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+
                 Spacer()
             }
-            
-            // Triggers
-            FlowLayout(spacing: 6) {
+
+            FlowLayout(spacing: 4) {
                 ForEach(triggers, id: \.self) { trigger in
                     Text("\"\(trigger)\"")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
                         .foregroundColor(theme.currentTheme.accent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.black.opacity(0.3))
-                        .cornerRadius(6)
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.currentTheme.accent.opacity(0.4), lineWidth: 1))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(theme.backgroundElevated)
+                        .cornerRadius(4)
                 }
             }
-            
+
             Text(desc)
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-                .lineLimit(3)
-            
+                .font(.system(size: 11))
+                .foregroundColor(theme.textSecondary)
+                .lineLimit(2)
+
             Spacer()
         }
-        .padding(18)
-        .frame(height: 190) 
+        .padding(14)
+        .frame(height: 150)
         .frame(maxWidth: .infinity)
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(isHovered ? 0.08 : 0.04))
-                
-                // Content Blur
-                VisualEffectView(material: .contentBackground, blendingMode: .withinWindow)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .opacity(0.1)
-            }
-        )
+        .background(theme.backgroundSurface)
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isHovered ? theme.currentTheme.accent.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isHovered ? theme.currentTheme.accent.opacity(0.4) : theme.borderColor, lineWidth: 1)
         )
-        .shadow(color: isHovered ? theme.currentTheme.accent.opacity(0.2) : .clear, radius: 10, x: 0, y: 5)
         .onHover { hovering in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
-        .scaleEffect(isHovered ? 1.02 : 1.0)
     }
 }

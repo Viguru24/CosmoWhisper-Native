@@ -257,25 +257,32 @@ namespace CosmoWhisper
 
         public void UpdateVolumeIndicator(float normalized)
         {
-            Dispatcher.Invoke(() =>
+            // Use BeginInvoke to prevent blocking the audio thread and use Render priority for smoothness
+            Dispatcher.BeginInvoke(new Action(() =>
             {
                 // Scale Orb based on level
                 float scale = 1.0f + (normalized * 0.5f);
                 OrbScale.ScaleX = scale;
                 OrbScale.ScaleY = scale;
 
-                // Animate Bars
-                foreach (var bar in _bars)
+                // Animate Bars - only if they are visible to save layout cycles
+                if (VisualizerPanel.Visibility == Visibility.Visible)
                 {
-                    double variation = _rnd.NextDouble() * 0.5 + 0.5;
-                    bar.Height = Math.Max(4, normalized * 30 * variation);
-                    bar.Fill = _cachedWhiteBrush;
+                    foreach (var bar in _bars)
+                    {
+                        double variation = _rnd.NextDouble() * 0.5 + 0.5;
+                        bar.Height = Math.Max(4, normalized * 30 * variation);
+                        bar.Fill = _cachedWhiteBrush;
+                    }
                 }
-            });
+            }), System.Windows.Threading.DispatcherPriority.Render);
         }
 
         private void OnAudioLevelChanged(float db)
         {
+            // Optimization: Skip calculation if window is hidden
+            if (!this.IsVisible) return;
+
             // Use same logic as Dashboard for consistency
             float minDb = -80;
             float sensitivityFactor = (float)AudioRecorder.Shared.Sensitivity * 2.0f;
@@ -285,6 +292,9 @@ namespace CosmoWhisper
 
             if (normalized < 0) normalized = 0;
             if (normalized > 1) normalized = 1;
+
+            // Optimization: If idle and level is basically zero, skip expensive UI update
+            if (!AudioRecorder.Shared.IsRecording && normalized < 0.01f) return;
 
             UpdateVolumeIndicator(normalized);
         }

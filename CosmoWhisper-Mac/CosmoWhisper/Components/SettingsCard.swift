@@ -1,33 +1,35 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct SettingsCard<Content: View>: View {
     let title: String
     let icon: String
     let content: Content
-    
+
     init(title: String, icon: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
         self.content = content()
     }
-    
+
+    @ObservedObject var theme = ThemeManager.shared
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(theme.currentTheme.accent)
                     .font(.system(size: 16, weight: .bold))
                 Text(title)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
             }
-            
+
             content
-                .padding(24)
+                .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.04))
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.05), lineWidth: 1))
+                .background(theme.backgroundElevated)
+                .cornerRadius(12)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
         }
     }
 }

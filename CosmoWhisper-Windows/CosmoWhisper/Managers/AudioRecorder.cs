@@ -81,6 +81,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 _waveIn = new WaveInEvent();
+                _waveIn.BufferMilliseconds = 150; // Higher buffer to reduce callback frequency and CPU usage
                 _waveIn.WaveFormat = new WaveFormat(16000, 1); // 16kHz Mono (Optimized for Whisper/VPN)
                 _waveIn.DataAvailable += WaveIn_DataAvailable;
                 _waveIn.RecordingStopped += WaveIn_RecordingStopped;
@@ -88,8 +89,6 @@ namespace CosmoWhisper.Managers
                 // Select device if we have one
                 if (!string.IsNullOrEmpty(SelectedDeviceId))
                 {
-                    // NAudio DeviceNumber is just an index (0, 1, 2...)
-                    // We need to map the WinRT DeviceId back to an index
                     int devIndex = GetDeviceIndex(SelectedDeviceId);
                     if (devIndex >= 0) _waveIn.DeviceNumber = devIndex;
                 }
@@ -129,6 +128,8 @@ namespace CosmoWhisper.Managers
             return -1; // Fallback to default
         }
 
+        private DateTime _lastLevelUpdateTime = DateTime.MinValue;
+
         private void WaveIn_DataAvailable(object? sender, WaveInEventArgs e)
         {
             // 1. Write to file if recording
@@ -137,17 +138,30 @@ namespace CosmoWhisper.Managers
                 _writer.Write(e.Buffer, 0, e.BytesRecorded);
             }
 
-            // 2. Calculate Audio Level (Meter)
-            float max = 0;
-            for (int i = 0; i < e.BytesRecorded; i += 2)
+            // 2. Calculate Audio Level (Meter) - Optimized for CPU efficiency
+            if (AudioLevelChanged != null)
             {
-                short sample = BitConverter.ToInt16(e.Buffer, i);
-                float sample32 = sample / 32768f;
-                if (System.Math.Abs(sample32) > max) max = System.Math.Abs(sample32);
-            }
+                // Throttle updates: Only calculate every 150ms if we aren't recording
+                if (!IsRecording && (DateTime.Now - _lastLevelUpdateTime).TotalMilliseconds < 150)
+                {
+                    return;
+                }
 
-            float db = max > 0.000001f ? 20 * (float)System.Math.Log10(max) : -100;
-            AudioLevelChanged?.Invoke(db);
+                _lastLevelUpdateTime = DateTime.Now;
+
+                int max = 0;
+                for (int i = 0; i < e.BytesRecorded; i += 2)
+                {
+                    // Fast extraction of 16-bit sample
+                    short sample = (short)((e.Buffer[i + 1] << 8) | e.Buffer[i]);
+                    int abs = Math.Abs((int)sample);
+                    if (abs > max) max = abs;
+                }
+
+                float max32 = max / 32768f;
+                float db = max32 > 0.000001f ? 20 * (float)System.Math.Log10(max32) : -100;
+                AudioLevelChanged?.Invoke(db);
+            }
         }
 
         private void WaveIn_RecordingStopped(object? sender, StoppedEventArgs e)

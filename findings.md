@@ -1,17 +1,22 @@
-# Research & Findings - Versioning & Fallback Issues
+# Findings - Performance & Packaging
 
-## 1. Version Identification Error
-- **Observation:** User reported the app identifies as "Windows/Store" version.
-- **Root Cause:** `WidgetWindow.xaml.cs` has a hardcoded `#if DEBUG` check. In non-debug builds (like the Personal build), it defaults to `Gray Gear` and logs `PRODUCTION`.
-- **Root Cause 2:** `PreferenceManager.cs` relies on `package.Id.Name.Contains("MicroMeadow.CosmoWhisper")`. If the Personal build manifest wasn't updated, it reports as Store version.
-- **Solution:** Rely on `IsStoreVersion` property which is saved in `settings.json` and already correctly set to `false` in the user's `CosmoWhisper_Personal` profile.
+## Discovery 1: Audio Monitoring Loop (OPTIMIZED v2)
+The initial optimization helped, but the high callback frequency (100ms) was still causing unnecessary overhead.
+**Further optimizations applied**:
+- **Increased Buffer**: Set `BufferMilliseconds` to 150ms in `WaveInEvent` to reduce the number of context switches and callbacks per second.
+- **Throttled Calculation**: Added a time-based throttle to skip amplitude calculations if less than 150ms has passed since the last update (when not recording).
 
-## 2. Groq API Fallback "Not Working"
-- **Observation:** Groq API returns 200 OK in logs, but user perceives failure.
-- **Root Cause:** "Race Mode" in `AIService.cs` picks the first finisher. If Local finishes first with `[BLANK_AUDIO]`, it returns that and discards the Cloud result.
-- **Root Cause 2:** `WidgetWindow.xaml.cs` resets to idle if transcription is empty, giving no feedback that a fallback happened or failed.
-- **Solution:** Filter out `[BLANK_AUDIO]` in the race logic. Force wait for Cloud if Local is empty.
+## Discovery 2: UI Rendering Overhead (OPTIMIZED)
+The WPF rendering engine was consuming CPU due to complex gradients and multiple blur/shadow effects being re-rendered frequently by the `IridescentAnimation`.
+**Optimizations applied**:
+- **RenderingBias**: Set `RenderingBias="Performance"` on all `DropShadowEffect` and `BlurEffect` elements in `WidgetWindow.xaml`. This forces the GPU to use a faster (though slightly less accurate) rendering path, significantly reducing CPU usage.
 
-## 3. Environment Isolation
-- **Status:** Verified. `CosmoWhisper_Personal` is being used correctly for settings.
-- **Discovery:** `LOUIS_PERSONAL_COSMO.md` confirms the build uses a unique assembly name `CosmoWhisperPersonal`.
+## Discovery 3: MSIX Build Manifest
+The MSIX build was failing because the manifest referenced `CosmoWhisperNative.exe`, but the project is configured to output `CosmoWhisperNative2.exe`.
+**Fix applied**:
+- Updated `Package.appxmanifest` to correctly reference `CosmoWhisperNative2.exe`.
+
+## Final Status
+- **Idle CPU**: Should now be < 1% on most modern hardware.
+- **Packaging**: Version 2.2.72.0 has been successfully built as an MSIX installer.
+- **Launcher**: The working `run_dev.bat` and Desktop shortcut are configured correctly.

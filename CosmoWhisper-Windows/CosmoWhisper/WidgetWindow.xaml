@@ -102,7 +102,7 @@
                 <ScaleTransform x:Name="MainBorderScale" CenterX="120" CenterY="40"/>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.5" ShadowDepth="0"/>
+                <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.5" ShadowDepth="0" RenderingBias="Performance"/>
             </Border.Effect>
             <Border.Background>
                 <RadialGradientBrush GradientOrigin="0.5,0.2" Center="0.5,0.2" RadiusX="1.5" RadiusY="1">
@@ -132,7 +132,7 @@
 
                     <!-- Real Shooting Star -->
                     <Path Data="M0,0 L40,0" Stroke="White" StrokeThickness="2" Opacity="0">
-                        <Path.Effect><BlurEffect Radius="4"/></Path.Effect>
+                        <Path.Effect><BlurEffect Radius="4" RenderingBias="Performance"/></Path.Effect>
                         <Path.RenderTransform>
                             <TranslateTransform x:Name="StarMove" X="-100" Y="20"/>
                         </Path.RenderTransform>
@@ -156,7 +156,7 @@
                         <ScaleTransform x:Name="RippleScale" CenterX="50" CenterY="50" ScaleX="1" ScaleY="1"/>
                     </Ellipse.RenderTransform>
                     <Ellipse.Effect>
-                        <BlurEffect Radius="20"/>
+                        <BlurEffect Radius="20" RenderingBias="Performance"/>
                     </Ellipse.Effect>
                 </Ellipse>
 
@@ -178,7 +178,7 @@
                                         <GradientStop Color="#00A000FF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Ellipse.Fill>
-                                <Ellipse.Effect><BlurEffect Radius="25"/></Ellipse.Effect>
+                                <Ellipse.Effect><BlurEffect Radius="25" RenderingBias="Performance"/></Ellipse.Effect>
                             </Ellipse>
                             <Grid.RenderTransform>
                                 <TransformGroup>
@@ -195,10 +195,10 @@
                                     <GradientStop Color="#00007AFF" Offset="1"/>
                                 </RadialGradientBrush>
                             </Ellipse.Fill>
-                            <Ellipse.Effect><BlurEffect Radius="20"/></Ellipse.Effect>
+                            <Ellipse.Effect><BlurEffect Radius="20" RenderingBias="Performance"/></Ellipse.Effect>
                         </Ellipse>
                         <Ellipse x:Name="OrbGlow" Width="36" Height="36" Fill="#CC007AFF" Opacity="0">
-                            <Ellipse.Effect><BlurEffect Radius="12"/></Ellipse.Effect>
+                            <Ellipse.Effect><BlurEffect Radius="12" RenderingBias="Performance"/></Ellipse.Effect>
                             <Ellipse.RenderTransform>
                                 <ScaleTransform x:Name="OrbAuraScale" CenterX="18" CenterY="18"/>
                             </Ellipse.RenderTransform>
@@ -214,8 +214,8 @@
                             <Ellipse.RenderTransform>
                                 <ScaleTransform x:Name="OrbScale" CenterX="10" CenterY="10"/>
                             </Ellipse.RenderTransform>
-                            <Ellipse.Effect>
-                                <DropShadowEffect x:Name="OrbShadow" BlurRadius="10" Color="#007AFF" Opacity="0.6" ShadowDepth="0"/>
+                        <Ellipse.Effect>
+                                <DropShadowEffect x:Name="OrbShadow" BlurRadius="10" Color="#007AFF" Opacity="0.6" ShadowDepth="0" RenderingBias="Performance"/>
                             </Ellipse.Effect>
                         </Ellipse>
                     </Grid>

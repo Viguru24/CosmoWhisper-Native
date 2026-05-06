@@ -1,30 +1,25 @@
-# Task Plan - Versioning & Fallback Hardening
+# Task Plan - Resolving Idle CPU Usage & MSIX Build
 
-## [2026-04-29 19:10] Implementation Complete
-- Fixed Gear Icon color logic in `WidgetWindow.xaml.cs` (Lime Green for Personal).
-- Fixed Dashboard branding and Sidebar gear color in `DashboardWindow.xaml.cs`.
-- Hardened `AIService.cs` transcription race logic to filter out `[BLANK_AUDIO]` and empty strings.
-- Added explicit Cloud-to-Local fallback for valid but empty cloud results.
-- Verified `PreferenceManager.cs` handles Louis's email override correctly.
+## Phase 1: Investigation (Completed)
+- [x] Identify `AudioRecorder` monitoring loop as the likely cause.
+- [x] Diagnose why `run_dev.bat` was failing (incorrect `APP_PATH`).
 
-## Status
-- Ready for testing. Restart the app to see the Lime Green gear.
+## Phase 2: Implementation (Completed)
+- [x] Optimize `AudioRecorder.cs` (bitwise extraction, integer math, throttled updates).
+- [x] Optimize `WidgetWindow.xaml.cs` (throttled UI, BeginInvoke).
+- [x] Optimize `WidgetWindow.xaml` (RenderingBias="Performance" on effects).
+- [x] Fix `run_dev.bat` path.
+- [x] Copy launcher to OneDrive Desktop.
 
-- [x] **Phase 1: Build & Version Fixes**
-    - [x] Update `PreferenceManager.cs` to ensure `IsStoreVersion` robustly identifies Personal builds.
-    - [x] Correct `WidgetWindow.xaml.cs` to show Lime Green gear for Personal builds.
-    - [x] Align `DashboardWindow.xaml.cs` branding with widget indicators.
+## Phase 3: MSIX Build (In Progress)
+- [x] Stop running instances.
+- [/] Run `./build_msix.ps1`.
+- [ ] Verify `CosmoWhisper.msix` output.
 
-- [x] **Phase 2: Transcription Reliability**
-    - [x] Harden `AIService.cs` race logic to skip `[BLANK_AUDIO]` or empty local results.
-    - [x] Implement Cloud -> Local fallback for empty cloud results (not just errors).
-    - [x] Verify visual feedback for "Cloud API" vs "Local Model" sources.
+## Phase 4: Validation
+- [ ] Verify CPU usage is lower (aiming for < 1% on modern hardware).
+- [ ] Provide the MSIX installer to the user.
 
-## Phase 3: UX Feedback Improvements
-- [ ] Update `WidgetWindow.xaml.cs` to show a temporary badge or status when "Cloud API" is used vs "Local Model".
-- [ ] Ensure the user knows when they are in "Personal" mode.
-
-## Phase 4: Verification
-- [ ] Run the app and check logs for "Lime Green Gear" confirmation.
-- [ ] Test transcription with Local disabled and verify Groq output is pasted.
-- [ ] Test transcription with both enabled and verify "Race winner" behavior handles blank audio correctly.
+## Error Log
+- `run_dev.bat` failing: Path `bin\x64\Debug` was incorrect; actual is `bin\Debug`.
+- CPU Usage: Optimization attempt 1 (bitwise) helped but user reported 4%. Applied attempt 2 (throtte, buffer size, rendering bias).
