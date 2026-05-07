@@ -41,11 +41,11 @@ namespace CosmoWhisper.Managers
                 }
             }
 
-            // Command Processing: Paragraphs and New Lines (Handle anywhere and with optional punctuation)
-            text = Regex.Replace(text, @"\b(new|next)\s+paragraph[\.\?\!]*\s*", "\r\n\r\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(new|next)\s+line[\.\?\!]*\s*", "\r\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(newline|nextline)[\.\?\!]*\s*", "\r\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(new|next)[\-\s]+(line|paragraph)[\.\?\!]*\s*", (m) => m.Groups[2].Value.ToLower().Contains("line") ? "\r\n" : "\r\n\r\n", RegexOptions.IgnoreCase);
+            // Command Processing: Paragraphs and New Lines (Handle anywhere and with optional punctuation including commas)
+            // Hardened to handle plurals (paragraphs) and trailing commas which Whisper often adds.
+            text = Regex.Replace(text, @"\b(new|next)[\s\-]+paragraphs?[\.\?\!\,]*\s*", "\r\n\r\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(new|next)[\s\-]+lines?[\.\?\!\,]*\s*", "\r\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(newline|nextline|newparagraph|nextparagraph)[\.\?\!\,]*\s*", (m) => m.Value.ToLower().Contains("line") ? "\r\n" : "\r\n\r\n", RegexOptions.IgnoreCase);
 
             // Remove disfluencies and non-speech sounds (e.g., (coughs), [clears throat], *laughs*)
             // Enhanced to catch standalone artifacts without brackets if they appear as isolated tokens
