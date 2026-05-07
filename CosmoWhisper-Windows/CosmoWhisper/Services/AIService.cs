@@ -25,6 +25,7 @@ namespace CosmoWhisper.Services
         
         public string LastTranscriptionSource { get; private set; } = "Unknown";
         public long LastTranscriptionTime { get; private set; } = 0;
+        public bool IsAccessBlocked { get; set; } = false;
         
         private string ChatUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
         private string ProxyUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
@@ -67,6 +68,12 @@ namespace CosmoWhisper.Services
 
         public async Task<string> Transcribe(string filePath)
         {
+            if (AppState.Shared.IsAccessBlocked)
+            {
+                LogEvent("[transcribe] 🛑 ACCESS BLOCKED: Account is flagged in dashboard.");
+                return "Error: Your account has been blocked. Please contact support or check your dashboard.";
+            }
+
             var p = PreferenceManager.Shared.Preferences;
             string model = string.IsNullOrWhiteSpace(p.AIModel) ? "whisper-large-v3" : p.AIModel;
 
@@ -80,11 +87,11 @@ namespace CosmoWhisper.Services
             string hints = Managers.VocabularyManager.Shared.GetActiveHints();
             string hintsText = string.IsNullOrWhiteSpace(hints) ? "" : $" {hints}.";
 
-            string basePrompt = $"Transcribe verbatim. {appContext}{hintsText}".Trim();
+            string basePrompt = $"Transcribe accurately. Ignore non-speech sounds like coughs or background noise. New line, new paragraph. {appContext}{hintsText}".Trim();
             if (langCode == "en")
             {
                 string variant = p.InterfaceLanguage == "en-GB" ? "British English (colour, realise)" : "American English (color, realize)";
-                basePrompt = $"Transcribe verbatim in {variant}. {appContext}{hintsText}".Trim();
+                basePrompt = $"Transcribe accurately in {variant}. Ignore non-speech sounds like coughs, laughter, or background noise. New line, new paragraph. {appContext}{hintsText}".Trim();
             }
 
             // Helper to create fresh content for each attempt
@@ -365,10 +372,16 @@ namespace CosmoWhisper.Services
             }
         }
 
-        public async Task<string> ProcessCommand(string prompt, string context, bool usePersonality = true)
+        public async Task<string> ProcessCommand(string prompt, string context, bool usePersonality = true, bool useInterfaceLanguage = true)
         {
+            if (AppState.Shared.IsAccessBlocked)
+            {
+                LogEvent("[command] 🛑 ACCESS BLOCKED: Account is flagged in dashboard.");
+                return "Error: Your account has been blocked. Please contact support or check your dashboard.";
+            }
+
             var p = PreferenceManager.Shared.Preferences;
-            string langHint = GetLanguageHint(p.InterfaceLanguage);
+            string langHint = useInterfaceLanguage ? GetLanguageHint(p.InterfaceLanguage) : "";
             string personalityHint = usePersonality ? GetPersonalityHint(p.AIPersonality) : "";
             
             string finalPrompt = $"{prompt}\n\nContext:\n{context}\n{langHint}{personalityHint}";

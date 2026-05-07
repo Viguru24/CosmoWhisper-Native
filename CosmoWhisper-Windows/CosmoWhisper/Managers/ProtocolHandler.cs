@@ -107,19 +107,27 @@ namespace CosmoWhisper.Managers
                             PreferenceManager.Shared.Save();
 
                             // Step 2: Update UI
-                            _ = Task.Run(async () => {
-                                if (DashboardWindow.Instance != null)
+                            _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => {
+                                var dashboard = DashboardWindow.Instance;
+                                if (dashboard == null)
                                 {
-                                    await DashboardWindow.Instance.Dispatcher.InvokeAsync(async () => {
-                                        DashboardWindow.Instance.Show();
-                                        DashboardWindow.Instance.WindowState = WindowState.Normal;
-                                        DashboardWindow.Instance.Activate();
-                                        DashboardWindow.Instance._navigation.ShowDashboard();
-                                        
-                                        await UIEvents.Shared.ShowMessageAsync("Signed In", $"Welcome, {(string.IsNullOrEmpty(email) ? "user" : email)}! 🎉", "👋");
-                                        await DashboardWindow.Instance.CheckAuthStatus();
-                                    });
+                                    // Create it if it doesn't exist
+                                    dashboard = new DashboardWindow();
                                 }
+
+                                dashboard.Show();
+                                dashboard.WindowState = WindowState.Normal;
+                                dashboard.Activate();
+                                dashboard.Topmost = true;
+                                dashboard.Topmost = false; // Kick to front but don't stay topmost
+                                
+                                if (dashboard._navigation != null)
+                                {
+                                    dashboard._navigation.ShowDashboard();
+                                }
+                                
+                                await UIEvents.Shared.ShowMessageAsync("Signed In", $"Welcome, {(string.IsNullOrEmpty(email) ? "user" : email)}! 🎉", "👋");
+                                await dashboard.CheckAuthStatus();
                             });
                         }
                         else

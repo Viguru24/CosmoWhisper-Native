@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CosmoWhisper.Managers
@@ -48,7 +49,32 @@ namespace CosmoWhisper.Managers
                             var filesToBackup = Directory.GetFiles(sourceDir, "*.json", SearchOption.TopDirectoryOnly);
                             foreach (var file in filesToBackup)
                             {
-                                archive.CreateEntryFromFile(file, Path.GetFileName(file));
+                                string fileName = Path.GetFileName(file);
+                                if (fileName.Equals("settings.json", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    // Sanitize settings.json to remove personal backup paths
+                                    try
+                                    {
+                                        string json = File.ReadAllText(file);
+                                        var prefs = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                                        if (prefs != null && prefs.ContainsKey("BackupDirectory"))
+                                        {
+                                            // Reset to an empty string so the restorer uses their own default
+                                            prefs["BackupDirectory"] = ""; 
+                                            string sanitizedJson = JsonSerializer.Serialize(prefs, new JsonSerializerOptions { WriteIndented = true });
+                                            
+                                            var entry = archive.CreateEntry(fileName);
+                                            using (var writer = new StreamWriter(entry.Open()))
+                                            {
+                                                writer.Write(sanitizedJson);
+                                            }
+                                            continue;
+                                        }
+                                    }
+                                    catch { /* Fallback to original if parse fails */ }
+                                }
+                                
+                                archive.CreateEntryFromFile(file, fileName);
                             }
                         }
                     }

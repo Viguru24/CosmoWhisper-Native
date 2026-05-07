@@ -1,22 +1,21 @@
-# Findings - Performance & Packaging
+# Findings - Voice Recognition and Dictation Quality Issues
 
-## Discovery 1: Audio Monitoring Loop (OPTIMIZED v2)
-The initial optimization helped, but the high callback frequency (100ms) was still causing unnecessary overhead.
-**Further optimizations applied**:
-- **Increased Buffer**: Set `BufferMilliseconds` to 150ms in `WaveInEvent` to reduce the number of context switches and callbacks per second.
-- **Throttled Calculation**: Added a time-based throttle to skip amplitude calculations if less than 150ms has passed since the last update (when not recording).
+## CRITICAL BUG IDENTIFIED: Over-aggressive Garbage Filtering
+- **Observation**: `TextProcessor.IsGarbage` uses `low.Contains(h)` for `PhraseHallucinations`.
+- **Impact**: Any sentence containing common phrases like "thank you", "subtitle", or "subtracting" is being discarded entirely.
+- **Cause**: Line 86 in `TextProcessor.cs`: `if (PhraseHallucinations.Any(h => low.Contains(h))) return true;`.
+- **Resolution**: Change `Contains` to a check that only discards if the *entire* segment is the hallucination, or if the hallucination makes up the bulk of the (short) segment.
 
-## Discovery 2: UI Rendering Overhead (OPTIMIZED)
-The WPF rendering engine was consuming CPU due to complex gradients and multiple blur/shadow effects being re-rendered frequently by the `IridescentAnimation`.
-**Optimizations applied**:
-- **RenderingBias**: Set `RenderingBias="Performance"` on all `DropShadowEffect` and `BlurEffect` elements in `WidgetWindow.xaml`. This forces the GPU to use a faster (though slightly less accurate) rendering path, significantly reducing CPU usage.
+## Issue 1: "New line" and "New paragraph" commands not working
+- **Observation**: The user says this wasn't a problem before.
+- **Hypothesis**: The issue might be related to the `IsGarbage` check filtering out the commands if they are transcribed with any hallucination-like artifacts, OR the `CleanText` regexes were modified in a way that broke them (though my recent expansion should have helped).
+- **Correction**: Revert Cloud-forcing heuristic in `AIService.cs` as the user explicitly wants Local-only if configured.
 
-## Discovery 3: MSIX Build Manifest
-The MSIX build was failing because the manifest referenced `CosmoWhisperNative.exe`, but the project is configured to output `CosmoWhisperNative2.exe`.
-**Fix applied**:
-- Updated `Package.appxmanifest` to correctly reference `CosmoWhisperNative2.exe`.
+## Issue 2: Poor Dictation Quality / Losing Words
+- **Direct Cause**: The `IsGarbage` bug mentioned above. If a user speaks a long sentence and it ends with "thank you" or "bye", the entire sentence is deleted.
+- **Secondary Cause**: Prompt aggression.
 
-## Final Status
-- **Idle CPU**: Should now be < 1% on most modern hardware.
-- **Packaging**: Version 2.2.72.0 has been successfully built as an MSIX installer.
-- **Launcher**: The working `run_dev.bat` and Desktop shortcut are configured correctly.
+## Plan for Implementation
+1. **Revert** the Cloud-forcing heuristic in `AIService.cs`.
+2. **Fix `IsGarbage`** in `TextProcessor.cs` to use `==` instead of `Contains` for hallucination detection, or at least only apply `Contains` if the text is very short.
+3. **Refine `PhraseHallucinations`**: Move some phrases to `ShortHallucinations` or separate "discard if contains" vs "discard if matches".

@@ -14,13 +14,20 @@ namespace CosmoWhisper.Managers
         Unauthorized,   // Server responded with 401/403 — token is revoked
         NetworkError    // Could not reach the server (offline, timeout, VPS down)
     }
+
+    public class StatusChangeEvent
+    {
+        public bool Is_Active { get; set; }
+        public string Email { get; set; }
+    }
+
     public class BackendService
     {
         public static BackendService Shared { get; } = new BackendService();
         private HttpClient _client;
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        private void LogEvent(string msg)
+        public void LogEvent(string msg)
         {
             try { AIService.Shared.LogEvent("[BackendService] " + msg); } catch { }
         }
@@ -28,6 +35,7 @@ namespace CosmoWhisper.Managers
         public BackendService()
         {
             _client = new HttpClient();
+            _client.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
             UpdateBaseAddress();
         }
 
@@ -51,7 +59,7 @@ namespace CosmoWhisper.Managers
             catch { }
         }
 
-        private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null)
+        private HttpRequestMessage CreateRequest(HttpMethod method, string path)
         {
             var request = new HttpRequestMessage(method, path);
             var p = PreferenceManager.Shared.Preferences;
@@ -61,169 +69,281 @@ namespace CosmoWhisper.Managers
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
-
-            if (payload != null)
-            {
-                var json = JsonSerializer.Serialize(payload);
-                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            }
-
             return request;
         }
 
-        private async Task<ApiResponse<T>> SendRequestAsync<T>(HttpMethod method, string path, object? payload = null, int timeoutSeconds = 15)
+        public async Task<(bool success, string message)> Login()
         {
             try
             {
-                using var request = CreateRequest(method, path, payload);
-                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-                
-                var response = await _client.SendAsync(request, cts.Token);
-                var responseString = await response.Content.ReadAsStringAsync();
+                // Simple empty post to trigger the mock login
+                var content = new StringContent("{}", Encoding.UTF8, "application/json");
 
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || 
-                    response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                {
-                    LogEvent($"[API] Access Denied (401/403) at {path}");
-                    return ApiResponse<T>.Failed("Unauthorized", true);
-                }
+                var response = await _client.PostAsync("api/auth/login", content);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var data = JsonSerializer.Deserialize<T>(responseString, _jsonOptions);
-                    return ApiResponse<T>.Successful(data);
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<LoginResponse>(responseString, _jsonOptions);
+
+                    if (result != null)
+                    {
+                        var p = PreferenceManager.Shared.Preferences;
+                        p.AuthToken = result.token;
+                        p.UserTier = result.user.tier;
+                        p.IsAIUnlocked = result.user.tier != "free";
+                        p.UserEmail = result.user.email;
+                        PreferenceManager.Shared.Save();
+                        return (true, "Login Successful");
+                    }
                 }
                 else
                 {
-                    string errorMsg = "Request Failed";
                     try
                     {
-                        var errorObj = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
-                        errorMsg = errorObj?.error ?? response.ReasonPhrase;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
+                        return (false, error?.error ?? "Login failed");
                     }
-                    catch { errorMsg = response.ReasonPhrase; }
-
-                    return ApiResponse<T>.Failed(errorMsg);
+                    catch
+                    {
+                        return (false, "Login failed: " + response.ReasonPhrase);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                LogEvent($"[API] Network Error at {path}: {ex.Message}");
-                return ApiResponse<T>.Failed("Network connection failed. Is the backend running?", false, true);
+                System.Diagnostics.Debug.WriteLine($"Login Error: {ex.Message}");
+                return (false, "Connection Error: Is the backend running?");
             }
+            return (false, "Unknown error");
         }
-
-        public class ApiResponse<T>
-        {
-            public bool Success { get; set; }
-            public T? Data { get; set; }
-            public string Message { get; set; } = "";
-            public bool IsUnauthorized { get; set; }
-            public bool IsNetworkError { get; set; }
-
-            public static ApiResponse<T> Successful(T? data) => new ApiResponse<T> { Success = true, Data = data };
-            public static ApiResponse<T> Failed(string msg, bool unauthorized = false, bool network = false) 
-                => new ApiResponse<T> { Success = false, Message = msg, IsUnauthorized = unauthorized, IsNetworkError = network };
-        }
-
-
 
         public async Task<(bool success, string message)> RequestMagicCode(string email)
         {
-            var res = await SendRequestAsync<object>(HttpMethod.Post, "api/auth/request-otp", new { email });
-            return (res.Success, res.Success ? "Code sent!" : res.Message);
+            try
+            {
+                var payload = new { email };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _client.PostAsync("api/auth/request-otp", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, "Code sent!");
+                }
+                else
+                {
+                    try
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
+                        return (false, error?.error ?? "Request failed");
+                    }
+                    catch
+                    {
+                        return (false, "Request failed: " + response.ReasonPhrase);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, "Connection Error: " + ex.Message);
+            }
         }
 
         public async Task<(bool success, string message)> VerifyMagicCode(string email, string code)
         {
-            var res = await SendRequestAsync<LoginResponse>(HttpMethod.Post, "api/auth/verify-otp", new { email, code });
-            if (res.Success && res.Data != null)
+            try
             {
-                var p = PreferenceManager.Shared.Preferences;
-                p.AuthToken = res.Data.token;
-                p.UserTier = res.Data.user.tier;
-                p.IsAIUnlocked = res.Data.user.tier != "free";
-                p.UserEmail = res.Data.user.email;
-                PreferenceManager.Shared.Save();
-                return (true, "Login Successful");
+                var payload = new { email, code };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _client.PostAsync("api/auth/verify-otp", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<LoginResponse>(responseString, _jsonOptions);
+
+                    if (result != null)
+                    {
+                        var p = PreferenceManager.Shared.Preferences;
+                        p.AuthToken = result.token;
+                        p.UserTier = result.user.tier;
+                        p.IsAIUnlocked = result.user.tier != "free";
+                        p.UserEmail = result.user.email;
+                        PreferenceManager.Shared.Save();
+                        return (true, "Login Successful");
+                    }
+                }
+                else
+                {
+                     try
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var error = JsonSerializer.Deserialize<ErrorResponse>(responseString, _jsonOptions);
+                        return (false, error?.error ?? "Verification failed");
+                    }
+                    catch
+                    {
+                        return (false, "Verification failed: " + response.ReasonPhrase);
+                    }
+                }
             }
-            return (false, res.Message);
+            catch (Exception ex)
+            {
+                return (false, "Connection Error: " + ex.Message);
+            }
+            return (false, "Unknown Error");
         }
 
         public async Task<SyncResult> SyncStatus()
         {
             var p = PreferenceManager.Shared.Preferences;
-            var res = await SendRequestAsync<StatusResponse>(HttpMethod.Get, "api/license/status", timeoutSeconds: 10);
-            
-            if (res.IsUnauthorized) return SyncResult.Unauthorized;
-            if (res.IsNetworkError) return SyncResult.NetworkError;
-
-            if (res.Success && res.Data != null)
+            if (p.AuthToken == "dev-bypass-active" || p.LicenseToken == "dev-bypass-active")
             {
-                p = PreferenceManager.Shared.Preferences;
-                p.UserTier = res.Data.tier;
-                p.UserEmail = res.Data.email;
-                p.UsageMinutes = res.Data.usageMinutes;
-                p.UsageLimitMinutes = res.Data.limitMinutes;
-                
-                // Fallback for store/lite version
-                if (p.UsageLimitMinutes <= 0) p.UsageLimitMinutes = 60;
-
-                // Respect the server's over-limit flag or tier status
-                p.IsAIUnlocked = !res.Data.isOverLimit && (res.Data.tier != "free");
-                
+                p.UserTier = "unlimited";
+                p.UserEmail = "dev@cosmowhisper.local";
+                p.IsAIUnlocked = true;
+                p.UsageMinutes = 0;
+                p.UsageLimitMinutes = 999999;
                 PreferenceManager.Shared.Save();
                 return SyncResult.Success;
             }
 
-            return SyncResult.NetworkError;
+            try
+            {
+                using var request = CreateRequest(HttpMethod.Get, "api/license/status");
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+                LogEvent($"[SyncStatus] Pinging {(_client.BaseAddress?.ToString() ?? "N/A")}api/license/status ...");
+                var response = await _client.SendAsync(request, cts.Token);
+                LogEvent($"[SyncStatus] Received status: {response.StatusCode}");
+
+                // Explicit auth failure — server actively rejected the token
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+                    response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    LogEvent($"[SyncStatus] ❌ ACCESS REVOKED: {response.StatusCode}. User is likely blocked.");
+                    return SyncResult.Unauthorized;
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var status = JsonSerializer.Deserialize<StatusResponse>(responseString, _jsonOptions);
+
+                    if (status != null)
+                    {
+                        p = PreferenceManager.Shared.Preferences;
+                        p.UserTier = status.tier;
+                        p.UserEmail = status.email;
+                        p.IsAIUnlocked = status.tier != "free";
+                        p.UsageMinutes = status.usageMinutes;
+                        p.UsageLimitMinutes = status.limitMinutes;
+                        PreferenceManager.Shared.Save();
+                        return SyncResult.Success;
+                    }
+                }
+
+                // Non-401/403 non-success (e.g. 500, 503) — treat as network error, keep session
+                System.Diagnostics.Debug.WriteLine($"[SyncStatus] Server returned {response.StatusCode} — treating as NetworkError");
+                return SyncResult.NetworkError;
+            }
+            catch (Exception ex)
+            {
+                // Could not reach server at all (timeout, DNS fail, no internet)
+                System.Diagnostics.Debug.WriteLine($"[SyncStatus] Network error: {ex.Message}");
+                return SyncResult.NetworkError;
+            }
         }
 
         public async Task<bool> ReportUsage(long durationMs)
         {
-            var p = PreferenceManager.Shared.Preferences;
-            string token = string.IsNullOrEmpty(p.AuthToken) ? p.LicenseToken : p.AuthToken;
-
-            if (string.IsNullOrEmpty(token))
+            try
             {
-                // Local usage tracking for unauthenticated users
-                if (p.LastLocalResetMonth != DateTime.Now.Month)
-                {
-                    p.UsageMinutes = 0;
-                    p.LastLocalResetMonth = DateTime.Now.Month;
-                }
-                p.UsageMinutes += (durationMs / 60000.0);
-                PreferenceManager.Shared.Save();
-                return true;
-            }
+                using var request = CreateRequest(HttpMethod.Post, "api/license/report-usage");
+                var payload = new { durationMs };
+                var json = JsonSerializer.Serialize(payload);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var res = await SendRequestAsync<object>(HttpMethod.Post, "api/license/report-usage", new { durationMs });
-            if (res.Success)
-            {
-                // Refresh status after reporting to get updated limits
-                await SyncStatus();
+                var response = await _client.SendAsync(request);
+                return response.IsSuccessStatusCode;
             }
-            return res.Success;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Usage Report Error: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<SupportActivityResponse?> GetSupportTicketActivity()
         {
-            var res = await SendRequestAsync<SupportTicket[]>(HttpMethod.Get, "api/tickets/all");
-            
-            if (res.Success && res.Data != null && res.Data.Length > 0)
+            try
             {
-                int openCount = 0;
-                foreach(var t in res.Data) {
-                    if(t.Status == "open") openCount++;
+                using var request = CreateRequest(HttpMethod.Get, "api/tickets/all");
+                var response = await _client.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var tickets = JsonSerializer.Deserialize<SupportTicket[]>(responseString, _jsonOptions);
+                    
+                    if (tickets != null && tickets.Length > 0)
+                    {
+                        int openCount = 0;
+                        string latestId = "";
+                        foreach(var t in tickets) {
+                           if(t.Status == "open") openCount++;
+                        }
+                        
+                        return new SupportActivityResponse { 
+                            OpenCount = openCount, 
+                            LatestTicketId = tickets[0].Id.ToString(),
+                            LatestTicketMessage = tickets[0].Message
+                        };
+                    }
                 }
-                
-                return new SupportActivityResponse { 
-                    OpenCount = openCount, 
-                    LatestTicketId = res.Data[0].Id.ToString(),
-                    LatestTicketMessage = res.Data[0].Message
-                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Support Activity Error: {ex.Message}");
             }
             return null;
+        }
+
+        public async Task<System.IO.Stream?> GetStatusStream()
+        {
+            try
+            {
+                var request = CreateRequest(HttpMethod.Get, "api/license/status-stream");
+                var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsStreamAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Status Stream Error: {ex.Message}");
+            }
+            return null;
+        }
+
+        public async Task<bool> SignOut()
+        {
+            try
+            {
+                using var request = CreateRequest(HttpMethod.Post, "api/auth/logout");
+                var response = await _client.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SignOut error: {ex.Message}");
+                return false;
+            }
         }
     }
 

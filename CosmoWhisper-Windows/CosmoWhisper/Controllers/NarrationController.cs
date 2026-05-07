@@ -27,10 +27,20 @@ namespace CosmoWhisper.Controllers
         private void InitializeVoices()
         {
             if (Window.ComboVoice == null) return;
+
+            // Save currently selected tag if any
+            string? currentTag = null;
+            if (Window.ComboVoice.SelectedItem is ComboBoxItem selected)
+            {
+                currentTag = selected.Tag?.ToString();
+            }
+
             Window.ComboVoice.Items.Clear();
 
-            // 1. Add Neural Voices (OpenAI)
+            // 1. Add Neural Voices (OpenAI) - The core 6 standard versions
             string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer" };
+            File.AppendAllText(Path.Combine(PreferenceManager.Shared.AppDataFolder, "narration_debug.txt"), $"[{DateTime.Now}] Initializing dropdown with {neuralVoices.Length} OpenAI voices and filtered system voices.\n");
+
             foreach (var nv in neuralVoices)
             {
                 Window.ComboVoice.Items.Add(new ComboBoxItem 
@@ -41,7 +51,10 @@ namespace CosmoWhisper.Controllers
                 });
             }
 
+            // 2. Add System Voices (Local) - Strictly filtered to basic voices that are always installed
+            string[] allowedBasics = { "George", "Hazel", "David", "Zira" };
             var voices = SpeechSynthesizer.AllVoices
+                .Where(v => allowedBasics.Any(name => v.DisplayName.Contains(name)))
                 .OrderBy(v => v.DisplayName.Contains("George") ? 0 : 1)
                 .ThenBy(v => v.DisplayName);
 
@@ -50,21 +63,22 @@ namespace CosmoWhisper.Controllers
                 Window.ComboVoice.Items.Add(new ComboBoxItem 
                 { 
                     Content = v.DisplayName.Contains("George") ? $"👑 {v.DisplayName} (Default)" : $"✨ {v.DisplayName}", 
-                    Tag = v.Id // Use unique ID for technical precision
+                    Tag = v.Id
                 });
             }
 
             var p = PreferenceManager.Shared.Preferences;
+            string targetVoice = !string.IsNullOrEmpty(currentTag) ? currentTag : p.SelectedVoice;
             bool selectionMade = false;
             
-            // Try to restore user preference
-            if (!string.IsNullOrEmpty(p.SelectedVoice))
+            // Try to match the target preference
+            if (!string.IsNullOrEmpty(targetVoice))
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
                 {
-                    if (item.Tag?.ToString() == p.SelectedVoice)
+                    if (item.Tag?.ToString() == targetVoice)
                     {
-                        // If it's a neural voice but we have no key, don't auto-select it
+                        // Optimization: If it's a neural voice but we have no key, don't auto-select it as default
                         bool isNeural = !item.Content.ToString().Contains("✨") && !item.Content.ToString().Contains("👑");
                         if (isNeural && string.IsNullOrWhiteSpace(p.OpenAIApiKey)) continue;
 
@@ -75,7 +89,21 @@ namespace CosmoWhisper.Controllers
                 }
             }
             
-            // If No Preference OR Neural Voice failed (no key), Force Fallback to George
+            // Fallback 1: If key is present but no selection, auto-select Nova (best AI voice)
+            if (!selectionMade && !string.IsNullOrWhiteSpace(p.OpenAIApiKey))
+            {
+                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
+                 {
+                     if (item.Tag?.ToString() == "Nova")
+                     {
+                         Window.ComboVoice.SelectedItem = item;
+                         selectionMade = true;
+                         break;
+                     }
+                 }
+            }
+
+            // Fallback 2: Default to George
             if (!selectionMade)
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
@@ -84,14 +112,12 @@ namespace CosmoWhisper.Controllers
                     if (content.Contains("George") || content.Contains("👑"))
                     {
                         Window.ComboVoice.SelectedItem = item;
-                        p.SelectedVoice = item.Tag?.ToString() ?? ""; // Sync preference
                         selectionMade = true;
                         break;
                     }
                 }
             }
 
-            // Absolute fallback to first item
             if (!selectionMade && Window.ComboVoice.Items.Count > 0) 
                 Window.ComboVoice.SelectedIndex = 0;
         }

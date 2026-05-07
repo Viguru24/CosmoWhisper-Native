@@ -4,7 +4,12 @@
              xmlns:local="clr-namespace:CosmoWhisper"
              StartupUri="WidgetWindow.xaml">
     <Application.Resources>
-        <!-- DESIGN TOKENS (ITEM 1 & 3) -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- DESIGN TOKENS -->
         <FontFamily x:Key="MainFont">Inter, Segoe UI, Roboto, sans-serif</FontFamily>
         <FontFamily x:Key="DisplayFont">Outfit, Inter, Segoe UI semibold</FontFamily>
         
@@ -12,6 +17,9 @@
         <Color x:Key="ThemeAccentColor">#4f46e5</Color>
         <SolidColorBrush x:Key="ThemeAccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
         
+        <Color x:Key="ThemeForegroundColor">White</Color>
+        <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{DynamicResource ThemeForegroundColor}"/>
+
         <Color x:Key="ThemeGlowColor">#3b82f6</Color>
         <SolidColorBrush x:Key="ThemeGlowBrush" Color="{DynamicResource ThemeGlowColor}"/>
 
@@ -39,17 +47,17 @@
 
         <!-- GLOBAL STYLES -->
         <Style TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource MainFont}"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="{DynamicResource MainFont}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
         
         <Style TargetType="Window">
-            <Setter Property="FontFamily" Value="{StaticResource MainFont}"/>
+            <Setter Property="FontFamily" Value="{DynamicResource MainFont}"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
 
-        <!-- ELASTIC BUTTON (ITEM 3) -->
+        <!-- ELASTIC BUTTON -->
         <Style x:Key="ElasticButton" TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
@@ -90,6 +98,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
-

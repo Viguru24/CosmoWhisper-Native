@@ -83,42 +83,34 @@ namespace CosmoWhisper.Managers
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            try 
-            {
-                if (nCode >= 0)
-                {
-                    int vkCode = Marshal.ReadInt32(lParam);
-                    
-                    // DEBUG: Log *attempt* for F9 (120) specifically to see if hook is alive
-                    if (vkCode == 120 || vkCode == (int)_currentVk) 
-                    {
-                        // LogEvent($"[Hook-Debug] Saw VK {vkCode} Action {wParam}");
-                    }
+            if (nCode < 0) return CallNextHookEx(_hookID, nCode, wParam, lParam);
 
-                    if (vkCode == (int)_currentVk)
-                    {
-                        if (wParam == (IntPtr)WM_KEYDOWN)
-                        {
-                            if (!_isKeyCurrentlyPressed)
-                            {
-                                _isKeyCurrentlyPressed = true;
-                                LogEvent($"[HotKey] MATCHED VK {vkCode} DOWN - Triggering Action");
-                                KeyPressed?.Invoke();
-                            }
-                        }
-                        else if (wParam == (IntPtr)WM_KEYUP)
-                        {
-                            _isKeyCurrentlyPressed = false;
-                            LogEvent($"[HotKey] MATCHED VK {vkCode} UP");
-                            KeyReleased?.Invoke();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
+            int vkCode = Marshal.ReadInt32(lParam);
+            if (vkCode == (int)_currentVk)
             {
-                LogEvent($"[Hook-Error] {ex.Message}");
+                // Process all Down events (including auto-repeats and Alt+System keys)
+                if (wParam == (IntPtr)0x0100 || wParam == (IntPtr)0x0104) // WM_KEYDOWN, WM_SYSKEYDOWN
+                {
+                    if (!_isKeyCurrentlyPressed)
+                    {
+                        _isKeyCurrentlyPressed = true;
+                        // Fire-off action on background thread instantly
+                        System.Threading.ThreadPool.QueueUserWorkItem(_ => KeyPressed?.Invoke());
+                    }
+                    return (IntPtr)1; // Consume message immediately to prevent leakage
+                }
+                // Process all Up events
+                else if (wParam == (IntPtr)0x0101 || wParam == (IntPtr)0x0105) // WM_KEYUP, WM_SYSKEYUP
+                {
+                    _isKeyCurrentlyPressed = false;
+                    System.Threading.ThreadPool.QueueUserWorkItem(_ => KeyReleased?.Invoke());
+                    return (IntPtr)1; // Consume message immediately
+                }
+
+                // Total lockdown for this key - suppress any other WM messages associated with it
+                return (IntPtr)1;
             }
+
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
 

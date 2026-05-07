@@ -38,7 +38,7 @@ CMD: list
 CMD: get | [id]
 If it's just a question, answer it directly without CMD.";
 
-                    var response = await AIService.Shared.ProcessCommand(systemPrompt, userRequest);
+                    var response = await AIService.Shared.ProcessCommand(systemPrompt, userRequest, usePersonality: false, useInterfaceLanguage: false);
                     string finalResult = response;
 
                     if (response.Contains("CMD:"))
@@ -50,22 +50,22 @@ If it's just a question, answer it directly without CMD.";
                         {
                             if (line.Trim().StartsWith("CMD:"))
                             {
-                                var parts = line.Substring(4).Split('|');
-                                var command = parts[0].Trim().ToLower();
-                                var id = parts.Length > 1 ? parts[1].Trim() : null;
+                                var cmdParts = line.Substring(4).Split('|');
+                                var command = cmdParts[0].Trim().ToLower();
+                                var id = cmdParts.Length > 1 ? cmdParts[1].Trim() : null;
 
                                 if (command == "mark_step")
                                 {
-                                    int index = (parts.Length > 2 && int.TryParse(parts[2], out int idx)) ? idx : -1;
-                                    string status = parts.Length > 3 ? parts[3].Trim() : "completed";
-                                    string notes = parts.Length > 4 ? parts[4].Trim() : "";
-                                    resultBuilder.AppendLine(_planningTool.Execute(command, id, null, null, index, status, notes));
+                                    int index = (cmdParts.Length > 2 && int.TryParse(cmdParts[2], out int idx)) ? idx : -1;
+                                    string status = cmdParts.Length > 3 ? cmdParts[3].Trim() : "completed";
+                                    string notes = cmdParts.Length > 4 ? cmdParts[4].Trim() : "";
+                                    resultBuilder.AppendLine(_planningTool.Execute(command, id, stepIndex: index, stepStatus: status, stepNotes: notes));
                                 }
                                 else
                                 {
-                                    var title = parts.Length > 2 ? parts[2].Trim() : null;
-                                    var steps = parts.Length > 3 ? parts[3].Split(',').Select(s => s.Trim()).ToList() : null;
-                                    resultBuilder.AppendLine(_planningTool.Execute(command, id, title, steps));
+                                    var title = cmdParts.Length > 2 ? cmdParts[2].Trim() : null;
+                                    var steps = cmdParts.Length > 3 ? cmdParts[3].Split(',').Select(s => s.Trim()).ToList() : null;
+                                    resultBuilder.AppendLine(_planningTool.Execute(command, id, title: title, steps: steps));
                                 }
                             }
                             else { resultBuilder.AppendLine(line); }

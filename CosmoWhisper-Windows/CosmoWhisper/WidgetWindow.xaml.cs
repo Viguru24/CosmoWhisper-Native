@@ -23,14 +23,20 @@ namespace CosmoWhisper
         private HotKeyManager _hotKeyManager = new HotKeyManager();
         private MouseButtonManager _mouseButtonManager = new MouseButtonManager();
         public static DashboardWindow _dashboard;
-        private Storyboard _soundWaveStoryboard;
+        private Storyboard _thinkingDotsStoryboard;
         private Storyboard _rippleStoryboard;
         private Storyboard _idleBreathingStoryboard;
         private Storyboard _thinkingStoryboard;
         private Storyboard _jiggleStoryboard;
         private Storyboard _iridescentStoryboard;
+        private Storyboard _satelliteStoryboard;
         private SolidColorBrush _cachedWhiteBrush;
         private SolidColorBrush _cachedBlueBrush;
+        private uint _lastRegisteredVk = 0;
+        private string _lastRegisteredMouseButton = "";
+        private double _sinePhase = 0.0;  // Tracks wave phase for smooth animation
+        private double _currentAmplitude = 2.0; // Current wave amplitude (audio-driven)
+        private System.Threading.Timer _sineAnimTimer; // Timer for animating wave when quiet
 
         public WidgetWindow()
         {
@@ -39,6 +45,13 @@ namespace CosmoWhisper
             // Apply Glassmorphism (ITEM 1)
             this.SourceInitialized += (s, e) =>
             {
+                // HARD WALL BOUNDARY: Compile-time colors
+#if DEV_BUILD
+                if (GearIcon != null) GearIcon.Fill = new SolidColorBrush(Color.FromRgb(255, 140, 0)); // Orange
+#else
+                if (GearIcon != null) GearIcon.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 100)); // Bright Green
+#endif
+
                 // WindowEffectManager.ApplyEffect(this, BackdropType.Mica); 
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
@@ -51,19 +64,24 @@ namespace CosmoWhisper
                 UpdateTopmostState();
             };
 
+            this.LocationChanged += (s, e) => SavePosition();
+            this.Loaded += (s, e) => LoadPosition();
+
             // Apply widget transparency from preferences
             ApplyWidgetTransparency();
             _pulseStoryboard = (Storyboard)FindResource("PulseAnimation");
-            _soundWaveStoryboard = (Storyboard)FindResource("SoundWaveAnimation");
+            _thinkingDotsStoryboard = (Storyboard)FindResource("ThinkingDotsAnimation");
             _rippleStoryboard = (Storyboard)FindResource("RippleAnimation");
             _idleBreathingStoryboard = (Storyboard)FindResource("IdleBreathingAnimation");
             _thinkingStoryboard = (Storyboard)FindResource("ThinkingAnimation");
             _jiggleStoryboard = (Storyboard)FindResource("JiggleAnimation");
             _iridescentStoryboard = (Storyboard)FindResource("IridescentAnimation");
+            _satelliteStoryboard = (Storyboard)FindResource("SatelliteAnimation");
 
             // Start animations
             _idleBreathingStoryboard.Begin();
             _iridescentStoryboard.Begin();
+            _satelliteStoryboard.Begin();
 
             // Capture the bars we created in XAML
             foreach (var child in VisualizerPanel.Children)
@@ -93,51 +111,40 @@ namespace CosmoWhisper
             // Wire up HotKey for push-to-talk
             _hotKeyManager.KeyPressed += () =>
             {
-                LogEvent("Hotkey Pressed: F9");
+                Task.Run(() => LogEvent("Hotkey (Key Down) Triggered"));
                 if (!AudioRecorder.Shared.IsRecording)
                 {
-                    AudioRecorder.Shared.StartRecording();
+                    Task.Run(() => AudioRecorder.Shared.StartRecording());
                 }
-                Dispatcher.Invoke(() =>
-                {
-                });
             };
             _hotKeyManager.KeyReleased += () =>
             {
-                LogEvent("Hotkey Released: F9");
+                Task.Run(() => LogEvent("Hotkey (Key Up) Released"));
                 if (AudioRecorder.Shared.IsRecording)
                 {
-                    AudioRecorder.Shared.StopRecording();
+                    Task.Run(() => AudioRecorder.Shared.StopRecording());
                 }
-                Dispatcher.Invoke(() =>
-                {
-                });
             };
             _hotKeyManager.ErrorOccurred += (msg) =>
             {
-                LogEvent($"Hotkey Error: {msg}");
-                Dispatcher.Invoke(() =>
-                {
-                    string keyName = PreferenceManager.Shared.Preferences.ActivationKey;
-
-                });
+                Task.Run(() => LogEvent($"Hotkey Error: {msg}"));
             };
 
             // Wire up Mouse Button for push-to-talk
             _mouseButtonManager.ButtonPressed += () =>
             {
-                LogEvent("Mouse Button Pressed");
+                Task.Run(() => LogEvent("Mouse Button Pressed"));
                 if (!AudioRecorder.Shared.IsRecording)
                 {
-                    AudioRecorder.Shared.StartRecording();
+                    Task.Run(() => AudioRecorder.Shared.StartRecording());
                 }
             };
             _mouseButtonManager.ButtonReleased += () =>
             {
-                LogEvent("Mouse Button Released");
+                Task.Run(() => LogEvent("Mouse Button Released"));
                 if (AudioRecorder.Shared.IsRecording)
                 {
-                    AudioRecorder.Shared.StopRecording();
+                    Task.Run(() => AudioRecorder.Shared.StopRecording());
                 }
             };
             _mouseButtonManager.ErrorOccurred += (msg) =>
@@ -151,18 +158,26 @@ namespace CosmoWhisper
 
             PreferenceManager.Shared.PreferencesUpdated += () =>
             {
-                LogEvent("Preferences Updated");
-                Dispatcher.Invoke(() =>
+                var p = PreferenceManager.Shared.Preferences;
+                
+                // Only re-register if the actual key/button changed
+                if (p.VirtualKey != _lastRegisteredVk || p.MouseButton != _lastRegisteredMouseButton)
                 {
-                    _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
-                    _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
-                    
-                    var p = PreferenceManager.Shared.Preferences;
-                    if (p.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {p.MouseButton}";
-                    else TxtHotkeyHint.Text = $"Hold {p.ActivationKey}";
-                    
-                    ApplyWidgetTransparency();
-                });
+                    LogEvent($"Preferences Updated (IO Change: {p.ActivationKey}/{p.MouseButton})");
+                    Dispatcher.Invoke(() =>
+                    {
+                        _hotKeyManager.Register(this, p.VirtualKey);
+                        _mouseButtonManager.Register(p.MouseButton);
+                        
+                        _lastRegisteredVk = p.VirtualKey;
+                        _lastRegisteredMouseButton = p.MouseButton;
+
+                        if (p.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {p.MouseButton}";
+                        else TxtHotkeyHint.Text = $"Hold {p.ActivationKey}";
+                    });
+                }
+                
+                Dispatcher.Invoke(ApplyWidgetTransparency);
             };
 
             this.Closed += (s, e) =>
@@ -177,13 +192,24 @@ namespace CosmoWhisper
 
             LoadPosition();
 
-#if DEBUG
-            GearIcon.Fill = Brushes.Orange; // "Yellow" style
-            LogEvent("Yellow Gear Active (DEBUG)");
-#else
-            GearIcon.Fill = Brushes.Gray; // Gray for Production
-            LogEvent("Gray Gear Active (PRODUCTION)");
-#endif
+            // --- GEAR COLOR LOGIC ---
+            if (PreferenceManager.Shared.IsDevMode)
+            {
+                GearIcon.Fill = Brushes.Orange; 
+                LogEvent("Orange Gear Active (DEV MODE)");
+            }
+            else if (!PreferenceManager.Shared.Preferences.IsStoreVersion)
+            {
+                // Personal / Custom Build (Louis Edition)
+                GearIcon.Fill = new SolidColorBrush(Color.FromRgb(50, 215, 75)); // Lime Green
+                LogEvent("Lime Green Gear Active (PERSONAL)");
+            }
+            else
+            {
+                // Official Microsoft Store Build
+                GearIcon.Fill = Brushes.Gray; 
+                LogEvent("Gray Gear Active (STORE)");
+            }
             // Ensure gear is visible 
             if (FindName("GearIcon") is FrameworkElement gear) gear.Visibility = Visibility.Visible;
             if (GearBg?.Parent is Grid gearGrid) gearGrid.Visibility = Visibility.Visible;
@@ -193,11 +219,10 @@ namespace CosmoWhisper
             else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
 
             // LOG STARTUP
-            LogEvent("--- APP STARTING v2.2.20 ---");
+            LogEvent("--- APP STARTING v2.2.90.0 ---");
 
-            // WARM UP: We no longer StartMonitoring() by default to save CPU. 
-            // The hardware will initialize instantly when the hotkey is pressed.
-            // AudioRecorder.Shared.StartMonitoring(); 
+            // WARM UP: Removed StartMonitoring() to save resources. 
+            // Hardware will initialize on-demand when recording starts.
         }
 
         private void LogEvent(string msg)
@@ -212,19 +237,48 @@ namespace CosmoWhisper
             catch { }
         }
 
-        private void LoadPosition()
+
+        private void UpdateVisualizer(float level)
         {
-            var p = PreferenceManager.Shared.Preferences;
-            this.Top = p.WidgetTop;
-            this.Left = p.WidgetLeft;
+            // Performance Guard: Skip UI updates for background noise
+            if (level < -60 && !isRecordingActive) return;
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    if (TxtStatus.Visibility == Visibility.Visible && level > -50)
+                        TxtStatus.Visibility = Visibility.Collapsed;
+
+                    // Update Sine Wave
+                    UpdateSineWave(level);
+
+                    // Update the old bar visualizer (fallback)
+                    if (VisualizerPanel.Visibility == Visibility.Visible)
+                    {
+                        foreach (System.Windows.Shapes.Rectangle rect in VisualizerPanel.Children)
+                        {
+                            double targetHeight = 4 + (level + 60) * 0.8;
+                            if (targetHeight < 4) targetHeight = 4;
+                            if (targetHeight > 40) targetHeight = 40;
+                            rect.Height = targetHeight;
+                        }
+                    }
+                }
+                catch { }
+            }));
         }
 
-        private void SavePosition()
+        private void UpdateSineWave(float level)
         {
-            var p = PreferenceManager.Shared.Preferences;
-            p.WidgetTop = this.Top;
-            p.WidgetLeft = this.Left;
-            PreferenceManager.Shared.Save();
+            // Normalize -60dB -> 0 to 0dB -> 1
+            float minDb = -60;
+            float normalized = (level - minDb) / (0 - minDb);
+            if (normalized < 0) normalized = 0;
+            if (normalized > 1) normalized = 1;
+
+            // Drive the amplitude of the drawing loop
+            _currentAmplitude = normalized;
         }
 
         private void OnIsRecordingChanged(bool isRecording)
@@ -233,56 +287,95 @@ namespace CosmoWhisper
             {
                 if (isRecording)
                 {
-                    // Show colorful sound wave, hide visualizer
+                    // Show Neural Sine Wave, hide idle elements
                     VisualizerPanel.Visibility = Visibility.Collapsed;
                     TxtHotkeyHint.Visibility = Visibility.Collapsed;
-                    SoundWavePanel.Visibility = Visibility.Visible;
-                    _soundWaveStoryboard.Begin();
+                    ThinkingDotsPanel.Visibility = Visibility.Collapsed;
+                    SineWaveCanvas.Visibility = Visibility.Visible;
+                    _currentAmplitude = 2.0;
+
+                    // Start the sine wave animation timer (runs at ~60fps to phase-shift the wave)
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = new System.Threading.Timer(_ =>
+                    {
+                        _sinePhase += 0.18; // advance phase each tick
+                        Dispatcher.BeginInvoke(() => DrawSineWave(_currentAmplitude));
+                    }, null, 0, 16); // ~60fps
+
                     _jiggleStoryboard.Begin();
-                    SetTheme(Colors.LimeGreen, "");
+
+                    // Orb goes white when listening
+                    SetTheme(Colors.White, "");
+                    _satelliteStoryboard.SetSpeedRatio(2.0); // Boost speed
                 }
                 else
                 {
-                    // Hide sound wave, show visualizer
-                    _soundWaveStoryboard.Stop();
+                    // Stop sine wave, reset to idle
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = null;
+                    _thinkingDotsStoryboard.Stop();
                     _jiggleStoryboard.Begin();
-                    SoundWavePanel.Visibility = Visibility.Collapsed;
+                    SineWaveCanvas.Visibility = Visibility.Collapsed;
+                    ThinkingDotsPanel.Visibility = Visibility.Collapsed;
                     VisualizerPanel.Visibility = Visibility.Visible;
                     TxtHotkeyHint.Visibility = Visibility.Visible;
-                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
+                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue (now Moon)
+                    _satelliteStoryboard.SetSpeedRatio(1.0); // Normal speed
                     ResetBars();
                 }
             });
         }
 
+        /// <summary>
+        /// Draws a smooth sine wave across the SineWaveCanvas.
+        /// The amplitude is driven by real-time audio level (0-1 normalised).
+        /// </summary>
+        private void DrawSineWave(double amplitudeNorm)
+        {
+            const double canvasWidth = 120;
+            const double centerY = 22;
+            const double minAmp = 2.0;
+            const double maxAmp = 18.0;
+            double amplitude = minAmp + (amplitudeNorm * (maxAmp - minAmp));
+            const int points = 80;
+
+            var figure = new PathFigure { IsClosed = false, IsFilled = false };
+            for (int i = 0; i <= points; i++)
+            {
+                double x = (canvasWidth / points) * i;
+                double y = centerY + amplitude * Math.Sin(_sinePhase + (i / (double)points) * Math.PI * 4);
+                if (i == 0) figure.StartPoint = new System.Windows.Point(x, y);
+                else figure.Segments.Add(new LineSegment(new System.Windows.Point(x, y), true));
+            }
+
+            var geometry = new PathGeometry();
+            geometry.Figures.Add(figure);
+            SineWavePath.Data = geometry;
+            SineWaveGlow.Data = geometry; // glow uses same path
+        }
+
         public void UpdateVolumeIndicator(float normalized)
         {
-            // Use BeginInvoke to prevent blocking the audio thread and use Render priority for smoothness
-            Dispatcher.BeginInvoke(new Action(() =>
+            // Store amplitude for the sine wave timer to pick up
+            _currentAmplitude = normalized;
+
+            Dispatcher.Invoke(() =>
             {
-                // Scale Orb based on level
-                float scale = 1.0f + (normalized * 0.5f);
+                // Scale orb based on level
+                float scale = 1.0f + (normalized * 0.4f);
                 OrbScale.ScaleX = scale;
                 OrbScale.ScaleY = scale;
-
-                // Animate Bars - only if they are visible to save layout cycles
-                if (VisualizerPanel.Visibility == Visibility.Visible)
+                // Old bars are still used for idle visualiser (kept minimal)
+                foreach (var bar in _bars)
                 {
-                    foreach (var bar in _bars)
-                    {
-                        double variation = _rnd.NextDouble() * 0.5 + 0.5;
-                        bar.Height = Math.Max(4, normalized * 30 * variation);
-                        bar.Fill = _cachedWhiteBrush;
-                    }
+                    bar.Height = Math.Max(4, normalized * 30 * (_rnd.NextDouble() * 0.5 + 0.5));
+                    bar.Fill = _cachedWhiteBrush;
                 }
-            }), System.Windows.Threading.DispatcherPriority.Render);
+            });
         }
 
         private void OnAudioLevelChanged(float db)
         {
-            // Optimization: Skip calculation if window is hidden
-            if (!this.IsVisible) return;
-
             // Use same logic as Dashboard for consistency
             float minDb = -80;
             float sensitivityFactor = (float)AudioRecorder.Shared.Sensitivity * 2.0f;
@@ -293,9 +386,6 @@ namespace CosmoWhisper
             if (normalized < 0) normalized = 0;
             if (normalized > 1) normalized = 1;
 
-            // Optimization: If idle and level is basically zero, skip expensive UI update
-            if (!AudioRecorder.Shared.IsRecording && normalized < 0.01f) return;
-
             UpdateVolumeIndicator(normalized);
         }
 
@@ -303,23 +393,36 @@ namespace CosmoWhisper
 
         private void OnTranscriptionReceived(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return;
-
             Dispatcher.Invoke(async () =>
             {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    // Reset to idle if we get an empty string (e.g. filtered garbage)
+                    ResetOrbToIdle();
+                    return;
+                }
+
                 if (text.Contains("Thinking"))
                 {
+                    // Switch from sine wave → thinking dots
+                    SineWaveCanvas.Visibility = Visibility.Collapsed;
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = null;
+
+                    ThinkingDotsPanel.Visibility = Visibility.Visible;
+                    _thinkingDotsStoryboard.Begin();
                     _thinkingStoryboard?.Begin();
                     ThinkingAura.Opacity = 1;
                     SetTheme(Colors.MediumPurple, "THINKING");
                 }
                 else
                 {
+                    _thinkingDotsStoryboard?.Stop();
+                    ThinkingDotsPanel.Visibility = Visibility.Collapsed;
                     _thinkingStoryboard?.Stop();
                     ThinkingAura.Opacity = 0;
-                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
+                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), "");
 
-                    // UI provides feedback via Orb
                     if (!isRecordingActive)
                     {
                         var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
@@ -375,12 +478,17 @@ namespace CosmoWhisper
         {
             Dispatcher.Invoke(() =>
             {
-                // Show full error in status (don't use SetTheme as it overwrites the text)
-
+                // Show full error in status
                 OrbMain.Fill = new SolidColorBrush(Colors.OrangeRed);
                 OrbGlow.Fill = new SolidColorBrush(Colors.OrangeRed);
 
                 System.Diagnostics.Debug.WriteLine($"Cosmo Error: {error}");
+
+                if (TxtStatus != null)
+                {
+                    TxtStatus.Text = "Error: " + error;
+                    TxtStatus.Visibility = Visibility.Visible;
+                }
 
                 // Log to file for debugging
                 try
@@ -391,22 +499,128 @@ namespace CosmoWhisper
                     System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
                 }
                 catch { }
+
+                // Auto-reset after a few seconds to prevent "lock up" feel
+                Task.Delay(3000).ContinueWith(_ => Dispatcher.Invoke(() => ResetOrbToIdle()));
             });
         }
 
+        private void ResetOrbToIdle()
+        {
+            // Restores original colors and idle state (Blue)
+            SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); 
+            if (TxtStatus != null)
+            {
+                TxtStatus.Text = "Ready";
+                TxtStatus.Visibility = Visibility.Collapsed;
+            }
+        }
+
+
+
         private void SetTheme(System.Windows.Media.Color color, string statusText)
         {
-            OrbMain.Fill = new SolidColorBrush(color);
-            OrbGlow.Fill = new SolidColorBrush(color);
-            if (OrbShadow != null) OrbShadow.Color = color;
+            // NEW: Use White/Silver Moon as default, only change if specified (like OrangeRed for error)
+            System.Windows.Media.Color themeColor = color;
+            if (color == System.Windows.Media.Color.FromRgb(0, 122, 255)) themeColor = Colors.White; // Override Blue with Moon
+
+            OrbMain.Fill = new SolidColorBrush(themeColor);
+            OrbGlow.Fill = new SolidColorBrush(themeColor);
+            if (OrbShadow != null) OrbShadow.Color = themeColor;
 
             if (MainBorder != null)
             {
-                MainBorder.BorderBrush = new SolidColorBrush(color) { Opacity = 0.5 };
+                MainBorder.BorderBrush = new SolidColorBrush(themeColor) { Opacity = 0.5 };
             }
 
-            if (statusText == "ERROR") OrbMain.Fill = Brushes.OrangeRed;
-            if (statusText.Contains("THINKING")) OrbMain.Fill = new SolidColorBrush(Colors.MediumPurple);
+            if (statusText == "ERROR") 
+            {
+                OrbMain.Fill = Brushes.OrangeRed;
+                _satelliteStoryboard.SetSpeedRatio(0.5); // slow down on error
+            }
+            else if (statusText.Contains("THINKING")) 
+            {
+                OrbMain.Fill = new SolidColorBrush(Colors.MediumPurple);
+                _satelliteStoryboard.SetSpeedRatio(2.5); // spin faster when thinking
+            }
+            else
+            {
+                _satelliteStoryboard.SetSpeedRatio(1.0); // normal speed
+            }
+        }
+
+        private void LoadPosition()
+        {
+            try
+            {
+                var p = PreferenceManager.Shared.Preferences;
+                this.WindowStartupLocation = WindowStartupLocation.Manual;
+                this.Top = p.WidgetTop;
+                this.Left = p.WidgetLeft;
+                
+                EnsureVisible();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading widget position: {ex.Message}");
+            }
+        }
+
+        private void SavePosition()
+        {
+            try
+            {
+                if (this.WindowState != WindowState.Normal) return;
+                
+                var p = PreferenceManager.Shared.Preferences;
+                p.WidgetTop = this.Top;
+                p.WidgetLeft = this.Left;
+                PreferenceManager.Shared.Save();
+            }
+            catch { }
+        }
+
+        private void EnsureVisible()
+        {
+            try
+            {
+                bool isVisible = false;
+                foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+                {
+                    // Check if window center is within any screen
+                    double centerX = this.Left + (this.Width / 2);
+                    double centerY = this.Top + (this.Height / 2);
+
+                    if (centerX >= screen.WorkingArea.Left && centerX <= screen.WorkingArea.Right &&
+                        centerY >= screen.WorkingArea.Top && centerY <= screen.WorkingArea.Bottom)
+                    {
+                        isVisible = true;
+                        break;
+                    }
+                }
+
+                if (!isVisible)
+                {
+                    // Snap to primary screen center-ish
+                    var primary = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea;
+                    this.Left = primary.Right - this.Width - 100;
+                    this.Top = primary.Bottom - this.Height - 100;
+                    SavePosition();
+                }
+            }
+            catch { }
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Unless the application is shutting down, we just hide.
+            // This prevents "vanishing" if user accidentally hits Alt+F4
+            if (System.Windows.Application.Current != null && !App.IsShuttingDown) 
+            {
+                e.Cancel = true;
+                this.Visibility = Visibility.Collapsed;
+            }
+            base.OnClosing(e);
         }
 
         public void ApplyWidgetTransparency()
@@ -497,6 +711,9 @@ namespace CosmoWhisper
                 // Periodic "kick" ensuring we stay above other topmost windows
                 this.Topmost = false;
                 this.Topmost = true;
+
+                // FINAL SAFETY: If we are visible, ensure we are actually on screen
+                if (this.Visibility == Visibility.Visible) EnsureVisible();
             }
             catch { }
         }
@@ -522,3 +739,4 @@ namespace CosmoWhisper
         }
     }
 }
+

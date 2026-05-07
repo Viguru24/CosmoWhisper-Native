@@ -4,7 +4,6 @@ using System.Text.Json;
 
 namespace CosmoWhisper.Managers
 {
-    public enum InsertionMethod { FastPaste, DirectTyping }
 
     public class UserPreferences : System.ComponentModel.INotifyPropertyChanged
     {
@@ -17,7 +16,6 @@ namespace CosmoWhisper.Managers
         private uint _virtualKey = 0x78; // F9
         public uint VirtualKey { get => _virtualKey; set { _virtualKey = value; OnPropertyChanged(nameof(VirtualKey)); } }
         public string MouseButton { get; set; } = "None"; // "Left", "Right", "Middle", "XButton1", "XButton2"
-        public InsertionMethod InsertionMode { get; set; } = InsertionMethod.FastPaste;
         public bool RestoreClipboard { get; set; } = true;
         public bool AutoSubmit { get; set; } = false;
         public string BackupDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
@@ -90,7 +88,7 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com") return false;
+                if (UserEmail?.ToLower() == "louisdesouza@gmail.com") return false;
 
                 if (_isStoreVersion.HasValue) return _isStoreVersion.Value;
                 try
@@ -123,6 +121,10 @@ namespace CosmoWhisper.Managers
 
         private bool _hasCompletedOnboarding = false;
         public bool HasCompletedOnboarding { get => _hasCompletedOnboarding; set { _hasCompletedOnboarding = value; OnPropertyChanged(nameof(HasCompletedOnboarding)); } }
+
+        // Sign-Off / Signature Settings
+        public string SignOffSignature { get; set; } = "Regards,\nBruce Wayne";
+        public bool EnableSignOff { get; set; } = false;
     }
 
     public class PreferenceManager : System.ComponentModel.INotifyPropertyChanged
@@ -132,6 +134,7 @@ namespace CosmoWhisper.Managers
 
         public static PreferenceManager Shared { get; } = new PreferenceManager();
         
+        public bool IsDevMode { get; private set; }
         private UserPreferences _preferences;
         public UserPreferences Preferences 
         { 
@@ -153,7 +156,7 @@ namespace CosmoWhisper.Managers
 #if DEV_BUILD
             return true;
 #else
-            return Array.Exists(Environment.GetCommandLineArgs(), arg => arg.Equals("--dev", StringComparison.OrdinalIgnoreCase));
+            return false;
 #endif
         }
 
@@ -162,11 +165,21 @@ namespace CosmoWhisper.Managers
             try
             {
                 string appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#if DEV_BUILD
-                _appDataFolder = Path.Combine(appDataRoot, "Cosmo_Dev_Sandbox");
-#else
-                _appDataFolder = Path.Combine(appDataRoot, "CosmoWhisper_Personal");
+                
+                bool isDev = Environment.GetCommandLineArgs().Contains("--dev", StringComparer.OrdinalIgnoreCase);
+#if DEBUG
+                isDev = true;
 #endif
+                IsDevMode = isDev;
+
+                if (isDev)
+                {
+                    _appDataFolder = Path.Combine(appDataRoot, "CosmoWhisper_Dev");
+                }
+                else
+                {
+                    _appDataFolder = Path.Combine(appDataRoot, "CosmoWhisper_Personal");
+                }
 
                 if (!Directory.Exists(_appDataFolder))
                 {
@@ -196,15 +209,22 @@ namespace CosmoWhisper.Managers
                         Preferences.BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
                     }
                     
-                    // Default Backend URLs
-                    bool isDev = IsDevelopmentMode();
-                    if (string.IsNullOrEmpty(Preferences.BackendUrl) || 
-                        (isDev && Preferences.BackendUrl.Contains("cosmowhisper.com")) ||
-                        (!isDev && Preferences.BackendUrl.Contains("localhost")))
+                    // Default Backend URLs - FORCE Production for non-dev builds
+                    // This prevents MSIX builds from accidentally using stale dev IPs found in AppData
+                    if (!IsDevMode)
                     {
-                        Preferences.BackendUrl = isDev ? "http://localhost:5000" : "https://api.cosmowhisper.com";
+                        if (string.IsNullOrEmpty(Preferences.BackendUrl) || !Preferences.BackendUrl.Contains("api.cosmowhisper.com"))
+                        {
+                            Preferences.BackendUrl = "https://api.cosmowhisper.com";
+                            Save();
+                        }
+                    }
+                    else if (string.IsNullOrEmpty(Preferences.BackendUrl) || Preferences.BackendUrl.Contains("localhost"))
+                    {
+                        Preferences.BackendUrl = "https://api.cosmowhisper.com";
                         Save();
                     }
+
 
                     // Migration: Ensure everyone is on the 60-minute limit
                     if (Preferences.UsageLimitMinutes < 60)
@@ -223,16 +243,12 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        private string _lastSavedJson = "";
         public void Save()
         {
             try
             {
                 string json = JsonSerializer.Serialize(Preferences, new JsonSerializerOptions { WriteIndented = true });
-                if (json == _lastSavedJson) return; // No changes, skip disk I/O
-
                 File.WriteAllText(_settingsPath, json);
-                _lastSavedJson = json;
                 PreferencesUpdated?.Invoke();
             }
             catch { } // logging?

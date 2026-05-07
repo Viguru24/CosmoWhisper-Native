@@ -1,5 +1,6 @@
+using System.Windows;
 using System.Windows.Controls;
-using CosmoWhisper.Managers;
+using System.Windows.Input;
 
 namespace CosmoWhisper.Views
 {
@@ -8,26 +9,15 @@ namespace CosmoWhisper.Views
         public MicrophoneView()
         {
             InitializeComponent();
-            LoadDevices();
-
-            SldSensitivity.ValueChanged += (s, e) =>
-            {
-                TxtSensitivityValue.Text = $"{(int)e.NewValue}%";
-                PreferenceManager.Shared.Preferences.MicSensitivity = e.NewValue / 100.0;
-                PreferenceManager.Shared.Save();
-            };
+            
+            // Wire up internal events to delegate to parent
+            this.ComboMics.SelectionChanged += (s, e) => GetParentWindow()?.ComboMics_SelectionChanged(s, e);
+            this.SldSensitivity.ValueChanged += (s, e) => GetParentWindow()?.SldSensitivity_ValueChanged(s, e);
         }
 
-        private async void LoadDevices()
-        {
-            var devices = await AudioRecorder.Shared.EnumerateInputDevices();
-            ComboMics.ItemsSource = devices;
-            ComboMics.DisplayMemberPath = "Name";
+        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
-            // Set selected device from preferences
-            // (Simplified for now)
-        }
+        private void ToggleInteractionSounds_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleInteractionSounds_Click(sender, e);
+        private void BtnCalibrate_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnCalibrate_Click(sender, e);
     }
 }
-
-

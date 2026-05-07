@@ -1,11 +1,17 @@
-# Progress - CosmoWhisper Native Optimization
+# Progress - Voice Recognition Session
 
-## Session: 2026-05-05
-- **Task**: Address 1.3% idle CPU usage, fix dev launcher, and run app.
-- **Status**: COMPLETED.
+## 2026-05-07 15:55
+- [x] Refined `AIService.cs` prompt to include formatting commands and reduce aggressive noise filtering.
+- [x] Expanded `TextProcessor.cs` regex patterns to handle "newline" and more variations.
+- [x] Increased audio padding in `AudioRecorder.cs` to 300ms to prevent clipping.
+- [ ] Next: Optimize Race Mode to favor Cloud for longer dictations (accuracy over speed).
 
-### Log:
-- **CPU Optimization**: Optimized `AudioRecorder.cs` (bitwise extraction, integer math) and `WidgetWindow.xaml.cs` (throttled UI, BeginInvoke).
-- **Launcher Fix**: Identified incorrect `APP_PATH` in `run_dev.bat` (extra `x64` folder). Fixed it in the repo.
-- **Deployment**: Copied the fixed launcher to `C:\Users\louis\OneDrive\Desktop\CosmoWhisper_Dev_Launcher.bat`.
-- **Execution**: Successfully ran the fixed batch file to launch the app.
+## Session Log
+- **15:48**: Started session. User reports commands not working and poor dictation quality.
+- **15:52**: Found aggressive "non-speech" filtering in prompt and tight audio padding.
+- **15:54**: Softened prompt and improved command regex. Increased audio padding.
+- **15:55**: Identified "Race Mode" with `tiny` model as the likely cause for "terrible" long sentence dictation.
+- **16:00**: **CRITICAL DISCOVERY**: Found a bug in `TextProcessor.IsGarbage` that was discarding any sentence containing phrases like "thank you" or "subtracting". This was the true cause of "losing words".
+- **16:02**: Fixed `IsGarbage` to use exact matching. Reverted Cloud-forcing heuristic to respect user's Local-only preference. Adjusted prompt for better command recognition.
+
+

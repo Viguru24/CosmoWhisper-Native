@@ -23,6 +23,78 @@ namespace CosmoWhisper.Managers
         private const byte VK_MENU = 0x12; // Alt
         private const byte VK_LWIN = 0x5B;
 
+        private string? SafeGetClipboardText()
+        {
+            if (System.Windows.Application.Current == null) return null;
+            
+            string? result = null;
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    try
+                    {
+                        if (System.Windows.Clipboard.ContainsText())
+                        {
+                            result = System.Windows.Clipboard.GetText();
+                            break;
+                        }
+                    }
+                    catch (COMException) { Thread.Sleep(50); }
+                    catch (Exception) { break; }
+                }
+            });
+            return result;
+        }
+
+        public void SafeSetClipboardText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    System.Windows.Clipboard.SetText(text);
+                    return;
+                }
+                catch (COMException) { Thread.Sleep(50); }
+                catch (Exception) { break; }
+            }
+        }
+
+        public async Task<string> CaptureSelectedText()
+        {
+            // 1. Clear clipboard on UI thread
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                try { System.Windows.Clipboard.Clear(); } catch { }
+            });
+
+            // 2. Send Ctrl+C via Win32 (Thread-safe)
+            ExecuteKeystroke("c", ctrl: true);
+
+            // 3. Wait and check
+            string captured = "";
+            for (int i = 0; i < 6; i++) // Check for up to 1.5 seconds
+            {
+                await Task.Delay(250);
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        if (System.Windows.Clipboard.ContainsText())
+                            captured = System.Windows.Clipboard.GetText();
+                    }
+                    catch { }
+                });
+
+                if (!string.IsNullOrWhiteSpace(captured)) return captured;
+            }
+
+            return "";
+        }
+
         public async Task PasteText(string text, bool autoSubmit = false, bool restoreClipboard = true)
         {
             string? oldText = null;
@@ -31,18 +103,17 @@ namespace CosmoWhisper.Managers
                 // Must be on UI thread for System.Windows.Clipboard access
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (System.Windows.Clipboard.ContainsText())
-                        oldText = System.Windows.Clipboard.GetText();
+                    oldText = SafeGetClipboardText();
                 });
             }
 
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                System.Windows.Clipboard.SetText(text);
+                SafeSetClipboardText(text);
             });
 
-            // Small delay to allow clipboard to sync
-            await Task.Delay(100);
+            // Small delay to allow clipboard to sync (Reduced from 100ms for speed)
+            await Task.Delay(50);
 
             // Ctrl + V
             SendModifierKey(VK_CONTROL, false);
@@ -52,17 +123,17 @@ namespace CosmoWhisper.Managers
 
             if (autoSubmit)
             {
-                await Task.Delay(150);
+                await Task.Delay(100); // Reduced from 150ms
                 SendKey(0x0D, false); // Enter
                 SendKey(0x0D, true);
             }
 
             if (restoreClipboard && oldText != null)
             {
-                await Task.Delay(500);
+                await Task.Delay(200); // Reduced from 500ms
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    System.Windows.Clipboard.SetText(oldText);
+                    SafeSetClipboardText(oldText);
                 });
             }
         }
@@ -201,38 +272,6 @@ namespace CosmoWhisper.Managers
                 await Task.Delay(50);
                 SendKey(0x0D, false); // Enter
                 SendKey(0x0D, true);
-            }
-        }
-        public void SafeSetClipboardText(string text)
-        {
-            try
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    System.Windows.Clipboard.SetText(text);
-                });
-            }
-            catch { }
-        }
-
-        [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-
-        public string GetActiveProcessName()
-        {
-            try
-            {
-                IntPtr hwnd = GetForegroundWindow();
-                GetWindowThreadProcessId(hwnd, out uint pid);
-                var process = System.Diagnostics.Process.GetProcessById((int)pid);
-                return process.ProcessName;
-            }
-            catch
-            {
-                return "Unknown";
             }
         }
     }

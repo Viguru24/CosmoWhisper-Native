@@ -55,6 +55,14 @@ namespace CosmoWhisper.Controllers
                 Window.TxtVocabHints.TextChanged -= TxtVocabHints_TextChanged;
                 Window.TxtVocabHints.TextChanged += TxtVocabHints_TextChanged;
             }
+
+            // Load Signature
+            if (Window.TxtSignature != null)
+            {
+                Window.TxtSignature.Text = PreferenceManager.Shared.Preferences.SignOffSignature;
+                UpdateSignature();
+            }
+            UpdateSignOffUI();
         }
 
         private void TxtVocabHints_TextChanged(object sender, TextChangedEventArgs e)
@@ -65,6 +73,39 @@ namespace CosmoWhisper.Controllers
                 VocabularyManager.Shared.Save();
                 UpdateHintsPlaceholder(tb);
             }
+        }
+
+        public void UpdateSignature()
+        {
+            if (Window.TxtSignature == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            p.SignOffSignature = Window.TxtSignature.Text;
+            PreferenceManager.Shared.Save();
+            
+            if (Window.PlaceholderSignature != null)
+                Window.PlaceholderSignature.Visibility = string.IsNullOrEmpty(p.SignOffSignature) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public void ToggleSignOff()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.EnableSignOff = !p.EnableSignOff;
+            PreferenceManager.Shared.Save();
+            UpdateSignOffUI();
+        }
+
+        public void UpdateSignOffUI()
+        {
+            if (Window.ToggleSignOff == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            bool isOn = p.EnableSignOff;
+
+            Window.ToggleSignOff.Background = isOn 
+                ? new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#007AFF"))
+                : new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#30FFFFFF"));
+
+            if (Window.DotSignOff != null)
+                Window.DotSignOff.HorizontalAlignment = isOn ? System.Windows.HorizontalAlignment.Right : System.Windows.HorizontalAlignment.Left;
         }
 
         private void UpdateHintsPlaceholder(TextBox tb)
@@ -212,11 +253,11 @@ namespace CosmoWhisper.Controllers
 
         public void UpdatePlaceholderVisibility(TextBox txt)
         {
-            if (txt.Name == "TxtNewKey" && Window.PlaceholderKey != null)
+            if (txt.Name == "TxtNewKeyControl" && Window.PlaceholderKey != null)
             {
                 Window.PlaceholderKey.Visibility = string.IsNullOrEmpty(txt.Text) ? Visibility.Visible : Visibility.Collapsed;
             }
-            else if (txt.Name == "TxtNewValue" && Window.PlaceholderValue != null)
+            else if (txt.Name == "TxtNewValueControl" && Window.PlaceholderValue != null)
             {
                 Window.PlaceholderValue.Visibility = string.IsNullOrEmpty(txt.Text) ? Visibility.Visible : Visibility.Collapsed;
             }

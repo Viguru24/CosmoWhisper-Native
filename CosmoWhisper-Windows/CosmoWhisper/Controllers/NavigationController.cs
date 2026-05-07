@@ -17,7 +17,7 @@ namespace CosmoWhisper.Controllers
 
         public void ShowDashboard()
         {
-            AudioRecorder.Shared.StartMonitoring();
+            AudioRecorder.Shared.StopMonitoring(); // Save resources on main dashboard
             SwitchToView(Window.DashboardHeader, Window.DashboardView, Window.BtnDashboard);
         }
 
@@ -26,6 +26,7 @@ namespace CosmoWhisper.Controllers
 
         public void ShowSmartCommands()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.SmartCommandsHeader, Window.SmartCommandsView, Window.BtnSmartCommands);
         }
 
@@ -37,17 +38,26 @@ namespace CosmoWhisper.Controllers
 
         public void ShowNarration()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.NarrationHeader, Window.NarrationView, Window.BtnNarration);
         }
 
         public void ShowLibrary()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(null, Window.CloudLibraryView, Window.BtnLibrary);
         }
 
         public void ShowAccount()
         {
-            if (string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.UserEmail))
+            AudioRecorder.Shared.StopMonitoring();
+            var p = PreferenceManager.Shared.Preferences;
+            // Token is the ultimate source of truth for login. Email is just UI metadata.
+            bool isLoggedIn = !string.IsNullOrEmpty(p.AuthToken) || !string.IsNullOrEmpty(p.UserEmail);
+            
+            Debug.WriteLine($"[Navigation] ShowAccount: isLoggedIn={isLoggedIn}, Token={!string.IsNullOrEmpty(p.AuthToken)}, Email={!string.IsNullOrEmpty(p.UserEmail)}");
+
+            if (!isLoggedIn)
             {
                 ShowLogin();
                 return;
@@ -57,21 +67,25 @@ namespace CosmoWhisper.Controllers
 
         public void ShowLogin()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.LoginHeader, Window.LoginView, null);
         }
 
         public void ShowIntelligence()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.IntelligenceHeader, Window.IntelligenceView, Window.BtnIntelligence);
         }
 
         public void ShowVocabulary()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.VocabularyHeader, Window.VocabularyView, Window.BtnVocabulary);
         }
 
         public void ShowPreferences()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.PreferencesHeader, Window.PreferencesView, Window.BtnPreferences);
         }
 

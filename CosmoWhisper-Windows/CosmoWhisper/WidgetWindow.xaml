@@ -43,15 +43,20 @@
                              From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
         </Storyboard>
 
-        <!-- Sound Wave Animation (Fluid & Glowing) -->
-        <Storyboard x:Key="SoundWaveAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="Wave1" Storyboard.TargetProperty="Height" From="8" To="35" Duration="0:0:0.45" AutoReverse="True"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave2" Storyboard.TargetProperty="Height" From="12" To="45" Duration="0:0:0.55" AutoReverse="True" BeginTime="0:0:0.1"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave3" Storyboard.TargetProperty="Height" From="16" To="55" Duration="0:0:0.65" AutoReverse="True" BeginTime="0:0:0.05"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave4" Storyboard.TargetProperty="Height" From="10" To="38" Duration="0:0:0.5" AutoReverse="True" BeginTime="0:0:0.15"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave5" Storyboard.TargetProperty="Height" From="14" To="48" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.08"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave6" Storyboard.TargetProperty="Height" From="10" To="42" Duration="0:0:0.52" AutoReverse="True" BeginTime="0:0:0.12"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Wave7" Storyboard.TargetProperty="Height" From="6" To="28" Duration="0:0:0.48" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><BackEase Amplitude="0.5"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+        <!-- Thinking Dots Animation (staggered pulse) -->
+        <Storyboard x:Key="ThinkingDotsAnimation" RepeatBehavior="Forever">
+            <!-- Dot 1 -->
+            <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot1" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"/>
+            <!-- Dot 2 -->
+            <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot2" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"/>
+            <!-- Dot 3 -->
+            <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="Dot3" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"/>
         </Storyboard>
 
         <!-- AI Thinking Glow -->
@@ -87,6 +92,16 @@
         <Storyboard x:Key="IridescentAnimation" RepeatBehavior="Forever">
             <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:3" AutoReverse="True"/>
             <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:3" AutoReverse="True"/>
+        </Storyboard>
+
+        <!-- Moon Satellite Animation -->
+        <Storyboard x:Key="SatelliteAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="SatelliteRotation" 
+                             Storyboard.TargetProperty="Angle" 
+                             From="0" To="360" Duration="0:0:2.5"/>
+            <DoubleAnimation Storyboard.TargetName="SatelliteOrb" 
+                             Storyboard.TargetProperty="Opacity" 
+                             From="1" To="0.4" Duration="0:0:1.25" AutoReverse="True"/>
         </Storyboard>
     </Window.Resources>
 
@@ -168,14 +183,14 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Liquid Mic Orb -->
+                    <!-- Liquid Moon Orb -->
                     <Grid x:Name="MicControl" Cursor="Hand" MouseLeftButtonDown="MicControl_MouseLeftButtonDown" VerticalAlignment="Center" Margin="2,0,8,0">
                         <Grid x:Name="ThinkingAura" Opacity="0">
                             <Ellipse Width="46" Height="46">
                                 <Ellipse.Fill>
                                     <RadialGradientBrush>
-                                        <GradientStop Color="#88A000FF" Offset="0"/>
-                                        <GradientStop Color="#00A000FF" Offset="1"/>
+                                        <GradientStop Color="#88FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Ellipse.Fill>
                                 <Ellipse.Effect><BlurEffect Radius="25" RenderingBias="Performance"/></Ellipse.Effect>
@@ -188,36 +203,51 @@
                             </Grid.RenderTransform>
                         </Grid>
 
-                        <Ellipse x:Name="OrbCorona" Width="44" Height="44" Opacity="0">
+                        <Ellipse x:Name="OrbCorona" Width="44" Height="44" Opacity="0.3">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>
-                                    <GradientStop Color="#44007AFF" Offset="0.2"/>
-                                    <GradientStop Color="#00007AFF" Offset="1"/>
+                                    <GradientStop Color="#44FFFFFF" Offset="0.2"/>
+                                    <GradientStop Color="#00FFFFFF" Offset="1"/>
                                 </RadialGradientBrush>
                             </Ellipse.Fill>
                             <Ellipse.Effect><BlurEffect Radius="20" RenderingBias="Performance"/></Ellipse.Effect>
                         </Ellipse>
-                        <Ellipse x:Name="OrbGlow" Width="36" Height="36" Fill="#CC007AFF" Opacity="0">
+                        
+                        <Ellipse x:Name="OrbGlow" Width="36" Height="36" Fill="#88FFFFFF" Opacity="0.4">
                             <Ellipse.Effect><BlurEffect Radius="12" RenderingBias="Performance"/></Ellipse.Effect>
                             <Ellipse.RenderTransform>
                                 <ScaleTransform x:Name="OrbAuraScale" CenterX="18" CenterY="18"/>
                             </Ellipse.RenderTransform>
                         </Ellipse>
-                        <Ellipse x:Name="OrbMain" Width="20" Height="20">
+
+                        <Ellipse x:Name="OrbMain" Width="22" Height="22">
                             <Ellipse.Fill>
                                 <RadialGradientBrush Center="0.3,0.3" RadiusX="1" RadiusY="1">
-                                    <GradientStop Color="#FF55A9FF" Offset="0"/>
-                                    <GradientStop Color="#FF007AFF" Offset="0.7"/>
-                                    <GradientStop Color="#FF0056B3" Offset="1"/>
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop Color="#F0F0F0" Offset="0.3"/>
+                                    <GradientStop Color="#D0D0D0" Offset="0.7"/>
+                                    <GradientStop Color="#C0C0C0" Offset="1"/>
                                 </RadialGradientBrush>
                             </Ellipse.Fill>
                             <Ellipse.RenderTransform>
-                                <ScaleTransform x:Name="OrbScale" CenterX="10" CenterY="10"/>
+                                <ScaleTransform x:Name="OrbScale" CenterX="11" CenterY="11"/>
                             </Ellipse.RenderTransform>
-                        <Ellipse.Effect>
-                                <DropShadowEffect x:Name="OrbShadow" BlurRadius="10" Color="#007AFF" Opacity="0.6" ShadowDepth="0" RenderingBias="Performance"/>
+                            <Ellipse.Effect>
+                                <DropShadowEffect x:Name="OrbShadow" BlurRadius="15" Color="White" Opacity="0.5" ShadowDepth="0" RenderingBias="Performance"/>
                             </Ellipse.Effect>
                         </Ellipse>
+
+                        <!-- Satellite fly-by -->
+                        <Canvas Width="44" Height="44" IsHitTestVisible="False">
+                            <Ellipse x:Name="SatelliteOrb" Width="5" Height="4" Fill="White" Canvas.Left="40" Canvas.Top="20">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect Color="White" BlurRadius="8" ShadowDepth="0" Opacity="1" RenderingBias="Performance"/>
+                                </Ellipse.Effect>
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform x:Name="SatelliteRotation" CenterX="-18" CenterY="2"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                        </Canvas>
                     </Grid>
 
                     <!-- Visualizer -->
@@ -233,31 +263,51 @@
                             <Rectangle Width="3" Height="4" RadiusX="1.5" RadiusY="1.5" Fill="#44FFFFFF" Margin="2,0"/>
                         </StackPanel>
 
+                        <!-- Status/Error Text (NEWly Required by C#) -->
+                        <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="OrangeRed" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" IsHitTestVisible="False" FontWeight="Bold"/>
+
                         <!-- Hotkey Hint (NEW) -->
                         <TextBlock x:Name="TxtHotkeyHint" Text="Hold F9" Foreground="White" Opacity="0.3" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Visible" IsHitTestVisible="False"/>
 
-                        <StackPanel x:Name="SoundWavePanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
-                            <Rectangle x:Name="Wave1" Width="4" Height="8" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00D4FF" Offset="0"/><GradientStop Color="#007AFF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave2" Width="4" Height="12" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00FFD4" Offset="0"/><GradientStop Color="#00D4FF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave3" Width="4" Height="16" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FF00D4" Offset="0"/><GradientStop Color="#FF007A" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave4" Width="4" Height="10" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FFD400" Offset="0"/><GradientStop Color="#FF7A00" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave5" Width="4" Height="14" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#8B5CF6" Offset="0"/><GradientStop Color="#6D28D9" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave6" Width="4" Height="10" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00D4FF" Offset="0"/><GradientStop Color="#007AFF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="Wave7" Width="4" Height="6" RadiusX="2" RadiusY="2" Margin="2,0" VerticalAlignment="Center">
-                                <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00FFD4" Offset="0"/><GradientStop Color="#00D4FF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
-                            </Rectangle>
+
+                        <!-- Sine Wave Canvas: driven by C# audio level in real-time -->
+                        <Canvas x:Name="SineWaveCanvas" Width="120" Height="44" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path x:Name="SineWavePath"
+                                  Stroke="White"
+                                  StrokeThickness="1.8"
+                                  StrokeLineJoin="Round"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Opacity="0.92">
+                                <Path.Effect>
+                                    <BlurEffect Radius="2" RenderingBias="Performance"/>
+                                </Path.Effect>
+                            </Path>
+                            <!-- Glow duplicate for depth -->
+                            <Path x:Name="SineWaveGlow"
+                                  Stroke="White"
+                                  StrokeThickness="4"
+                                  Opacity="0.18">
+                                <Path.Effect>
+                                    <BlurEffect Radius="6" RenderingBias="Performance"/>
+                                </Path.Effect>
+                            </Path>
+                        </Canvas>
+
+                        <!-- Thinking Dots: three white circles that pulse sequentially -->
+                        <StackPanel x:Name="ThinkingDotsPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                            <Ellipse x:Name="Dot1" Width="7" Height="7" Fill="White" Margin="4,0" Opacity="0.25">
+                                <Ellipse.RenderTransform><ScaleTransform x:Name="Dot1Scale" CenterX="3.5" CenterY="3.5"/></Ellipse.RenderTransform>
+                                <Ellipse.Effect><DropShadowEffect Color="White" BlurRadius="6" ShadowDepth="0" Opacity="0.6" RenderingBias="Performance"/></Ellipse.Effect>
+                            </Ellipse>
+                            <Ellipse x:Name="Dot2" Width="7" Height="7" Fill="White" Margin="4,0" Opacity="0.25">
+                                <Ellipse.RenderTransform><ScaleTransform x:Name="Dot2Scale" CenterX="3.5" CenterY="3.5"/></Ellipse.RenderTransform>
+                                <Ellipse.Effect><DropShadowEffect Color="White" BlurRadius="6" ShadowDepth="0" Opacity="0.6" RenderingBias="Performance"/></Ellipse.Effect>
+                            </Ellipse>
+                            <Ellipse x:Name="Dot3" Width="7" Height="7" Fill="White" Margin="4,0" Opacity="0.25">
+                                <Ellipse.RenderTransform><ScaleTransform x:Name="Dot3Scale" CenterX="3.5" CenterY="3.5"/></Ellipse.RenderTransform>
+                                <Ellipse.Effect><DropShadowEffect Color="White" BlurRadius="6" ShadowDepth="0" Opacity="0.6" RenderingBias="Performance"/></Ellipse.Effect>
+                            </Ellipse>
                         </StackPanel>
                     </Grid>
 
@@ -300,3 +350,4 @@
         </Border>
     </Grid>
 </Window>
+

@@ -27,7 +27,7 @@ namespace CosmoWhisper.Managers
                 string apiKey = p.OpenAIApiKey;
                 
                 // Identify if it's a neural voice (OpenAI)
-                string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer" };
+                string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer", "Ash", "Brook", "Cedar", "Coral", "Sage" };
                 bool isNeural = neuralVoices.Any(nv => string.Equals(nv, voice, StringComparison.OrdinalIgnoreCase));
                 
                 LogToFile($"Narration Request: Voice='{voice}', isNeural={isNeural}, hasKey={!string.IsNullOrWhiteSpace(apiKey)}");

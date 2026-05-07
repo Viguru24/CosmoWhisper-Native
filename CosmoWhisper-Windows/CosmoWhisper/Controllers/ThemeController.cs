@@ -29,6 +29,7 @@ namespace CosmoWhisper.Controllers
             Application.Current.Resources["ThemeBgMidColor"] = ColorConverter.ConvertFromString(bgMid);
             Application.Current.Resources["ThemeBgEndColor"] = ColorConverter.ConvertFromString(bgEnd);
             Application.Current.Resources["ThemeSurfaceColor"] = ColorConverter.ConvertFromString(surface);
+            Application.Current.Resources["ThemeForegroundColor"] = Colors.White;
 
             // Re-create brushes
             Application.Current.Resources["ThemeAccentBrush"] = CreateFrozenBrush(accent);
@@ -38,6 +39,7 @@ namespace CosmoWhisper.Controllers
             Application.Current.Resources["ThemeBgMidBrush"] = CreateFrozenBrush(bgMid);
             Application.Current.Resources["ThemeBgEndBrush"] = CreateFrozenBrush(bgEnd);
             Application.Current.Resources["ThemeSurfaceBrush"] = CreateFrozenBrush(surface);
+            Application.Current.Resources["ThemeForegroundBrush"] = Brushes.White;
 
             // Add slight transparency to surface for glass effect
             var surfaceColor = (Color)ColorConverter.ConvertFromString(surface);

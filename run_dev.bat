@@ -1,24 +1,48 @@
 @echo off
-setlocal
-title CosmoWhisper Dev Launcher (Publish Mode)
+setlocal enabledelayedexpansion
 
-set APP_EXE=CosmoWhisperNative2.exe
-set APP_PATH=c:\CosmoWhisper-Dev-Restore\CosmoWhisper-Windows\CosmoWhisper\bin\Debug\net8.0-windows10.0.19041.0\win-x64
+echo 🚀 Launching CosmoWhisper Development (Orange)...
+echo 🛑 Stopping clashing processes...
 
-echo [1/3] Terminating any existing CosmoWhisper processes...
-taskkill /F /IM %APP_EXE% /T 2>nul
-taskkill /F /IM CosmoWhisper.exe /T 2>nul
+:: Kill any running instances (Native and legacy)
+taskkill /F /IM CosmoWhisperNative.exe /t 2>nul
+taskkill /F /IM CosmoWhisperNative2.exe /t 2>nul
+taskkill /F /IM CosmoWhisper.exe /t 2>nul
 
-echo [2/3] Changing directory to Publish folder...
-cd /d "%APP_PATH%"
+:: Wait for processes to fully release file locks
+echo ⏳ Waiting for processes to terminate...
+timeout /t 2 /nobreak >nul
 
-echo [3/3] Launching CosmoWhisper in --dev mode...
-start "" "%APP_EXE%" --dev
+:: Set Project Path
+set PROJ_DIR=%~dp0CosmoWhisper-Windows\CosmoWhisper
+set CSPROJ=%PROJ_DIR%\CosmoWhisper.csproj
 
-echo.
-echo ==================================================
-echo   CosmoWhisper is now running from DEV OUTPUT
-echo   Location: %APP_PATH%
-echo ==================================================
-timeout /t 3
+:: Build the dev binary
+echo 🔨 Building Development binary...
+dotnet build "%CSPROJ%" -c Debug -r win-x64 --no-self-contained -nologo /clp:ErrorsOnly
+if %ERRORLEVEL% neq 0 (
+    echo ❌ Build failed! Retrying without specific Runtime Identifier...
+    dotnet build "%CSPROJ%" -c Debug -nologo /clp:ErrorsOnly
+    if !ERRORLEVEL! neq 0 (
+        echo ❌ Critical Build Failure.
+        pause
+        exit /b 1
+    )
+)
+
+echo ✨ Starting Development Instance (Orange Mode)...
+
+:: Try to find the exe in common build locations
+set EXE_PATH=%PROJ_DIR%\bin\Debug\net8.0-windows10.0.19041.0\win-x64\CosmoWhisperNative2.exe
+if not exist "!EXE_PATH!" set EXE_PATH=%PROJ_DIR%\bin\Debug\net8.0-windows10.0.19041.0\CosmoWhisperNative2.exe
+
+if not exist "!EXE_PATH!" (
+    echo ❌ Could not find executable at: !EXE_PATH!
+    pause
+    exit /b 1
+)
+
+:: Start Development App with --dev flag
+start "" "!EXE_PATH!" --dev
+
 exit

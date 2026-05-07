@@ -42,8 +42,19 @@ namespace CosmoWhisper.Managers
             }
 
             // Command Processing: Paragraphs and New Lines (Handle anywhere and with optional punctuation)
-            text = Regex.Replace(text, @"\b(new|next) paragraph[\.\?\!]*\s*", "\n\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(new|next) line[\.\?\!]*\s*", "\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(new|next)\s+paragraph[\.\?\!]*\s*", "\r\n\r\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(new|next)\s+line[\.\?\!]*\s*", "\r\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(newline|nextline)[\.\?\!]*\s*", "\r\n", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b(new|next)[\-\s]+(line|paragraph)[\.\?\!]*\s*", (m) => m.Groups[2].Value.ToLower().Contains("line") ? "\r\n" : "\r\n\r\n", RegexOptions.IgnoreCase);
+
+            // Remove disfluencies and non-speech sounds (e.g., (coughs), [clears throat], *laughs*)
+            // Enhanced to catch standalone artifacts without brackets if they appear as isolated tokens
+            text = Regex.Replace(text, @"\s*[\(\[\*](coughs?|coughing|clears throat|sighs?|laughs?|laughter|background noise|unintelligible|breathing|music|silence)[\)\]\*]\s*", " ", RegexOptions.IgnoreCase);
+            
+            // Catch standalone artifacts like "Cough." or " (Cough) " more reliably
+            text = Regex.Replace(text, @"^\s*(coughs?|coughing|clears throat|sighs?|laughs?|laughter|background noise|unintelligible|breathing|music)\.?\s*$", "", RegexOptions.IgnoreCase);
+            
+            text = Regex.Replace(text, @"\s*\[music\]\s*", " ", RegexOptions.IgnoreCase);
 
             // Punctuation commands
             if (low.Contains("comma")) text = Regex.Replace(text, @"\bcomma\b", ",", RegexOptions.IgnoreCase);
@@ -74,7 +85,9 @@ namespace CosmoWhisper.Managers
             if (low.Length <= 2) return true;
             
             if (ShortHallucinations.Contains(low)) return true;
-            if (PhraseHallucinations.Any(h => low.Contains(h))) return true;
+            // Only discard if the ENTIRE segment is a known hallucination phrase.
+            // Using Contains was too aggressive and stripped valid sentences containing these words.
+            if (PhraseHallucinations.Any(h => low == h.ToLower().Trim())) return true;
             if (text.Split("Bye").Length > 3) return true;
             if (text.Length < 3 && !text.Any(char.IsDigit)) return true;
 

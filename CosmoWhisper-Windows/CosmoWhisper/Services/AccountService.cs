@@ -14,6 +14,7 @@ namespace CosmoWhisper.Services
         public static AccountService Shared { get; } = new AccountService();
 
         private bool _isHeartbeatRunning = false;
+        private bool _isStatusListenerRunning = false;
         private int _heartbeatGuard = 0;
 
         public event Action? StatsUpdated;
@@ -30,6 +31,9 @@ namespace CosmoWhisper.Services
             if (System.Threading.Interlocked.CompareExchange(ref _heartbeatGuard, 1, 0) != 0) return;
             _isHeartbeatRunning = true;
 
+            StartStatusListener(); // Launch instant push listener
+
+            BackendService.Shared.LogEvent("[Account] Heartbeat loop started.");
             Task.Run(async () =>
             {
                 while (_isHeartbeatRunning)
@@ -39,6 +43,7 @@ namespace CosmoWhisper.Services
                         var prefs = PreferenceManager.Shared.Preferences;
                         if (string.IsNullOrEmpty(prefs.LicenseToken) && string.IsNullOrEmpty(prefs.AuthToken))
                         {
+                            BackendService.Shared.LogEvent("[Account] No tokens found, stopping heartbeat.");
                             _isHeartbeatRunning = false;
                             break;
                         }
@@ -48,6 +53,7 @@ namespace CosmoWhisper.Services
                             var result = await BackendService.Shared.SyncStatus();
                             if (result == SyncResult.Unauthorized)
                             {
+                                BackendService.Shared.LogEvent("[Account] Heartbeat: Unauthorized. Blocking access.");
                                 if (!AppState.Shared.IsAccessBlocked)
                                 {
                                     AppState.Shared.IsAccessBlocked = true;
@@ -57,7 +63,12 @@ namespace CosmoWhisper.Services
                             }
                             else if (result == SyncResult.Success)
                             {
+                                // DiagnosticManager.Shared.Log("Heartbeat: Success.", "AUTH"); // Too noisy? 
                                 AppState.Shared.IsAccessBlocked = false;
+                            }
+                            else if (result == SyncResult.NetworkError)
+                            {
+                                BackendService.Shared.LogEvent("[Account] Heartbeat: Network Error (Backend down?).");
                             }
                         }
                         
@@ -65,17 +76,98 @@ namespace CosmoWhisper.Services
                     }
                     catch (Exception ex)
                     {
-                        DiagnosticManager.Shared.Log($"Heartbeat error: {ex.Message}", "ERROR");
+                        DiagnosticManager.Shared.Log($"Heartbeat loop exception: {ex.Message}", "ERROR");
                     }
                     await Task.Delay(TimeSpan.FromSeconds(30));
                 }
+                BackendService.Shared.LogEvent("[Account] Heartbeat loop stopped.");
                 System.Threading.Interlocked.Exchange(ref _heartbeatGuard, 0);
+            });
+        }
+
+        private void StartStatusListener()
+        {
+            if (_isStatusListenerRunning) return;
+            _isStatusListenerRunning = true;
+
+            Task.Run(async () =>
+            {
+                BackendService.Shared.LogEvent("[SSE] Status listener (SSE) started.");
+                while (_isStatusListenerRunning && _isHeartbeatRunning)
+                {
+                    try
+                    {
+                        using (var stream = await BackendService.Shared.GetStatusStream())
+                        {
+                            if (stream == null)
+                            {
+                                await Task.Delay(5000); // Wait before retry
+                                continue;
+                            }
+
+                            using (var reader = new System.IO.StreamReader(stream))
+                            {
+                                while (!reader.EndOfStream && _isStatusListenerRunning)
+                                {
+                                    var line = await reader.ReadLineAsync();
+                                    if (line == null) 
+                                    {
+                                        BackendService.Shared.LogEvent("[SSE] Stream ended. Reconnecting...");
+                                        break;
+                                    }
+                                    
+                                    if (string.IsNullOrEmpty(line)) continue;
+                                    
+                                    // Log every line for debugging
+                                    BackendService.Shared.LogEvent($"[SSE] Received: {line}");
+
+                                    if (line.StartsWith("data: "))
+                                    {
+                                        var jsonData = line.Substring(6);
+                                        try
+                                        {
+                                            var status = System.Text.Json.JsonSerializer.Deserialize<StatusChangeEvent>(jsonData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                                            if (status != null)
+                                            {
+                                                BackendService.Shared.LogEvent($"[SSE] Status change: is_active={status.Is_Active}");
+                                                
+                                                // Sync immediately
+                                                await BackendService.Shared.SyncStatus();
+                                                
+                                                AppState.Shared.IsAccessBlocked = !status.Is_Active;
+                                                if (AppState.Shared.IsAccessBlocked)
+                                                {
+                                                    try { AudioRecorder.Shared.StopRecording(); } catch { }
+                                                    AccessBlocked?.Invoke();
+                                                }
+                                                
+                                                StatsUpdated?.Invoke();
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            BackendService.Shared.LogEvent($"[SSE] Parse error: {ex.Message}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DiagnosticManager.Shared.Log($"Status listener exception: {ex.Message}", "ERROR");
+                        await Task.Delay(5000); // Backoff
+                    }
+                }
+                _isStatusListenerRunning = false;
+                BackendService.Shared.LogEvent("[SSE] Status listener (SSE) stopped.");
             });
         }
 
         public void StopHeartbeat()
         {
             _isHeartbeatRunning = false;
+            _isStatusListenerRunning = false;
             System.Threading.Interlocked.Exchange(ref _heartbeatGuard, 0);
         }
 

@@ -55,7 +55,7 @@ namespace CosmoWhisper.Controllers
             if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
             UpdateLocalOnlyUI();
 
-            UpdateInsertionUI();
+
 
             // Widget Opacity
             if (Window.SldWidgetOpacity != null)
@@ -110,106 +110,8 @@ namespace CosmoWhisper.Controllers
                 }
             }
 
-            if (Window.TxtApiKey != null)
-            {
-                Window.TxtApiKey.Password = p.OpenAIApiKey;
-            }
-
-            if (Window.TxtOpenAIApiKey_Int != null)
-            {
-                Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-            }
-
-            if (Window.TxtGroqApiKey != null)
-            {
-                Window.TxtGroqApiKey.Password = p.GroqApiKey;
-                Window.TxtGroqApiKey.PasswordChanged += (s, e) =>
-                {
-                    if (p.IsAIUnlocked)
-                    {
-                        p.GroqApiKey = Window.TxtGroqApiKey.Password;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
-            }
-
-
-            if (Window.TxtAnthropicApiKey != null)
-            {
-                Window.TxtAnthropicApiKey.Password = p.AnthropicApiKey;
-                Window.TxtAnthropicApiKey.PasswordChanged += (s, e) =>
-                {
-                    if (p.IsAIUnlocked)
-                    {
-                        p.AnthropicApiKey = Window.TxtAnthropicApiKey.Password;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
-            }
         }
 
-        public async void SaveApiKey()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            
-            // Determine which field contains the "current" edit
-            string newKey = Window.TxtApiKey?.Password ?? "";
-            
-            // If the user is in the Intelligence tab, that field is the source of truth for the save click
-            if (Window.IntelligenceView != null && Window.IntelligenceView.Visibility == Visibility.Visible)
-            {
-                if (Window.TxtOpenAIApiKey_Int != null && !string.IsNullOrEmpty(Window.TxtOpenAIApiKey_Int.Password))
-                {
-                    newKey = Window.TxtOpenAIApiKey_Int.Password;
-                }
-            }
-
-            p.OpenAIApiKey = newKey.Trim();
-            
-            // Force Sync both UI fields to the final trimmed value
-            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = p.OpenAIApiKey;
-            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-            
-            PreferenceManager.Shared.Save();
-
-            // Success feedback
-            await Window.ShowDialogAsync("API Key Secured", 
-                "Your OpenAI API Key has been successfully saved.\n\nNeural High-Fidelity voices are now active.", 
-                "\u2728");
-        }
-
-        public async void DeleteApiKey()
-        {
-            bool confirm = await Window.ShowDialogAsync("Delete API Key?", 
-                "Are you sure you want to remove your API key? This will disable neural high-fidelity voices.", 
-                "\u26A0\uFE0F", true);
-
-            if (!confirm) return;
-
-            var p = PreferenceManager.Shared.Preferences;
-            p.OpenAIApiKey = "";
-            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = "";
-            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = "";
-            PreferenceManager.Shared.Save();
-            
-            Window.ShowToast("OpenAI Key Deleted", "\uD83D\uDDD1");
-        }
-
-        public void OpenOpenAIKeyLink()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "https://platform.openai.com/api-keys",
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                Window.ShowToast("Could not open link", "\u26A0");
-            }
-        }
 
         public void UpdateToggle(Border toggle, bool isOn)
         {
@@ -250,26 +152,7 @@ namespace CosmoWhisper.Controllers
             Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uD83D\uDCCB");
         }
 
-        public void SetInsertionMode(InsertionMethod method)
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.InsertionMode = method;
-            PreferenceManager.Shared.Save();
-            UpdateInsertionUI();
-        }
 
-        public void UpdateInsertionUI()
-        {
-            if (Window.BtnFastPaste == null || Window.BtnDirectType == null) return;
-            var p = PreferenceManager.Shared.Preferences;
-            bool isFast = p.InsertionMode == InsertionMethod.FastPaste;
-
-            Window.BtnFastPaste.Opacity = isFast ? 1.0 : 0.6;
-            Window.BtnFastPaste.BorderBrush = isFast ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF")) : Brushes.Transparent;
-
-            Window.BtnDirectType.Opacity = !isFast ? 1.0 : 0.6;
-            Window.BtnDirectType.BorderBrush = !isFast ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF")) : Brushes.Transparent;
-        }
 
 
         public void UpdateWidgetOpacity(double value)

@@ -207,6 +207,34 @@ namespace CosmoWhisper.Managers
                 processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
             }
 
+            // STEP 3: Handle Automatic Sign-Off (Signature)
+            var p = PreferenceManager.Shared.Preferences;
+            if (p.EnableSignOff && !string.IsNullOrWhiteSpace(p.SignOffSignature))
+            {
+                // Triggers: "sign off", "regards" (if not already part of a replacement)
+                string signature = p.SignOffSignature.Replace("\\n", "\n").Replace("\r", "");
+                
+                // Case 1: "Sign off" -> Replacement with full signature
+                if (Regex.IsMatch(processed, @"\bsign\s*off\b", RegexOptions.IgnoreCase))
+                {
+                    processed = Regex.Replace(processed, @"\bsign\s*off\b", signature, RegexOptions.IgnoreCase);
+                }
+                // Case 2: "Regards" at the very end -> Append the rest of signature if not already present
+                else if (processed.TrimEnd().EndsWith("regards", StringComparison.OrdinalIgnoreCase))
+                {
+                    // If the signature starts with "Regards", we just append the rest
+                    if (signature.StartsWith("regards", StringComparison.OrdinalIgnoreCase))
+                    {
+                        processed = Regex.Replace(processed, @"\bregards\b\s*$", signature, RegexOptions.IgnoreCase);
+                    }
+                    else
+                    {
+                        // Append full signature if it doesn't contain "Regards" already
+                        processed = processed.TrimEnd() + "\n\n" + signature;
+                    }
+                }
+            }
+
             return processed;
         }
 

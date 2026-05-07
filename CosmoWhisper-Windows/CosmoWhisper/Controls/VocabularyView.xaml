@@ -1,0 +1,125 @@
+<UserControl x:Class="CosmoWhisper.Controls.VocabularyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="800">
+    
+    <ScrollViewer x:Name="OuterScrollViewer" VerticalScrollBarVisibility="Auto" Background="Transparent">
+        <StackPanel Margin="30">
+
+            <!-- Hints & SignOff (MOVED UP) -->
+            <TextBlock Text="Transcription Hints" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="18" Margin="0,0,0,8"/>
+            <TextBlock Text="Keywords that help the AI understand your context." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="13" Margin="0,0,0,15"/>
+            
+            <Grid Margin="0,0,0,25">
+                <TextBox x:Name="TxtVocabHintsControl" Height="100" Background="#15FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" CaretBrush="{DynamicResource ThemeForegroundBrush}" BorderBrush="#20FFFFFF" BorderThickness="1" TextWrapping="Wrap" Padding="15" AcceptsReturn="True" VerticalContentAlignment="Top"/>
+                <TextBlock x:Name="PlaceholderVocabHintsControl" Text="Separated by commas: deep learning, Purley, Croydon, Louis..." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.2" IsHitTestVisible="False" Margin="18,18,0,0"/>
+            </Grid>
+
+            <Border Background="#15FFFFFF" CornerRadius="16" Padding="25" Margin="0,0,0,30">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="Auto Sign-Off" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                        <TextBlock Text="To activate: Say 'Sign off' or 'Regards' at the end of your dictation." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12" Margin="0,0,0,15"/>
+                        <Grid>
+                           <TextBox x:Name="TxtSignatureControl" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="13" Padding="0"/>
+                           <TextBlock x:Name="PlaceholderSignatureControl" Text="Enter signature (e.g. - Sent via CosmoWhisper)" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.3" IsHitTestVisible="False" FontSize="13"/>
+                        </Grid>
+                    </StackPanel>
+                    
+                    <Border x:Name="ToggleSignOffControl" HorizontalAlignment="Right" VerticalAlignment="Center" Width="44" Height="22" CornerRadius="11" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleSignOff_Click">
+                        <Ellipse x:Name="DotSignOffControl" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Add New Entry -->
+            <TextBlock Text="Add New Entry" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="18" Margin="0,0,0,8"/>
+            <TextBlock Text="Create custom shortcuts. While dictating, simply say the Trigger Phrase and Cosmo will automatically swap it with the Replacement text." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="13" Margin="0,0,0,15"/>
+            <Border Background="#15FFFFFF" CornerRadius="12" Padding="25" Margin="0,0,0,30">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                        <TextBlock Text="TRIGGER PHRASE" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,10"/>
+                        <Grid>
+                            <TextBox x:Name="TxtNewKeyControl" Height="45" Background="#10FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" CaretBrush="{DynamicResource ThemeForegroundBrush}" BorderBrush="#20FFFFFF" BorderThickness="1" Padding="15,0" VerticalContentAlignment="Center" TextChanged="TxtNewInput_TextChanged"/>
+                            <TextBlock x:Name="PlaceholderKeyControl" Text="e.g. 'CW'" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.2" IsHitTestVisible="False" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,15,0">
+                        <TextBlock Text="REPLACEMENT" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,10"/>
+                        <Grid>
+                            <TextBox x:Name="TxtNewValueControl" Height="45" Background="#10FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" CaretBrush="{DynamicResource ThemeForegroundBrush}" BorderBrush="#20FFFFFF" BorderThickness="1" Padding="15,0" VerticalContentAlignment="Center" TextChanged="TxtNewInput_TextChanged"/>
+                            <TextBlock x:Name="PlaceholderValueControl" Text="e.g. 'CosmoWhisper'" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.2" IsHitTestVisible="False" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="ADD ENTRY" Click="BtnAddEntry_Click" VerticalAlignment="Bottom" Height="45" Padding="30,0" Background="#007AFF" Foreground="White" FontWeight="Bold" BorderThickness="0">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="12"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- List -->
+            <TextBlock Text="Active Vocabulary" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+            <ListBox x:Name="VocabListControl" Background="Transparent" BorderThickness="0" Padding="0" Foreground="{DynamicResource ThemeForegroundBrush}" 
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled" 
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                     HorizontalContentAlignment="Stretch" 
+                     PreviewMouseWheel="VocabListControl_PreviewMouseWheel"
+                     Margin="0,0,0,30">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#15FFFFFF" CornerRadius="16" Margin="0,0,0,15" Padding="25,20" MinHeight="85">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Key}" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="15"/>
+                                    <TextBlock Text="{Binding Value}" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.6" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="20"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="&#x2715;" Click="DeleteVocabulary_Click" Background="#25FF453A" Foreground="#FF453A" Width="32" Height="32" VerticalAlignment="Center" BorderThickness="0" Cursor="Hand" Margin="20,0,0,0">
+                                    <Button.Resources>
+                                        <Style TargetType="Border"><Setter Property="CornerRadius" Value="16"/></Style>
+                                    </Button.Resources>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Stretch"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+
+            <!-- Extra space at bottom -->
+            <Rectangle Height="100" Fill="Transparent"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

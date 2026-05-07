@@ -13,6 +13,7 @@ namespace CosmoWhisper;
 /// </summary>
 public partial class App : System.Windows.Application
 {
+    public static bool IsShuttingDown { get; set; } = false;
     private TrayManager? _trayManager;
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -24,6 +25,7 @@ public partial class App : System.Windows.Application
 
         // 1. Register the protocol handler (idempotent)
         Managers.ProtocolHandler.Register();
+        Managers.SingleInstanceProvider.StartListening();
 
         // Start background tasks
         // Initialize services in order
@@ -43,6 +45,9 @@ public partial class App : System.Windows.Application
                 
                 _ = SoundManager.Shared;
                 _ = CommandController.Shared;
+
+                // Start Heartbeat immediately if logged in
+                AccountService.Shared.StartHeartbeat();
             } 
             catch { }
         });
@@ -123,6 +128,7 @@ public partial class App : System.Windows.Application
         {
             Dispatcher.Invoke(() =>
             {
+                IsShuttingDown = true;
                 _trayManager?.Dispose();
                 Shutdown();
             });
@@ -133,6 +139,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Managers.SingleInstanceProvider.StopListening();
         _trayManager?.Dispose();
         base.OnExit(e);
     }

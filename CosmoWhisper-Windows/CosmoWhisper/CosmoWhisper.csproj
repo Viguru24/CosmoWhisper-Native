@@ -7,14 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName Condition="'$(Configuration)' == 'Personal'">CosmoWhisperPersonal</AssemblyName>
-    <AssemblyName Condition="'$(Configuration)' != 'Personal'">CosmoWhisperNative2</AssemblyName>
-    <DefineConstants Condition="'$(Configuration)' == 'Personal'">$(DefineConstants);PERSONAL_BUILD</DefineConstants>
-    <DefineConstants Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'Release'">$(DefineConstants);DEV_BUILD</DefineConstants>
+    <AssemblyName>CosmoWhisperNative2</AssemblyName>
+    <StartupObject>CosmoWhisper.Program</StartupObject>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.2.73.0</Version>
+    <Version>2.2.80.0</Version>
     <EnableMsixTooling>true</EnableMsixTooling>
     <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
@@ -22,13 +20,21 @@
     <PackageCertificatePassword>password</PackageCertificatePassword>
     <AppxPackageDir>AppPackages</AppxPackageDir>
 
-    <StartupObject>CosmoWhisper.Program</StartupObject>
-    <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414;CS0017</NoWarn>
+    <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
+  <!-- Hard Wall Separation: PERSONAL BUILD -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Personal' Or '$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);PERSONAL_BUILD</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Hard Wall Separation: DEV BUILD -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Dev' Or '$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);DEV_BUILD</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Whisper.net" Version="1.9.0" />
     <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
@@ -46,6 +52,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\mic_stop.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\mic_start_new.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\mic_stop_new.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\chime_on.wav">

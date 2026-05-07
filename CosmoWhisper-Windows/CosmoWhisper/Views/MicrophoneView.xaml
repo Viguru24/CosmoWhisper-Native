@@ -4,35 +4,72 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="20">
-        <StackPanel>
-            <TextBlock Text="Microphone Configuration" FontSize="24" Foreground="White" Margin="0,0,0,20" FontWeight="Bold"/>
-            
-            <Border Background="#20FFFFFF" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+             d:DesignHeight="600" d:DesignWidth="800">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="35">
+
+            <Border Background="#10FFFFFF" CornerRadius="20" Padding="30" Margin="0,0,0,30">
                 <StackPanel>
-                    <TextBlock Text="Input Device" Foreground="#8FFF" Margin="0,0,0,10"/>
-                    <ComboBox x:Name="ComboMics" Background="#30FFFFFF" BorderThickness="0" Foreground="White" Padding="10"/>
+                    <TextBlock Text="Primary Input Device" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Choose the source for your voice commands." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12" Margin="0,0,0,20"/>
+                    
+                    <ComboBox x:Name="ComboMics" Height="50" Background="#15FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" Padding="15,0" VerticalContentAlignment="Center">
+                        <ComboBox.Resources>
+                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="12"/></Style>
+                        </ComboBox.Resources>
+                    </ComboBox>
                 </StackPanel>
             </Border>
 
-            <Border Background="#20FFFFFF" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+            <Border Background="#10FFFFFF" CornerRadius="20" Padding="30" Margin="0,0,0,30">
                 <StackPanel>
-                    <TextBlock Text="Input Sensitivity" Foreground="#8FFF" Margin="0,0,0,10"/>
-                    <Slider x:Name="SldSensitivity" Minimum="0" Maximum="100" Value="50" TickFrequency="1" IsSnapToTickEnabled="True"/>
-                    <TextBlock x:Name="TxtSensitivityValue" Text="50%" Foreground="White" HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="Input Sensitivity" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
+                            <TextBlock Text="Lower values pick up more background noise." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtSensitivityValue" Text="50%" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                    
+                    <Slider x:Name="SldSensitivity" Minimum="0" Maximum="100" Value="50" Margin="0,25,0,0" VerticalAlignment="Center"/>
+                    
+                    <!-- Live Monitor -->
+                    <Border Background="#08FFFFFF" CornerRadius="8" Height="14" Margin="0,25,0,0">
+                        <ProgressBar x:Name="LiveMonitorBar" Minimum="0" Maximum="100" Value="0" Background="Transparent" Foreground="{DynamicResource ThemeAccentBrush}" BorderThickness="0">
+                            <ProgressBar.Template>
+                                <ControlTemplate TargetType="ProgressBar">
+                                    <Grid>
+                                        <Border x:Name="PART_Track" CornerRadius="7" Background="{TemplateBinding Background}"/>
+                                        <Border x:Name="PART_Indicator" CornerRadius="7" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </ProgressBar.Template>
+                        </ProgressBar>
+                    </Border>
+                    <TextBlock Text="LIVE MONITOR" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.3" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                 </StackPanel>
             </Border>
 
-            <Border Background="#20FFFFFF" CornerRadius="10" Padding="15">
-                <StackPanel>
-                    <TextBlock Text="Silence Threshold" Foreground="#8FFF" Margin="0,0,0,10"/>
-                    <ProgressBar x:Name="LiveMonitorBar" Height="10" Background="#10FFFFFF" Foreground="#007AFF" Maximum="100" Value="0" BorderThickness="0"/>
-                    <TextBlock Text="Auto-stop recording after 2s of silence" Foreground="#6FFF" FontSize="12" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
+            <UniformGrid Columns="2" Margin="0,0,0,30">
+                <Border Background="#10FFFFFF" CornerRadius="16" Padding="20" Margin="0,0,10,0">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="Feedback Sounds" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
+                            <TextBlock Text="Play sounds on trigger" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="11"/>
+                        </StackPanel>
+                        <Border x:Name="ToggleInteractionSounds" HorizontalAlignment="Right" Width="44" Height="24" CornerRadius="12" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleInteractionSounds_Click">
+                            <Ellipse Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="3"/>
+                        </Border>
+                    </Grid>
+                </Border>
+                
+                <Button x:Name="BtnCalibrate" Content="Auto-Calibrate" Click="BtnCalibrate_Click" Height="64" Background="#15FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" BorderThickness="0" Margin="10,0,0,0">
+                    <Button.Resources>
+                        <Style TargetType="Border"><Setter Property="CornerRadius" Value="16"/></Style>
+                    </Button.Resources>
+                </Button>
+            </UniformGrid>
+
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </UserControl>
-
-

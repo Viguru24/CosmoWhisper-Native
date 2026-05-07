@@ -31,6 +31,7 @@ namespace CosmoWhisper.Managers
         private bool _isMonitoring;
         private DateTime _recordingStartTime = DateTime.MinValue;
         private DateTime _lastToggleTime = DateTime.MinValue;
+        private DateTime _lastLevelUpdateTime = DateTime.MinValue;
 
         private bool _isWaveInRecording = false;
         private readonly object _waveInLock = new object();
@@ -61,12 +62,8 @@ namespace CosmoWhisper.Managers
             get => _isRecording;
             private set
             {
-                if (_isRecording != value)
-                {
-                    _isRecording = value;
-                    AppState.Shared.IsRecording = value;
-                    IsRecordingChanged?.Invoke(value);
-                }
+                _isRecording = value;
+                IsRecordingChanged?.Invoke(value);
             }
         }
 
@@ -81,7 +78,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 _waveIn = new WaveInEvent();
-                _waveIn.BufferMilliseconds = 150; // Higher buffer to reduce callback frequency and CPU usage
+                _waveIn.BufferMilliseconds = 150; // Optimized for performance
                 _waveIn.WaveFormat = new WaveFormat(16000, 1); // 16kHz Mono (Optimized for Whisper/VPN)
                 _waveIn.DataAvailable += WaveIn_DataAvailable;
                 _waveIn.RecordingStopped += WaveIn_RecordingStopped;
@@ -89,6 +86,8 @@ namespace CosmoWhisper.Managers
                 // Select device if we have one
                 if (!string.IsNullOrEmpty(SelectedDeviceId))
                 {
+                    // NAudio DeviceNumber is just an index (0, 1, 2...)
+                    // We need to map the WinRT DeviceId back to an index
                     int devIndex = GetDeviceIndex(SelectedDeviceId);
                     if (devIndex >= 0) _waveIn.DeviceNumber = devIndex;
                 }
@@ -128,8 +127,6 @@ namespace CosmoWhisper.Managers
             return -1; // Fallback to default
         }
 
-        private DateTime _lastLevelUpdateTime = DateTime.MinValue;
-
         private void WaveIn_DataAvailable(object? sender, WaveInEventArgs e)
         {
             // 1. Write to file if recording
@@ -138,30 +135,24 @@ namespace CosmoWhisper.Managers
                 _writer.Write(e.Buffer, 0, e.BytesRecorded);
             }
 
-            // 2. Calculate Audio Level (Meter) - Optimized for CPU efficiency
-            if (AudioLevelChanged != null)
+            // 2. Throttled Audio Level Calculation (Idle Efficiency)
+            if ((DateTime.Now - _lastLevelUpdateTime).TotalMilliseconds < 50) return;
+            _lastLevelUpdateTime = DateTime.Now;
+
+            float max = 0;
+            // High-Performance Bitwise Amplitude Extraction (16-bit PCM)
+            for (int i = 0; i < e.BytesRecorded; i += 2)
             {
-                // Throttle updates: Only calculate every 150ms if we aren't recording
-                if (!IsRecording && (DateTime.Now - _lastLevelUpdateTime).TotalMilliseconds < 150)
-                {
-                    return;
-                }
-
-                _lastLevelUpdateTime = DateTime.Now;
-
-                int max = 0;
-                for (int i = 0; i < e.BytesRecorded; i += 2)
-                {
-                    // Fast extraction of 16-bit sample
-                    short sample = (short)((e.Buffer[i + 1] << 8) | e.Buffer[i]);
-                    int abs = Math.Abs((int)sample);
-                    if (abs > max) max = abs;
-                }
-
-                float max32 = max / 32768f;
-                float db = max32 > 0.000001f ? 20 * (float)System.Math.Log10(max32) : -100;
-                AudioLevelChanged?.Invoke(db);
+                short sample = (short)((e.Buffer[i + 1] << 8) | e.Buffer[i]);
+                float sample32 = sample / 32768f;
+                if (System.Math.Abs(sample32) > max) max = System.Math.Abs(sample32);
             }
+
+            // Skip event if level is negligible to save UI cycles
+            if (max < 0.001f && !IsRecording) return;
+
+            float db = max > 0.000001f ? 20 * (float)System.Math.Log10(max) : -100;
+            AudioLevelChanged?.Invoke(db);
         }
 
         private void WaveIn_RecordingStopped(object? sender, StoppedEventArgs e)
@@ -196,6 +187,7 @@ namespace CosmoWhisper.Managers
             {
                 try
                 {
+                    _isMonitoring = true; // Set this BEFORE StartRecording so StopRecording knows to keep it open
                     InitializeWaveIn();
                     if (_waveIn != null && !_isWaveInRecording)
                     {
@@ -203,7 +195,6 @@ namespace CosmoWhisper.Managers
                         _isWaveInRecording = true;
                         DiagnosticManager.Shared.Log("Mic WaveIn Physical Start (Monitoring)", "AUDIO");
                     }
-                    _isMonitoring = true;
                     LogDebug("Monitoring started.");
                 }
                 catch (Exception ex)
@@ -216,10 +207,11 @@ namespace CosmoWhisper.Managers
 
         public void StopMonitoring()
         {
-            if (!_isMonitoring) return;
             lock (_waveInLock)
             {
+                if (!_isMonitoring) return;
                 _isMonitoring = false;
+                
                 if (!IsRecording && _isWaveInRecording)
                 {
                     _waveInStoppingTask = new TaskCompletionSource<bool>();
@@ -235,6 +227,7 @@ namespace CosmoWhisper.Managers
 
         private WaveOutEvent? _outputDevice;
         private AudioFileReader? _audioFile;
+        public bool IsPlaying => _outputDevice != null && _outputDevice.PlaybackState == PlaybackState.Playing;
 
         public async Task PlayAudio(string filePath)
         {
@@ -312,14 +305,14 @@ namespace CosmoWhisper.Managers
             if (IsRecording) return;
 
             // 0. BLOCK CHECK (On-Demand re-verification)
-            if (AppState.Shared.IsAccessBlocked)
+            if (AIService.Shared.IsAccessBlocked)
             {
                 // If we are marked as blocked, don't just give up. 
                 // Ask the server RIGHT NOW if the admin unblocked us.
                 var result = await BackendService.Shared.SyncStatus();
                 if (result == SyncResult.Success)
                 {
-                    AppState.Shared.IsAccessBlocked = false;
+                    AIService.Shared.IsAccessBlocked = false;
                     DiagnosticManager.Shared.Log("Access restored via on-demand check.", "AUTH");
                 }
                 else
@@ -339,14 +332,19 @@ namespace CosmoWhisper.Managers
             // Check if user is over limit AND not on an unlimited plan
             if (!sub.IsUnlimited && p.UsageMinutes >= sub.MonthlyLimitMinutes)
             {
-                _ = Task.Run(async () => {
-                    bool upgrade = await UIEvents.Shared.ShowMessageAsync("Limit Reached", 
+                System.Windows.Application.Current.Dispatcher.Invoke(async () =>
+                {
+                    bool upgrade = await CosmoMessage.Show("Limit Reached", 
                         "You've reached your monthly transcription limit. Upgrade to a Pro plan for unlimited usage and elite features.", 
                         "🚀", true, "Upgrade Now");
                     
                     if (upgrade)
                     {
-                        UIEvents.Shared.OpenUrl("https://cosmowhisper.com/pricing");
+                        try
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://cosmowhisper.com/pricing") { UseShellExecute = true });
+                        }
+                        catch { }
                     }
                 });
                 return;
@@ -393,7 +391,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 // Add padding so Whisper doesn't clip the final syllable (Reduced for speed)
-                await Task.Delay(100);
+                await Task.Delay(300);
 
                 _writer?.Flush();
                 _writer?.Close();
@@ -414,7 +412,7 @@ namespace CosmoWhisper.Managers
                 {
                     double dur = (DateTime.Now - _recordingStartTime).TotalSeconds;
                     _recordingStartTime = DateTime.MinValue;
-                    _ = BackendService.Shared.ReportUsage((long)(dur * 1000));
+                    _ = LicenseManager.Shared.ReportUsageAsync(dur);
                 }
 
                 if (!string.IsNullOrEmpty(_currentFilePath))
@@ -500,26 +498,13 @@ namespace CosmoWhisper.Managers
                             prefs.TotalTimeSavedMinutes += (words / 65.0);
                             PreferenceManager.Shared.Save();
 
-                            if (prefs.AutoCopy) InputController.Shared.SafeSetClipboardText(corrected);
+                            if (prefs.AutoCopy) System.Windows.Application.Current.Dispatcher.Invoke(() => InputController.Shared.SafeSetClipboardText(corrected));
 
                             // Decide if we add a trailing space
                             bool isSoloCorrection = VocabularyManager.Shared.IsSoloCorrection(corrected);
                             string finalOutput = isSoloCorrection ? corrected : corrected + " ";
 
-                            // Word-Specific Spacing logic
-                            string activeApp = InputController.Shared.GetActiveProcessName();
-                            if (activeApp == "WINWORD")
-                            {
-                                // If first character is uppercase/digit and not already preceded by space/newline,
-                                // we might want a leading space? But trailing space is cleaner.
-                                // We'll stick to trailing space but ensure it's ALWAYS present for Word sentences.
-                                if (!isSoloCorrection && !finalOutput.EndsWith(" ")) finalOutput += " ";
-                            }
-
-                            if (prefs.InsertionMode == InsertionMethod.DirectTyping)
-                                await InputController.Shared.TypeText(finalOutput, prefs.AutoSubmit);
-                            else
-                                await InputController.Shared.PasteText(finalOutput, prefs.AutoSubmit, prefs.RestoreClipboard);
+                            await InputController.Shared.TypeText(finalOutput, prefs.AutoSubmit);
                         }
                     }
                     else

@@ -86,47 +86,39 @@ namespace CosmoWhisper.Managers
                     {
                         if (!PreferenceManager.Shared.Preferences.InteractionSoundsEnabled) return;
 
-                        // 1. Try local bundled professional sounds (F9 on/off)
-                        string assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", isStart ? "chime_on.wav" : "chime_off.wav");
-                        string path = assetsPath;
+                        // Premium Asset Path
+                        string fileName = isStart ? "mic_start_new.wav" : "mic_stop_new.wav";
+                        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", fileName);
 
-                        // 2. Fallback to Windows official dictation sounds
-                        if (!File.Exists(path))
+                        if (!File.Exists(filePath))
                         {
-                            path = isStart ? @"C:\Windows\Media\Speech On.wav" : @"C:\Windows\Media\Speech Off.wav";
+                            // Legacy Fallback
+                            fileName = isStart ? "mic_start.wav" : "mic_stop.wav";
+                            filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", fileName);
                         }
 
-                        // 3. Fallback to generic notify sound
-                        if (!File.Exists(path)) path = @"C:\Windows\Media\Windows Notify.wav";
-
-                        if (!File.Exists(path))
+                        if (File.Exists(filePath))
                         {
-                            System.Media.SystemSounds.Exclamation.Play();
-                            return;
-                        }
-
-                        // Use WaveOutEvent with DeviceNumber = -1 (Dynamic Mapping)
-                        using (var reader = new AudioFileReader(path))
-                        using (var output = new WaveOutEvent())
-                        {
-                            output.DeviceNumber = -1;
-                            output.Init(reader);
-                            output.Play();
-
-                            // We play the full duration (usually ~1s) because these are 
-                            // professionally mastered melodic chirps that shouldn't be cut off.
-                            while (output.PlaybackState == PlaybackState.Playing)
+                            using (var audioFile = new AudioFileReader(filePath))
+                            using (var outputDevice = new WaveOutEvent())
                             {
-                                Thread.Sleep(20);
+                                outputDevice.Init(audioFile);
+                                outputDevice.Play();
+                                while (outputDevice.PlaybackState == PlaybackState.Playing)
+                                {
+                                    Thread.Sleep(10);
+                                }
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[SoundManager] Dictation Play Fail: {ex.Message}");
+                        Debug.WriteLine($"[SoundManager] Chime Playback Fail: {ex.Message}");
                     }
                 }
             });
         }
     }
 }
+
+

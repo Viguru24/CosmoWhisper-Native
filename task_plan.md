@@ -1,25 +1,27 @@
-# Task Plan - Resolving Idle CPU Usage & MSIX Build
+# Task Plan - Restoring Voice Recognition & Command Reliability
 
-## Phase 1: Investigation (Completed)
-- [x] Identify `AudioRecorder` monitoring loop as the likely cause.
-- [x] Diagnose why `run_dev.bat` was failing (incorrect `APP_PATH`).
+## Phase 1: Diagnostics & Code Review 🔍
+- [x] Audit `TextProcessor.cs` regex patterns for "new line" / "new paragraph".
+- [x] Review `AIService.cs` prompt for over-aggressive noise filtering instructions.
+- [x] Check `AudioRecorder.cs` for potential audio clipping at the start/end of recording.
+- [x] Analyze the "Race Mode" logic to ensure quality is not sacrificed for speed.
 
-## Phase 2: Implementation (Completed)
-- [x] Optimize `AudioRecorder.cs` (bitwise extraction, integer math, throttled updates).
-- [x] Optimize `WidgetWindow.xaml.cs` (throttled UI, BeginInvoke).
-- [x] Optimize `WidgetWindow.xaml` (RenderingBias="Performance" on effects).
-- [x] Fix `run_dev.bat` path.
-- [x] Copy launcher to OneDrive Desktop.
+## Phase 2: Prompt Optimization ✍️
+- [x] Soften the "non-speech" instruction in `AIService.cs`.
+- [x] Add explicit instructions to the model to recognize formatting commands like "new line".
+- [x] Test if removing the "Ignore non-speech sounds" instruction restores accuracy.
 
-## Phase 3: MSIX Build (In Progress)
-- [x] Stop running instances.
-- [/] Run `./build_msix.ps1`.
-- [ ] Verify `CosmoWhisper.msix` output.
+## Phase 3: Command & Filtering Logic Refinement 🛠️
+- [x] Expand Regex in `TextProcessor.cs` to handle more variations (e.g., "newline", "next paragraph").
+- [x] Ensure formatting commands are not being stripped by the "Garbage" filter.
+- [x] Increase audio padding in `AudioRecorder.cs` slightly (from 100ms to 300ms) to prevent clipping.
 
-## Phase 4: Validation
-- [ ] Verify CPU usage is lower (aiming for < 1% on modern hardware).
-- [ ] Provide the MSIX installer to the user.
+## Phase 4: Quality & Performance Tuning 🏎️
+- [x] Evaluate if "Race Mode" should have a minimum quality threshold before accepting a Local result.
+- [x] Implement duration-based heuristic to favor Cloud for long sentences.
 
-## Error Log
-- `run_dev.bat` failing: Path `bin\x64\Debug` was incorrect; actual is `bin\Debug`.
-- CPU Usage: Optimization attempt 1 (bitwise) helped but user reported 4%. Applied attempt 2 (throtte, buffer size, rendering bias).
+## Phase 5: Verification ✅
+- [ ] Test long sentence dictation.
+- [ ] Test "new line" and "new paragraph" commands in various contexts.
+- [ ] Verify that word loss is minimized.
+
