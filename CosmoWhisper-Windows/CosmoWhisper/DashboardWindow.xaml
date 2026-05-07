@@ -890,7 +890,7 @@
                                     </StackPanel>
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.79.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
+                                <TextBlock Text="Version 2.2.80.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
 
                                 <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
 
