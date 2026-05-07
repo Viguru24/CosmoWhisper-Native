@@ -247,6 +247,15 @@ namespace CosmoWhisper.Managers
             // Real Direct Typing using SendInput with Unicode support
             foreach (char c in text)
             {
+                if (c == '\r') continue; // Skip \r, handle \n as Enter
+                if (c == '\n')
+                {
+                    SendKey(0x0D, false); // VK_RETURN Down
+                    SendKey(0x0D, true);  // VK_RETURN Up
+                    await Task.Delay(1);
+                    continue;
+                }
+
                 INPUT[] inputs = new INPUT[2];
 
                 // Key Down
