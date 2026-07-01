@@ -150,12 +150,26 @@ struct VocabularyView: View {
                                         .cornerRadius(10)
                                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
                                 } else {
-                                    TextField("Type this...", text: $newValue)
-                                        .textFieldStyle(.plain)
-                                        .padding(12)
-                                        .background(Color.black.opacity(0.3))
-                                        .cornerRadius(10)
-                                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                                    // Use TextEditor to allow multiline input (e.g. addresses)
+                                    ZStack(alignment: .topLeading) {
+                                        TextEditor(text: $newValue)
+                                            .font(.system(size: 13))
+                                            .scrollContentBackground(.hidden)
+                                            .padding(8)
+                                            .frame(height: 80)
+                                            .background(Color.black.opacity(0.3))
+                                            .cornerRadius(10)
+                                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                                        
+                                        if newValue.isEmpty {
+                                            Text("Type this...")
+                                                .foregroundColor(.white.opacity(0.2))
+                                                .font(.system(size: 13))
+                                                .padding(.leading, 12)
+                                                .padding(.top, 14)
+                                                .allowsHitTesting(false)
+                                        }
+                                    }
                                 }
                             }
                             
@@ -184,7 +198,7 @@ struct VocabularyView: View {
                                     .padding(.vertical, 20)
                             } else {
                                 ForEach($replacements) { $item in
-                                    HStack(spacing: 16) {
+                                    HStack(alignment: .top, spacing: 16) {
                                         TextField("", text: $item.trigger)
                                             .textFieldStyle(.plain)
                                             .font(.system(size: 14, weight: .bold))
@@ -194,15 +208,21 @@ struct VocabularyView: View {
                                         Image(systemName: "chevron.right")
                                             .font(.caption2)
                                             .foregroundColor(.secondary.opacity(0.3))
+                                            .padding(.top, 8)
                                         
                                         Group {
                                             if isSecureMode {
                                                 SecureField("", text: $item.value)
+                                                    .textFieldStyle(.plain)
                                             } else {
-                                                TextField("", text: $item.value)
+                                                TextEditor(text: $item.value)
+                                                    .scrollContentBackground(.hidden)
+                                                    .frame(minHeight: 40, maxHeight: 120)
+                                                    .padding(6)
+                                                    .background(Color.black.opacity(0.2))
+                                                    .cornerRadius(8)
                                             }
                                         }
-                                        .textFieldStyle(.plain)
                                         .font(.system(size: 14, design: .monospaced))
                                         .foregroundColor(theme.currentTheme.accent)
                                         .onChange(of: item.value) { _ in saveReplacements() }
@@ -217,9 +237,7 @@ struct VocabularyView: View {
                                                 .font(.system(size: 18))
                                         }
                                         .buttonStyle(.plain)
-                                        .onHover { inside in
-                                            // Optional hover effect logic
-                                        }
+                                        .padding(.top, 4)
                                     }
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
@@ -247,7 +265,10 @@ struct VocabularyView: View {
     }
     
     private func addReplacement() {
-        let newItem = ReplacementItem(trigger: newTrigger.trimmingCharacters(in: .whitespaces), value: newValue.trimmingCharacters(in: .whitespaces))
+        let newItem = ReplacementItem(
+            trigger: newTrigger.trimmingCharacters(in: .whitespacesAndNewlines),
+            value: newValue.trimmingCharacters(in: .whitespaces) // preserves internal newlines, only trims outer space/newlines
+        )
         replacements.insert(newItem, at: 0)
         saveReplacements()
         newTrigger = ""
