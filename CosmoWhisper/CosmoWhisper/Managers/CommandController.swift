@@ -218,13 +218,13 @@ public class CommandController {
         }
         
         // Context-Aware Commands (Requires Selection)
-        if isTriggered(["summarize", "summarize this", "summarize that", "give me the gist", "summarize selection"]) {
+        if isTriggered(["summarize", "summarized", "summarize this", "summarized this", "summarize that", "summarized that", "give me the gist", "summarize selection", "summary"]) {
             processAIOnSelection(prompt: "Summarize the following text into 2-3 concise sentences.")
             return true
         }
         
-        if isTriggered(["fix grammar", "fix this", "fix that", "polish logic", "polish"]) {
-           processAIOnSelection(prompt: "Fix the grammar and improve the flow of this text. Maintain the original meaning.")
+        if isTriggered(["fix grammar", "fixed grammar", "fix this", "fixed this", "fix that", "fixed that", "polish logic", "polish", "fix everything", "fixed everything"]) {
+           processAIOnSelection(prompt: "Fix the grammar, spelling, and improve the flow of this text. Maintain the original meaning. Return only the corrected text.")
            return true
         }
         
@@ -247,8 +247,8 @@ public class CommandController {
             triggerKey("x", mask: [.command])
             return true
         }
-        if isTriggered(["copy that", "copy all", "copy this"]) {
-             if cmd == "copy all" { triggerKey("a", mask: [.command]); try? await Task.sleep(nanoseconds: 100_000_000) }
+        if isTriggered(["copy that", "copy all", "copy this", "copied that", "copied this"]) {
+             if cmd.contains("all") { triggerKey("a", mask: [.command]); try? await Task.sleep(nanoseconds: 100_000_000) }
              triggerKey("c", mask: [.command])
              return true
         }
@@ -271,25 +271,21 @@ public class CommandController {
         }
         
         // AI EDITING & FORMATTING
-        if isTriggered(["fix everything"]) {
-             processAIOnSelection(prompt: "Fix the grammar, spelling, and punctuation of this text. Return only the corrected text.")
-             return true
-        }
-        if isTriggered(["shorter", "make shorter", "condense", "condense this", "condense that"]) {
+        if isTriggered(["shorter", "make shorter", "condense", "condensed", "condense this", "condense that"]) {
             processAIOnSelection(prompt: "Make the following text concise and punchy. Keep the meaning but remove fluff.")
             return true
         }
-        if isTriggered(["expand", "expand this", "expand that", "lengthen", "lengthen this", "lengthen that"]) {
+        if isTriggered(["expand", "expanded", "expand this", "expanded this", "expand that", "expanded that", "lengthen", "lengthened", "lengthen this", "lengthen that"]) {
             processAIOnSelection(prompt: "Expand on this text to make it more descriptive and engaging. Add natural flow and detail.")
             return true
         }
-        if isTriggered(["flesh out", "flesh out this", "flesh out that"]) {
+        if isTriggered(["flesh out", "fleshed out", "flesh out this", "flesh out that"]) {
              processAIOnSelection(prompt: "Turn these brief notes into multiple detailed, well-written paragraphs.")
              return true
         }
         
         // --- NEW COMMANDS ---
-        if isTriggered(["rewrite this", "rewrite that", "rewrite", "rephrase", "rephrase this"]) {
+        if isTriggered(["rewrite this", "rewrote this", "rewrite that", "rewrote that", "rewrite", "rewrote", "rephrase", "rephrase this", "rephrase that"]) {
             processAIOnSelection(prompt: "Rewrite the following text to be clearer and more effective. Keep the same meaning.")
             return true
         }
@@ -304,14 +300,23 @@ public class CommandController {
             return true
         }
         
-        if isTriggered(["translate to spanish", "translate into spanish", "translate this into spanish", "translate this to spanish", "translate that to spanish", "translate that into spanish", "spanish translation", "make spanish"]) {
-            processAIOnSelection(prompt: "Translate the following text into Spanish. Output ONLY the translated Spanish text.")
-            return true
-        }
-        
-        if isTriggered(["translate to french", "translate into french", "translate this into french", "translate this to french", "translate that to french", "translate that into french", "french translation", "make french"]) {
-             processAIOnSelection(prompt: "Translate the following text into French. Output ONLY the translated French text.")
-             return true
+        // DYNAMIC UNIVERSAL TRANSLATION (Matches any language: Spanish, French, German, Japanese, etc.)
+        let translatePrefixes = [
+            "translate to ", "translated to ", "translating to ", "translates to ",
+            "translate into ", "translated into ", "translating into ", "translates into ",
+            "translate this to ", "translated this to ", "translate this into ", "translated this into ",
+            "translate that to ", "translated that to ", "translate that into ", "translated that into ",
+            "translate ", "translated "
+        ]
+        for prefix in translatePrefixes {
+            if cmd.hasPrefix(prefix) {
+                var targetLang = cmd.replacingOccurrences(of: prefix, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                targetLang = targetLang.replacingOccurrences(of: "please", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !targetLang.isEmpty && targetLang.count < 35 {
+                    processAIOnSelection(prompt: "Translate the following text into \(targetLang.capitalized). Output ONLY the translated \(targetLang.capitalized) text without quotes or explanations.")
+                    return true
+                }
+            }
         }
         
         if isTriggered(["extract action items", "todo list", "action items"]) {
@@ -319,7 +324,7 @@ public class CommandController {
             return true
         }
         
-        if isTriggered(["explain this", "explain that", "explain selection"]) {
+        if isTriggered(["explain this", "explained this", "explain that", "explained that", "explain selection"]) {
             processAIOnSelection(prompt: "Explain the following text in simple terms, as if to a beginner.")
             return true
         }
