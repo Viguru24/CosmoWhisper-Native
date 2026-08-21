@@ -146,17 +146,12 @@ struct DashboardView: View {
     
     private var appHeader: some View {
         HStack(spacing: 12) {
-            ZStack {
-                theme.accentGradient
-                    .frame(width: 48, height: 48)
-                    .cornerRadius(14)
-                
-                Image(nsImage: NSApp.applicationIconImage ?? NSImage())
-                    .resizable()
-                    .frame(width: 34, height: 34)
-                    .brightness(-0.1)
-            }
-            .shadow(color: theme.currentTheme.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+            Image(nsImage: NSApp.applicationIconImage ?? NSImage())
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 48, height: 48)
+                .cornerRadius(11)
+                .shadow(color: theme.currentTheme.accent.opacity(0.4), radius: 8, x: 0, y: 3)
             
             if !isSidebarCollapsed {
                 VStack(alignment: .leading, spacing: 0) {
