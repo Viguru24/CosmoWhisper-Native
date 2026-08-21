@@ -215,6 +215,8 @@
 				TargetAttributes = {
 					C02565542F267FB300E4F0B0 = {
 						CreatedOnToolsVersion = 15.2;
+						DevelopmentTeam = 9AAQ3L289K;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -427,6 +429,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CosmoWhisper/Preview Content\"";
+				DEVELOPMENT_TEAM = 9AAQ3L289K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CosmoWhisper/Info.plist;
@@ -457,6 +460,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CosmoWhisper/Preview Content\"";
+				DEVELOPMENT_TEAM = 9AAQ3L289K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CosmoWhisper/Info.plist;
