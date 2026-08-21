@@ -16,5 +16,15 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CosmoWhisper requires microphone access for ambient AI voice dictation and speech-to-text transcription.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CosmoWhisper uses on-device speech recognition to transcribe your voice locally in real time.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>CosmoWhisper uses Apple Events to perform instant text pasting and system actions.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
 </dict>
 </plist>

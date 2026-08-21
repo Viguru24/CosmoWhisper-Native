@@ -13,7 +13,11 @@ actor AIService {
     }
     
     private var model: String {
-        UserDefaults.standard.string(forKey: "aiModel") ?? "llama-3.3-70b-versatile"
+        let stored = UserDefaults.standard.string(forKey: "aiModel") ?? ""
+        if stored.contains("llama") || stored.isEmpty {
+            return "openai/gpt-oss-20b"
+        }
+        return stored
     }
     
     func isDefaultKey() -> Bool {
@@ -159,37 +163,53 @@ actor AIService {
     }
 
     func processCommand(prompt: String, context: String) async throws -> String {
-        let url = URL(string: "\(self.groqURL)/chat/completions")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 600
-        request.setValue("Bearer \(self.apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let modelsToTry = [self.model, "openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+        var lastError: Error?
         
-        let body: [String: Any] = [
-            "model": self.model,
-            "messages": [
-                ["role": "system", "content": prompt],
-                ["role": "user", "content": context]
-            ],
-            "temperature": 0.3
-        ]
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "AIService", code: 0)
+        for candidateModel in modelsToTry {
+            let url = URL(string: "\(self.groqURL)/chat/completions")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.timeoutInterval = 30
+            request.setValue("Bearer \(self.apiKey)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let body: [String: Any] = [
+                "model": candidateModel,
+                "messages": [
+                    ["role": "system", "content": prompt],
+                    ["role": "user", "content": context]
+                ],
+                "temperature": 0.2
+            ]
+            
+            do {
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                let (data, response) = try await URLSession.shared.data(for: request)
+                
+                guard let httpResponse = response as? HTTPURLResponse else { continue }
+                
+                if httpResponse.statusCode == 200 {
+                    let result = try JSONDecoder().decode(ChatResponse.self, from: data)
+                    var text = result.choices.first?.message.content ?? ""
+                    
+                    // Clean thinking tags if present
+                    if let thinkEnd = text.range(of: "</think>") {
+                        text = String(text[thinkEnd.upperBound...])
+                    }
+                    
+                    return text.trimmingCharacters(in: .whitespacesAndNewlines)
+                } else {
+                    let errorDetails = String(data: data, encoding: .utf8) ?? "Status \(httpResponse.statusCode)"
+                    LogManager.shared.log("AI Model '\(candidateModel)' FAILED (\(httpResponse.statusCode)): \(errorDetails)")
+                    lastError = NSError(domain: "AIService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorDetails])
+                }
+            } catch {
+                lastError = error
+            }
         }
         
-        if httpResponse.statusCode != 200 {
-            let errorDetails = String(data: data, encoding: .utf8) ?? "No details"
-            LogManager.shared.log("AI Brain FAILED (\(httpResponse.statusCode)): \(errorDetails)")
-            throw NSError(domain: "AIService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "AI Processing failed: \(errorDetails)"])
-        }
-        
-        let result = try JSONDecoder().decode(ChatResponse.self, from: data)
-        return result.choices.first?.message.content ?? ""
+        throw lastError ?? NSError(domain: "AIService", code: 500, userInfo: [NSLocalizedDescriptionKey: "All AI models failed"])
     }
 
     func checkConnectivity() async -> (Bool, String) {

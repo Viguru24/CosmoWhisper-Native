@@ -2,7 +2,7 @@ import SwiftUI
 
 struct IntelligenceView: View {
     @State private var groqApiKey = ""
-    @AppStorage("aiModel") private var aiModel = "llama-3.3-70b-versatile"
+    @AppStorage("aiModel") private var aiModel = "openai/gpt-oss-20b"
     @AppStorage("aiPersonality") private var aiPersonality = "balanced"
     @AppStorage("isApiKeyLocked") private var isApiKeyLocked = true
     @State private var unlockCode = ""

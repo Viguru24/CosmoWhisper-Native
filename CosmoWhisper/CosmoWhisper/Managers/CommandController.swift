@@ -218,17 +218,17 @@ public class CommandController {
         }
         
         // Context-Aware Commands (Requires Selection)
-        if isTriggered(["summarize", "summarize this", "give me the gist"]) {
+        if isTriggered(["summarize", "summarize this", "summarize that", "give me the gist", "summarize selection"]) {
             processAIOnSelection(prompt: "Summarize the following text into 2-3 concise sentences.")
             return true
         }
         
-        if isTriggered(["fix grammar", "fix this", "polish logic", "polish"]) {
+        if isTriggered(["fix grammar", "fix this", "fix that", "polish logic", "polish"]) {
            processAIOnSelection(prompt: "Fix the grammar and improve the flow of this text. Maintain the original meaning.")
            return true
         }
         
-        if isTriggered(["reply to this", "draft reply"]) {
+        if isTriggered(["reply to this", "reply to that", "draft reply"]) {
             processAIOnSelection(prompt: "Draft a professional and polite reply to this text.")
             return true
         }
@@ -247,12 +247,12 @@ public class CommandController {
             triggerKey("x", mask: [.command])
             return true
         }
-        if isTriggered(["copy that", "copy all"]) {
+        if isTriggered(["copy that", "copy all", "copy this"]) {
              if cmd == "copy all" { triggerKey("a", mask: [.command]); try? await Task.sleep(nanoseconds: 100_000_000) }
              triggerKey("c", mask: [.command])
              return true
         }
-        if isTriggered(["paste here"]) {
+        if isTriggered(["paste here", "paste that", "paste this", "paste"]) {
             triggerKey("v", mask: [.command])
             return true
         }
@@ -275,51 +275,51 @@ public class CommandController {
              processAIOnSelection(prompt: "Fix the grammar, spelling, and punctuation of this text. Return only the corrected text.")
              return true
         }
-        if isTriggered(["shorter", "condense"]) {
+        if isTriggered(["shorter", "make shorter", "condense", "condense this", "condense that"]) {
             processAIOnSelection(prompt: "Make the following text concise and punchy. Keep the meaning but remove fluff.")
             return true
         }
-        if isTriggered(["expand", "lengthen"]) {
+        if isTriggered(["expand", "expand this", "expand that", "lengthen", "lengthen this", "lengthen that"]) {
             processAIOnSelection(prompt: "Expand on this text to make it more descriptive and engaging. Add natural flow and detail.")
             return true
         }
-        if isTriggered(["flesh out"]) {
+        if isTriggered(["flesh out", "flesh out this", "flesh out that"]) {
              processAIOnSelection(prompt: "Turn these brief notes into multiple detailed, well-written paragraphs.")
              return true
         }
         
         // --- NEW COMMANDS ---
-        if isTriggered(["rewrite this", "rewrite", "rephrase"]) {
+        if isTriggered(["rewrite this", "rewrite that", "rewrite", "rephrase", "rephrase this"]) {
             processAIOnSelection(prompt: "Rewrite the following text to be clearer and more effective. Keep the same meaning.")
             return true
         }
         
-        if isTriggered(["make professional", "professionalize"]) {
+        if isTriggered(["make professional", "professionalize", "professional tone"]) {
             processAIOnSelection(prompt: "Rewrite the following text to sound professional, corporate, and polite.")
             return true
         }
         
-        if isTriggered(["make friendly", "casual tone"]) {
+        if isTriggered(["make friendly", "casual tone", "make casual"]) {
             processAIOnSelection(prompt: "Rewrite the following text to sound friendly, casual, and approachable.")
             return true
         }
         
-        if isTriggered(["translate to spanish", "translate into spanish", "translate this into spanish", "translate this to spanish", "spanish translation", "make spanish"]) {
-            processAIOnSelection(prompt: "Translate the following text into Spanish.")
+        if isTriggered(["translate to spanish", "translate into spanish", "translate this into spanish", "translate this to spanish", "translate that to spanish", "translate that into spanish", "spanish translation", "make spanish"]) {
+            processAIOnSelection(prompt: "Translate the following text into Spanish. Output ONLY the translated Spanish text.")
             return true
         }
         
-        if isTriggered(["translate to french", "translate into french", "translate this into french", "translate this to french", "french translation", "make french"]) {
-             processAIOnSelection(prompt: "Translate the following text into French.")
+        if isTriggered(["translate to french", "translate into french", "translate this into french", "translate this to french", "translate that to french", "translate that into french", "french translation", "make french"]) {
+             processAIOnSelection(prompt: "Translate the following text into French. Output ONLY the translated French text.")
              return true
         }
         
-        if isTriggered(["extract action items", "todo list"]) {
+        if isTriggered(["extract action items", "todo list", "action items"]) {
             processAIOnSelection(prompt: "Extract all action items and tasks from the following text into a clean bulleted list.")
             return true
         }
         
-        if isTriggered(["explain this", "explain selection"]) {
+        if isTriggered(["explain this", "explain that", "explain selection"]) {
             processAIOnSelection(prompt: "Explain the following text in simple terms, as if to a beginner.")
             return true
         }
@@ -398,26 +398,43 @@ public class CommandController {
     
     private func processAIOnSelection(prompt: String) {
         Task {
-            // 1. Capture Selection via Clipboard
             notify("Reading selection...")
+            
+            // 1. Let any active hotkey/mouse button release
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            
             let oldPasteboard = NSPasteboard.general.string(forType: .string)
+            
+            // Clear pasteboard to detect fresh copy
             NSPasteboard.general.clearContents()
             
             triggerKey("c", mask: [.command]) // Cmd+C
-            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s Wait
             
-            guard let selection = NSPasteboard.general.string(forType: .string), !selection.isEmpty else {
+            // Poll for clipboard arrival up to 350ms
+            var selection: String? = nil
+            for _ in 0..<7 {
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                if let current = NSPasteboard.general.string(forType: .string), !current.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    selection = current
+                    break
+                }
+            }
+            
+            // Fallback: If nothing was newly copied, check old pasteboard
+            if selection == nil || selection?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true {
+                selection = oldPasteboard
+            }
+            
+            guard let validSelection = selection, !validSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 notify("No text selected!")
-                // Restore old clipboard
-                if let old = oldPasteboard { NSPasteboard.general.setString(old, forType: .string) }
                 return
             }
             
             // 2. Process
             notify("Processing...")
             do {
-                let result = try await AIService.shared.processCommand(prompt: prompt, context: selection)
-                // 3. Paste Result (Robust)
+                let result = try await AIService.shared.processCommand(prompt: prompt, context: validSelection)
+                // 3. Paste Result
                 await InputController.shared.pasteText(result)
             } catch {
                 notify("AI Error: \(error.localizedDescription)")
