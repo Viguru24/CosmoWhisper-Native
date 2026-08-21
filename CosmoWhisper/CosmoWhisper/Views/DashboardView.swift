@@ -68,6 +68,10 @@ struct DashboardView: View {
                         .padding(.horizontal, isSidebarCollapsed ? 0 : 12)
                     }
                     .buttonStyle(.plain)
+                    
+                    Text("v" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"))
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.3))
                 }
             }
             .frame(width: isSidebarCollapsed ? 80 : 250)
@@ -145,39 +149,30 @@ struct DashboardView: View {
     }
     
     private var appHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Image(nsImage: NSApp.applicationIconImage ?? NSImage())
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 48, height: 48)
-                .cornerRadius(11)
-                .shadow(color: theme.currentTheme.accent.opacity(0.4), radius: 8, x: 0, y: 3)
+                .frame(width: isSidebarCollapsed ? 48 : 54, height: isSidebarCollapsed ? 48 : 54)
+                .cornerRadius(12)
+                .shadow(color: theme.currentTheme.accent.opacity(0.4), radius: 10, x: 0, y: 4)
             
             if !isSidebarCollapsed {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .lastTextBaseline, spacing: 6) {
-                        Text("COSMO")
-                            .font(.system(size: 18, weight: .black))
-                            .tracking(1.5)
-                            .foregroundColor(.white) +
-                        Text(" WHISPER")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(theme.currentTheme.accent)
-                        
-                        Text("v" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"))
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("COSMO")
+                        .font(.system(size: 20, weight: .black))
+                        .tracking(2.0)
+                        .foregroundColor(.white)
                     
-                    Text("PRO EDITION")
-                        .font(.system(size: 9, weight: .black))
-                        .foregroundColor(theme.currentTheme.accent.opacity(0.7))
-                        .tracking(2)
+                    Text("WHISPER")
+                        .font(.system(size: 17, weight: .heavy))
+                        .tracking(1.5)
+                        .foregroundColor(theme.currentTheme.accent)
                 }
             }
         }
-        .padding(.horizontal, isSidebarCollapsed ? 0 : 20)
-        .padding(.bottom, isSidebarCollapsed ? 0 : 12)
+        .padding(.horizontal, isSidebarCollapsed ? 0 : 18)
+        .padding(.bottom, isSidebarCollapsed ? 0 : 16)
         .frame(maxWidth: .infinity, alignment: isSidebarCollapsed ? .center : .leading)
     }
     
