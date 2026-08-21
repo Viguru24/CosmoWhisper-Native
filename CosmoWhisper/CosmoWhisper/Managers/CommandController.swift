@@ -139,12 +139,12 @@ public class CommandController {
             triggerKey("z", mask: [.command])
             return true
         }
-        if cmd == "paste" || cmd == "paste that" {
+        if isTriggered(["paste", "paste that", "paste here"]) {
             triggerKey("v", mask: [.command])
             return true
         }
         
-        if cmd == "delete all" || cmd == "clear all" {
+        if isTriggered(["delete all", "clear all", "clear field", "delete everything"]) {
             triggerKey("a", mask: [.command]) // Select All
             try? await Task.sleep(nanoseconds: 100_000_000)
             triggerKey("delete", mask: []) // Delete
@@ -211,9 +211,9 @@ public class CommandController {
             return true
         }
         
-        if cmd.hasPrefix("write about ") {
-            let topic = cmd.replacingOccurrences(of: "write about ", with: "")
-            processAI(prompt: "You are a professional writer. Write a persistent, high-quality response about the topic.", context: topic)
+        if cmd.hasPrefix("write about ") || cmd.hasPrefix("write ") {
+            let topic = cmd.replacingOccurrences(of: "write about ", with: "").replacingOccurrences(of: "write ", with: "")
+            processAI(prompt: "You are a professional writer. Write a concise, high-quality response about the topic.", context: topic)
             return true
         }
         
@@ -333,11 +333,11 @@ public class CommandController {
              processAIOnSelection(prompt: "Convert all digits (e.g. '10') into written words (e.g. 'ten') in the following text. Keep everything else the same.")
              return true
         }
-        if cmd == "camel case" || cmd == "humpcase" {
+        if isTriggered(["camel case", "humpcase", "camelcase"]) {
             processAIOnSelection(prompt: "Convert the following text to camelCase (e.g. 'myVariableName'). Return only the code-safe string.")
             return true
         }
-        if cmd == "snake case" || cmd == "snake_case" {
+        if isTriggered(["snake case", "snake_case", "snakecase"]) {
              processAIOnSelection(prompt: "Convert the following text to snake_case (e.g. 'my_variable_name'). Return only the code-safe string.")
              return true
         }

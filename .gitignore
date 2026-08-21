@@ -29,6 +29,7 @@ CosmoWhisper/*.txt
 CosmoWhisper/*.log
 CosmoWhisper/build_*/
 CosmoWhisper/CosmoWhisper_BACKUP_STABLE/
+CosmoWhisper/release/
 
 # Agent/AI metadata
 .agent/

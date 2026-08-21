@@ -155,8 +155,13 @@ class WindowManager {
     
     func toggleDashboard() {
         if let existing = dashboardWindow, existing.isVisible {
-            existing.close()
-            dashboardWindow = nil
+            if existing.isKeyWindow && NSApp.isActive {
+                existing.close()
+                dashboardWindow = nil
+            } else {
+                existing.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+            }
         } else {
             showDashboard()
         }

@@ -151,7 +151,7 @@ struct MicrophoneView: View {
             if !recorder.isRecording { recorder.startPreview() }
         }
         .onDisappear {
-             if !recorder.isRecording { recorder.stopPreview() }
+            recorder.stopPreview()
         }
     }
 }

@@ -141,7 +141,7 @@ struct SettingsView: View {
             }
         }
         .onDisappear {
-            if !recorder.isRecording { recorder.stopPreview() }
+            recorder.stopPreview()
         }
     }
     
@@ -224,7 +224,7 @@ struct SettingsView: View {
                     Button(action: { 
                         inputController.isRecordingHotkey.toggle()
                     }) {
-                        Text(inputController.isRecordingHotkey ? "Press a key..." : (inputController.hotkeyCode == 61 ? "Right Option (Default)" : keyName(for: inputController.hotkeyCode)))
+                        Text(inputController.isRecordingHotkey ? "Press a key..." : keyName(for: inputController.hotkeyCode))
                             .font(.system(size: 12, weight: .bold))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
@@ -234,7 +234,9 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                     
                     Menu {
-                        Button("Right Option (Default)") { updateHotkey(61) }
+                        Button("Right Control") { updateHotkey(62) }
+                        Button("Left Control") { updateHotkey(59) }
+                        Button("Right Option") { updateHotkey(61) }
                         Button("Left Option") { updateHotkey(58) }
                         Button("Right Command") { updateHotkey(54) }
                     } label: {
@@ -258,6 +260,19 @@ struct SettingsView: View {
                 .foregroundColor(.blue.opacity(0.8))
                 .padding(.top, 4)
             }
+            
+            // Active key confirmation banner
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text("Active key: **\(keyName(for: inputController.hotkeyCode))**")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.green.opacity(0.08))
+            .cornerRadius(8)
         }
     }
     
@@ -566,7 +581,7 @@ struct SettingsView: View {
     }
     
     private func updateHotkey(_ code: Int) {
-        inputController.hotkeyCode = code
-        UserDefaults.standard.set(code, forKey: "hotkeyCode")
+        inputController.applyHotkey(code)
+        LogManager.shared.log("Settings: Hotkey changed to \(keyName(for: code)) [\(code)]")
     }
 }

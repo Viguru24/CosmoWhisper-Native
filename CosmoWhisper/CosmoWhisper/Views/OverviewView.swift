@@ -2,25 +2,30 @@ import SwiftUI
 
 struct OverviewView: View {
     @AppStorage("transcriptionCount") private var transcriptionCount = 0
+    @AppStorage("transcriptionEngine") private var transcriptionEngine = "online"
     @ObservedObject var recorder = AudioRecorder.shared
     @ObservedObject var inputController = InputController.shared
+    @ObservedObject var localSpeech = LocalSpeechService.shared
     @Binding var isAccessibilityTrusted: Bool
     @AppStorage("showHints") private var showHints = true
     @State private var recentItems: [TranscriptionItem] = []
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Your Command Center")
-                .font(.system(size: 32, weight: .bold))
-            Text("Let's see how brilliant you've been today.")
-                .foregroundColor(.secondary)
-                .padding(.bottom, 24)
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Your Command Center")
+                    .font(.system(size: 32, weight: .bold))
+                Text("Let's see how brilliant you've been today.")
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom, 8)
             
             HStack(spacing: 20) {
                 StatCard(title: "Transcriptions", value: "\(transcriptionCount)", icon: "waveform", color: .blue)
                 StatCard(title: "Life Reclaimed", value: transcriptionCount == 0 ? "0.0h" : String(format: "%.1fh", Double(transcriptionCount) * 0.05), icon: "clock.fill", color: .green)
-                
             }
+            
+            engineSelectionCard
             
             SettingsCard(title: "System Permissions", icon: "lock.shield") {
                 VStack(alignment: .leading, spacing: 24) {
@@ -196,6 +201,182 @@ struct OverviewView: View {
                 }
             }
             */
+        }
+    }
+    
+    private var engineSelectionCard: some View {
+        SettingsCard(title: "Transcription Engine & Privacy", icon: "cpu") {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Select where your voice is processed. Toggle between complete offline privacy and maximum cloud accuracy.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 16) {
+                    // Option 1: Local Model (100% Private)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            transcriptionEngine = "local"
+                        }
+                    }) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .fill(transcriptionEngine == "local" ? Color.green.opacity(0.2) : Color.white.opacity(0.05))
+                                        .frame(width: 42, height: 42)
+                                    Image(systemName: "lock.shield.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(transcriptionEngine == "local" ? .green : .secondary)
+                                }
+                                Spacer()
+                                if transcriptionEngine == "local" {
+                                    HStack(spacing: 4) {
+                                        Circle().fill(Color.green).frame(width: 6, height: 6)
+                                        Text("ACTIVE")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.green.opacity(0.12))
+                                    .cornerRadius(6)
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Local Model (On-Device)")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text("Whisper Tiny (75 MB) • 100% Offline")
+                                    .font(.caption)
+                                    .foregroundColor(.green.opacity(0.9))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 6) {
+                                featureBadge(icon: "shield.lefthalf.filled", text: "100% On-Device Privacy", color: .green)
+                                featureBadge(icon: "wifi.slash", text: "Zero Internet Needed", color: .green)
+                                featureBadge(icon: "bolt.fill", text: "Instant Local Neural Inference", color: .green)
+                            }
+                            .padding(.top, 4)
+                            
+                            if !localSpeech.isModelReady || localSpeech.isDownloading {
+                                Button(action: {
+                                    Task { await localSpeech.downloadTinyModel() }
+                                }) {
+                                    HStack {
+                                        if localSpeech.isDownloading {
+                                            ProgressView().scaleEffect(0.5)
+                                            Text("Downloading (\(Int(localSpeech.downloadProgress * 100))%)...")
+                                        } else {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                            Text("Download Tiny Model (75 MB)")
+                                        }
+                                    }
+                                    .font(.caption.bold())
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(Color.green.opacity(0.2))
+                                    .foregroundColor(.green)
+                                    .cornerRadius(8)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(localSpeech.isDownloading)
+                            }
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(transcriptionEngine == "local" ? Color.green.opacity(0.08) : Color.white.opacity(0.02))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(transcriptionEngine == "local" ? Color.green.opacity(0.6) : Color.white.opacity(0.08), lineWidth: transcriptionEngine == "local" ? 2 : 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Option 2: Online Model (Groq Cloud)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            transcriptionEngine = "online"
+                        }
+                    }) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .fill(transcriptionEngine == "online" ? Color.blue.opacity(0.2) : Color.white.opacity(0.05))
+                                        .frame(width: 42, height: 42)
+                                    Image(systemName: "bolt.horizontal.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(transcriptionEngine == "online" ? .blue : .secondary)
+                                }
+                                Spacer()
+                                if transcriptionEngine == "online" {
+                                    HStack(spacing: 4) {
+                                        Circle().fill(Color.blue).frame(width: 6, height: 6)
+                                        Text("ACTIVE")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.blue)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.blue.opacity(0.12))
+                                    .cornerRadius(6)
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Online Cloud (Groq LPU)")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text("Whisper Large-v3 + Llama 3.3 Brain")
+                                    .font(.caption)
+                                    .foregroundColor(.blue.opacity(0.9))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 6) {
+                                featureBadge(icon: "sparkles", text: "Maximum Accuracy & Vocabulary", color: .blue)
+                                featureBadge(icon: "character.book.closed.fill", text: "Understands Heavy Jargon & Accents", color: .blue)
+                                featureBadge(icon: "brain.head.profile", text: "Context-Aware Grammar Polishing", color: .blue)
+                            }
+                            .padding(.top, 4)
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(transcriptionEngine == "online" ? Color.blue.opacity(0.08) : Color.white.opacity(0.02))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(transcriptionEngine == "online" ? Color.blue.opacity(0.6) : Color.white.opacity(0.08), lineWidth: transcriptionEngine == "online" ? 2 : 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                // Comparative Privacy Guarantee
+                HStack(spacing: 12) {
+                    Image(systemName: transcriptionEngine == "local" ? "checkmark.shield.fill" : "info.circle.fill")
+                        .foregroundColor(transcriptionEngine == "local" ? .green : .blue)
+                    Text(transcriptionEngine == "local" ? "**Privacy Mode Active**: Audio is transcribed entirely on-device by Apple Silicon Neural Engine. Zero audio bytes ever leave your Mac." : "**High-Precision Mode Active**: Audio is transcribed via Groq's high-speed cloud infrastructure for maximum multi-lingual accuracy and AI formatting.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.02))
+                .cornerRadius(8)
+            }
+        }
+    }
+    
+    private func featureBadge(icon: String, text: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundColor(color)
+            Text(text)
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.8))
         }
     }
     

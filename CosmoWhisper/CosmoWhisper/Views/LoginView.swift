@@ -68,6 +68,32 @@ struct LoginView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(isLoading || email.isEmpty || password.isEmpty)
+                    
+                    HStack {
+                        Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
+                        Text("OR")
+                            .font(.caption2.bold())
+                            .foregroundColor(.secondary)
+                        Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button(action: {
+                        LicenseManager.shared.startGoogleAuth()
+                    }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "globe")
+                                .font(.system(size: 14))
+                            Text("Sign In with Google")
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(8)
+                        .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(30)
                 .background(Color.white.opacity(0.05))
@@ -98,16 +124,13 @@ struct LoginView: View {
         isLoading = true
         errorMessage = ""
         
-        // Mock Login Delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            isLoading = false
-            if email.contains("@") && password.count > 4 {
-                // Success
-                isLoggedIn = true
-                UserDefaults.standard.set(true, forKey: "userLoggedIn")
-                UserDefaults.standard.set(email, forKey: "userEmail")
+        Task { @MainActor in
+            let success = await LicenseManager.shared.login(email: email, password: password)
+            self.isLoading = false
+            if success {
+                self.isLoggedIn = true
             } else {
-                errorMessage = "Invalid email or password."
+                self.errorMessage = LicenseManager.shared.errorMessage ?? "Invalid credentials"
             }
         }
     }

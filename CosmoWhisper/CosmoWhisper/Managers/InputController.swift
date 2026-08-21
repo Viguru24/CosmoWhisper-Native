@@ -9,10 +9,10 @@ class InputController: ObservableObject {
     
     // Thread-safe state for the EventTap
     private class InputState {
-        var hotkeyCode: Int = 61
+        var hotkeyCode: Int = 62
         var isRecordingHotkey: Bool = false
         var isHotkeyDown: Bool = false
-        var lastCaptureTime: Date = Date.distantPast
+        var lastCaptureTime: Date = Date().addingTimeInterval(-10.0)
         private let lock = NSLock()
         
         func update(hotkey: Int? = nil, recording: Bool? = nil, down: Bool? = nil, captured: Bool = false) {
@@ -26,7 +26,7 @@ class InputController: ObservableObject {
         var currentHotkey: Int { lock.lock(); defer { lock.unlock() }; return hotkeyCode }
         var recording: Bool { lock.lock(); defer { lock.unlock() }; return isRecordingHotkey }
         var isDown: Bool { lock.lock(); defer { lock.unlock() }; return isHotkeyDown }
-        var timeSinceCapture: TimeInterval { lock.lock(); defer { lock.unlock() }; return Date().timeIntervalSince(lastCaptureTime) }
+        var timeSinceCapture: TimeInterval { lock.lock(); defer { lock.unlock() }; return abs(Date().timeIntervalSince(lastCaptureTime)) }
     }
     
     private let state = InputState()
@@ -55,7 +55,7 @@ class InputController: ObservableObject {
     
     private var settingsDebounceTimer: Timer?
     
-    @Published var hotkeyCode: Int = 61
+    @Published var hotkeyCode: Int = 62
     @Published var mouseButton: Int = 0
     @Published var useMouseButton: Bool = true
     
@@ -63,7 +63,7 @@ class InputController: ObservableObject {
         if let stored = UserDefaults.standard.object(forKey: "hotkeyCode") as? Int {
             hotkeyCode = stored
         } else {
-            hotkeyCode = 61
+            hotkeyCode = 62
         }
         state.update(hotkey: hotkeyCode)
         
@@ -79,12 +79,13 @@ class InputController: ObservableObject {
         updateInternalSettings()
         
         if hotkeyCode == 80 || hotkeyCode == 0 {
-            LogManager.shared.log("InputController: Defaulting/Migrating to Right Option (61)")
-            hotkeyCode = 61
-            UserDefaults.standard.set(61, forKey: "hotkeyCode")
+            LogManager.shared.log("InputController: Defaulting/Migrating to Right Control (62)")
+            hotkeyCode = 62
+            UserDefaults.standard.set(62, forKey: "hotkeyCode")
         }
         
         setupGlobalHotkey()
+        setupLocalMonitors()
         setupMouseMonitoring()
         setupLocalMouseRecording()
         startPermissionWatchdog()
@@ -143,7 +144,7 @@ class InputController: ObservableObject {
         }
     }
     
-    private func refreshMonitors() {
+    func refreshMonitors() {
         LogManager.shared.log("InputController: Refreshing monitors...")
         
         // 1. Full cleanup of all monitors
@@ -153,6 +154,16 @@ class InputController: ObservableObject {
         setupGlobalHotkey()     // This handles EventTap OR Global NSEvent Fallback
         setupLocalMonitors()    // ALWAYS enabled for focus-responsiveness
         setupMouseMonitoring() // Handles Mouse Button logic
+    }
+    
+    /// Call this from the UI to change the hotkey and immediately activate it.
+    func applyHotkey(_ code: Int) {
+        hotkeyCode = code
+        UserDefaults.standard.set(code, forKey: "hotkeyCode")
+        state.update(hotkey: code, captured: true)
+        lastDetectedKeyCode = code
+        LogManager.shared.log("InputController: Hotkey applied -> \(code)")
+        refreshMonitors()
     }
     
     private func stopAllMonitors() {
@@ -238,6 +249,16 @@ class InputController: ObservableObject {
                 options: .defaultTap,
                 eventsOfInterest: CGEventMask(mask),
                 callback: { (proxy, type, event, refcon) -> Unmanaged<CGEvent>? in
+                    if type.rawValue == 14 || type.rawValue == 15 {
+                        // kCGEventTapDisabledByTimeout or kCGEventTapDisabledByUserInput - Re-enable
+                        Task { @MainActor in
+                            if let tap = InputController.shared.eventTap {
+                                CGEvent.tapEnable(tap: tap, enable: true)
+                                LogManager.shared.log("InputController: EventTap re-enabled after timeout.")
+                            }
+                        }
+                        return Unmanaged.passRetained(event)
+                    }
                     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                     return InputController.shared.handleTapEvent(proxy: proxy, type: type, event: event, keyCode: Int(keyCode))
                 },
@@ -299,27 +320,20 @@ class InputController: ObservableObject {
             }
         }
         
-        // 2. Check if it's our target Hotkey
-        if keyCode == 61 {
-           // LogManager.shared.log("DEBUG: EventTap received Right Option (61). Target: \(targetKey)")
-        }
+        // 2. Check if it's our target Hotkey (supports matching Left/Right Control interchangeably)
+        let isTargetKey = (keyCode == targetKey) || ((targetKey == 62 || targetKey == 59) && (keyCode == 62 || keyCode == 59))
 
-        if keyCode == targetKey && state.timeSinceCapture > 0.6 {
+        if isTargetKey && state.timeSinceCapture > 0.6 {
             if isDown {
-                if type == .keyDown || type == .flagsChanged {
-                    let isRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
-                    if !isRepeat || type == .flagsChanged {
-                        Task { @MainActor in
-                            if !self.isHotkeyDown {
-                                LogManager.shared.log("Input: Hotkey DOWN [\(keyCode)] (EventTap) - Starting Record")
-                                self.isHotkeyDown = true
-                                self.state.update(down: true)
-                                AudioRecorder.shared.startRecording()
-                            }
-                        }
+                Task { @MainActor in
+                    if !self.isHotkeyDown {
+                        LogManager.shared.log("Input: Hotkey DOWN [\(keyCode)] (EventTap) - Starting Record")
+                        self.isHotkeyDown = true
+                        self.state.update(down: true)
+                        AudioRecorder.shared.startRecording()
                     }
                 }
-            } else { // UP
+            } else {
                 Task { @MainActor in
                     if self.isHotkeyDown {
                         LogManager.shared.log("Input: Hotkey UP [\(keyCode)] (EventTap) - Stopping Record")
@@ -482,12 +496,11 @@ class InputController: ObservableObject {
             return
         }
 
-        if keyCode == state.currentHotkey {
-             // Relaxed timing check for debugging
-             // && state.timeSinceCapture > 0.6 
-             if state.timeSinceCapture <= 0.6 {
-                 LogManager.shared.log("DEBUG: Ignoring trigger due to timeSinceCapture: \(state.timeSinceCapture)")
-             }
+        let isTargetKey = (keyCode == state.currentHotkey) || ((state.currentHotkey == 62 || state.currentHotkey == 59) && (keyCode == 62 || keyCode == 59))
+        if isTargetKey {
+            if state.timeSinceCapture <= 0.6 {
+                LogManager.shared.log("DEBUG: Ignoring trigger due to timeSinceCapture: \(state.timeSinceCapture)")
+            }
              
             if isDown {
                 if !self.isHotkeyDown {
@@ -779,11 +792,7 @@ class InputController: ObservableObject {
                 }
                 
                 Task { @MainActor in
-                    let autoTrusted = strongSelf.checkAutomationPermission()
-                    if autoTrusted != strongSelf.isAutomationTrusted {
-                        strongSelf.isAutomationTrusted = autoTrusted
-                        LogManager.shared.log("InputController: Automation permission status changed to: \(autoTrusted)")
-                    }
+                    strongSelf.isAutomationTrusted = axTrusted
                 }
             }
         }

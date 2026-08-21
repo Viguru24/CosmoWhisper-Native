@@ -20,6 +20,7 @@ if [ $? -ne 0 ]; then
 fi
 
 APP_PATH="./build_gentle/Build/Products/Debug/CosmoWhisper.app"
+INSTALL_PATH="/Applications/CosmoWhisper.app"
 
 # 3. Sign (Relaxed)
 echo "✍️  Signing..."
@@ -27,9 +28,15 @@ IDENTITY="Developer ID Application: Louis de Souza (9AAQ3L289K)"
 ENTITLEMENTS="./CosmoWhisper/CosmoWhisper.entitlements"
 codesign --force --deep --sign "$IDENTITY" --entitlements "$ENTITLEMENTS" "$APP_PATH"
 
-# 4. Remove Quarantine (just in case)
-xattr -rd com.apple.quarantine "$APP_PATH" 2>/dev/null || true
+# 4. Copy to /Applications to maintain stable Accessibility/TCC state
+echo "🚚 Installing to /Applications..."
+rm -rf "$INSTALL_PATH"
+cp -R "$APP_PATH" "$INSTALL_PATH"
 
-# 5. Run
-echo "🚀 Launching from build folder..."
-open "$APP_PATH"
+# 5. Remove Quarantine
+xattr -rd com.apple.quarantine "$INSTALL_PATH" 2>/dev/null || true
+chmod -R +x "$INSTALL_PATH"
+
+# 6. Run
+echo "🚀 Launching from /Applications..."
+open "$INSTALL_PATH"

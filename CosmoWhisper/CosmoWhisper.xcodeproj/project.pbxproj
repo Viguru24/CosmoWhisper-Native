@@ -44,6 +44,9 @@
 		C025B01B2F267FB700E4F0B0 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F01B2F267FB700E4F0B0 /* WelcomeView.swift */; };
 		C025B01C2F267FB700E4F0B0 /* ContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F01C2F267FB700E4F0B0 /* ContextManager.swift */; };
 		C025B01E2F267FB700E4F0B0 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F01E2F267FB700E4F0B0 /* LaunchManager.swift */; };
+		C025B0202F267FB700E4F0B0 /* LocalSpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F0202F267FB700E4F0B0 /* LocalSpeechService.swift */; };
+		C025B0212F267FB700E4F0B0 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F0212F267FB700E4F0B0 /* LicenseManager.swift */; };
+		C025B0222F267FB700E4F0B0 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F0222F267FB700E4F0B0 /* StoreKitManager.swift */; };
 		C025655D2F267FB700E4F0B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C025655C2F267FB700E4F0B0 /* Assets.xcassets */; };
 		C02565602F267FB700E4F0B0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C025655F2F267FB700E4F0B0 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -86,6 +89,9 @@
 		C025F01B2F267FB700E4F0B0 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/WelcomeView.swift; sourceTree = "<group>"; };
 		C025F01C2F267FB700E4F0B0 /* ContextManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/ContextManager.swift; sourceTree = "<group>"; };
 		C025F01E2F267FB700E4F0B0 /* LaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/LaunchManager.swift; sourceTree = "<group>"; };
+		C025F0202F267FB700E4F0B0 /* LocalSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/LocalSpeechService.swift; sourceTree = "<group>"; };
+		C025F0212F267FB700E4F0B0 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/LicenseManager.swift; sourceTree = "<group>"; };
+		C025F0222F267FB700E4F0B0 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/StoreKitManager.swift; sourceTree = "<group>"; };
 		C02565552F267FB300E4F0B0 /* CosmoWhisper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CosmoWhisper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C025655C2F267FB700E4F0B0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C025655F2F267FB700E4F0B0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -159,6 +165,9 @@
 				C025F01B2F267FB700E4F0B0 /* WelcomeView.swift */,
 				C025F01C2F267FB700E4F0B0 /* ContextManager.swift */,
 				C025F01E2F267FB700E4F0B0 /* LaunchManager.swift */,
+				C025F0202F267FB700E4F0B0 /* LocalSpeechService.swift */,
+				C025F0212F267FB700E4F0B0 /* LicenseManager.swift */,
+				C025F0222F267FB700E4F0B0 /* StoreKitManager.swift */,
 				C025655C2F267FB700E4F0B0 /* Assets.xcassets */,
 				C02565612F267FB700E4F0B0 /* CosmoWhisper.entitlements */,
 				C025655E2F267FB700E4F0B0 /* Preview Content */,
@@ -281,6 +290,9 @@
 				C025B01B2F267FB700E4F0B0 /* WelcomeView.swift in Sources */,
 				C025B01C2F267FB700E4F0B0 /* ContextManager.swift in Sources */,
 				C025B01E2F267FB700E4F0B0 /* LaunchManager.swift in Sources */,
+				C025B0202F267FB700E4F0B0 /* LocalSpeechService.swift in Sources */,
+				C025B0212F267FB700E4F0B0 /* LicenseManager.swift in Sources */,
+				C025B0222F267FB700E4F0B0 /* StoreKitManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -417,9 +429,11 @@
 				DEVELOPMENT_ASSET_PATHS = "\"CosmoWhisper/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CosmoWhisper/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CosmoWhisper needs microphone access to transcribe your voice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CosmoWhisper uses on-device speech recognition for private local transcription.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "CosmoWhisper needs to control other applications to paste text and perform commands.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -445,9 +459,11 @@
 				DEVELOPMENT_ASSET_PATHS = "\"CosmoWhisper/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CosmoWhisper/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CosmoWhisper needs microphone access to transcribe your voice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CosmoWhisper uses on-device speech recognition for private local transcription.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "CosmoWhisper needs to control other applications to paste text and perform commands.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

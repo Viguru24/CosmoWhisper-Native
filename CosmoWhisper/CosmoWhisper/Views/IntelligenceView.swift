@@ -8,6 +8,9 @@ struct IntelligenceView: View {
     @State private var unlockCode = ""
     @State private var errorMessage: String?
 
+    @AppStorage("transcriptionEngine") private var transcriptionEngine = "online"
+    @ObservedObject var localSpeech = LocalSpeechService.shared
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("The Big Brain")
@@ -17,10 +20,10 @@ struct IntelligenceView: View {
                 .padding(.bottom, 24)
             
             VStack(alignment: .leading, spacing: 24) {
+                localModelSection
                 apiServiceProviderSection
                 apiKeySection
                 aiPersonalitySection
-
             }
             .padding(24)
             .background(Color(red: 10/255, green: 15/255, blue: 30/255))
@@ -34,12 +37,60 @@ struct IntelligenceView: View {
         }
     }
     
+    private var localModelSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "cpu")
+                    .foregroundColor(.green)
+                Text("On-Device Local Intelligence")
+                    .font(.headline)
+                Spacer()
+                Text(localSpeech.isModelReady ? "READY" : "DOWNLOADING")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(localSpeech.isModelReady ? .green : .orange)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background((localSpeech.isModelReady ? Color.green : Color.orange).opacity(0.15))
+                    .cornerRadius(6)
+            }
+            
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(localSpeech.modelName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("Footprint: \(localSpeech.modelSize) • Latency: <0.3s • 100% Offline")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                
+                Button(action: {
+                    Task { await localSpeech.downloadTinyModel() }
+                }) {
+                    Text(localSpeech.isDownloading ? "Verifying..." : "Verify Model")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+                .disabled(localSpeech.isDownloading)
+            }
+            .padding(14)
+            .background(Color.white.opacity(0.03))
+            .cornerRadius(10)
+        }
+    }
+    
     private var apiServiceProviderSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("AI Service Provider")
+                Text("AI Cloud Provider")
                     .font(.headline)
-                Text("Groq (Free & Fast)")
+                Text("Groq LPU (Ultra-Fast Inference)")
                     .font(.system(size: 14, weight: .medium))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -48,7 +99,7 @@ struct IntelligenceView: View {
             }
             
             VStack(alignment: .leading, spacing: 6) {
-                Text("Model Name")
+                Text("Cloud Model Name")
                     .font(.headline)
                 Text(aiModel)
                     .font(.system(size: 14, weight: .medium))

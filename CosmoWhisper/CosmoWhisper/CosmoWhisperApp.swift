@@ -34,6 +34,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         warmupSystem()
         
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings), name: NSNotification.Name("OpenDashboard"), object: nil)
+        
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
+    }
+    
+    @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
+              let url = URL(string: urlString) else { return }
+        LicenseManager.shared.handleAuthDeepLink(url: url)
+    }
+    
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            LicenseManager.shared.handleAuthDeepLink(url: url)
+        }
     }
     
     func checkAccessibilityPermissions() {
@@ -68,26 +87,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             // Pre-initialize audio hardware
             await AIService.shared.warmUp()
-            
-            await MainActor.run {
-                self.triggerAutomationPrompt()
-            }
-        }
-    }
-    
-    func triggerAutomationPrompt() {
-        LogManager.shared.log("PERMISSIONS: Triggering Automation (System Events) prompt via NSAppleScript (Strict)...")
-        let scriptSource = "tell application \"System Events\" to get POSIX path of (path to frontmost application)"
-        
-        if let script = NSAppleScript(source: scriptSource) {
-            var error: NSDictionary?
-            script.executeAndReturnError(&error)
-            if let err = error {
-                let errCode = err[NSAppleScript.errorNumber] as? Int ?? 0
-                LogManager.shared.log("PERMISSIONS: Trigger failed or denied: \(errCode)")
-            } else {
-                LogManager.shared.log("PERMISSIONS: Trigger successful.")
-            }
         }
     }
     

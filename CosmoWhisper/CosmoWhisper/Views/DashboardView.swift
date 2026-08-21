@@ -37,6 +37,7 @@ struct DashboardView: View {
                         
                         
                         sidebarSection(title: "PREFERENCES") {
+                            SidebarItem(title: "Account", icon: "person.crop.circle.fill", isSelected: selectedTab == "account", isCompact: isSidebarCollapsed) { selectedTab = "account" }
                             SidebarItem(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == "settings", isCompact: isSidebarCollapsed) { selectedTab = "settings" }
                         }
                     }

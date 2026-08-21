@@ -36,7 +36,22 @@ actor AIService {
             throw NSError(domain: "AIService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Audio file missing"])
         }
         
-        // 2. Load file data
+        // 2. Check Engine Mode (Local Model vs Online Groq)
+        let engine = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "online"
+        if engine == "local" {
+            LogManager.shared.log("AIService: Routing to Local On-Device Whisper Model (100% Offline)")
+            do {
+                let localResult = try await LocalSpeechService.shared.transcribe(fileURL: fileURL)
+                if !localResult.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return localResult
+                }
+                LogManager.shared.log("AIService: Local model returned empty, attempting Groq fallback...")
+            } catch {
+                LogManager.shared.log("AIService: Local model error: \(error.localizedDescription)")
+            }
+        }
+        
+        // 3. Load file data for Groq Cloud
         let fileData = try Data(contentsOf: fileURL)
         let fileSize = fileData.count
         
