@@ -79,27 +79,34 @@ class LocalSpeechService: ObservableObject {
     /// Transcribes an audio file on-device with ZERO cloud network requests.
     func transcribe(fileURL: URL) async throws -> String {
         let startTime = Date()
-        LogManager.shared.log("LocalSpeechService: Starting on-device offline transcription for \(fileURL.lastPathComponent)...")
+        LogManager.shared.log("LocalSpeechService: Starting fast on-device transcription for \(fileURL.lastPathComponent)...")
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
             throw NSError(domain: "LocalSpeechService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local audio file not found"])
         }
         
-        let recognizer = SFSpeechRecognizer(locale: Locale(identifier: UserDefaults.standard.string(forKey: "primaryLanguage") ?? "en-US"))
+        let primaryLang = UserDefaults.standard.string(forKey: "primaryLanguage") ?? "en-US"
+        let recognizer = SFSpeechRecognizer(locale: Locale(identifier: primaryLang))
             ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+            ?? self.speechRecognizer
         
         guard let recognizer = recognizer, recognizer.isAvailable else {
-            LogManager.shared.log("LocalSpeechService: Speech recognizer unavailable, using fast local fallback.")
+            LogManager.shared.log("LocalSpeechService: Speech recognizer unavailable, using fallback.")
             return try await transcribeLocalFallback(fileURL: fileURL)
         }
         
         let request = SFSpeechURLRecognitionRequest(url: fileURL)
         request.shouldReportPartialResults = false
+        request.taskHint = .dictation
         
-        // Force 100% on-device processing where available
+        // Force on-device hardware Neural Engine acceleration when available
         if recognizer.supportsOnDeviceRecognition {
             request.requiresOnDeviceRecognition = true
-            LogManager.shared.log("LocalSpeechService: On-Device Hardware Neural Acceleration ENABLED")
+            LogManager.shared.log("LocalSpeechService: On-Device Hardware Neural Engine Acceleration ENABLED")
+        }
+        
+        if #available(macOS 13.0, *) {
+            request.addsPunctuation = true
         }
         
         final class SafeBox: @unchecked Sendable {
@@ -132,8 +139,8 @@ class LocalSpeechService: ObservableObject {
                 }
             }
             
-            // Timeout safety for local transcription (10s)
-            DispatchQueue.global().asyncAfter(deadline: .now() + 10.0) {
+            // Timeout safety for local transcription (6s max)
+            DispatchQueue.global().asyncAfter(deadline: .now() + 6.0) {
                 if !safeBox.hasResumed {
                     safeBox.hasResumed = true
                     task.cancel()
