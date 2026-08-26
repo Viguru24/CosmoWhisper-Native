@@ -36,17 +36,7 @@ struct OverviewView: View {
                         action: { InputController.shared.requestAccessibility() }
                     )
                     
-                    Divider().opacity(0.1)
-                    
-                    permissionRow(
-                        title: "Automation (Typing)",
-                        description: "Allows CosmoWhisper to paste text into other applications.",
-                        isTrusted: inputController.isAutomationTrusted,
-                        action: { 
-                            inputController.requestAutomation()
-                        }
-                    )
-                    
+
                     Divider().opacity(0.1)
                     
                     HStack {

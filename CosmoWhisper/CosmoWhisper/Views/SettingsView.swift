@@ -178,31 +178,7 @@ struct SettingsView: View {
                     .foregroundColor(.red)
                 }
                 
-                if !inputController.isAutomationTrusted {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Automation permissions are required to paste transcribed text.")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        
-                        Text("If you don't see a prompt, try the 'Hard Reset' below, then restart CosmoWhisper.")
-                            .font(.caption)
-                            .opacity(0.8)
 
-                        HStack {
-                            Button("Trigger Prompt") {
-                                inputController.requestAutomation()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            
-                            Button("Hard Reset Permissions") {
-                                inputController.resetPermissions()
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.red)
-                        }
-                    }
-                    .foregroundColor(.red)
-                }
             }
         }
         .padding(.bottom, 24)
