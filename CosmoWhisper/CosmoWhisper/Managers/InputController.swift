@@ -525,8 +525,7 @@ class InputController: ObservableObject {
     }
     
     func executeKeystroke(key: String, modifiers: NSEvent.ModifierFlags) {
-        // Use nil source to avoid inheriting current keyboard state (modifiers held down by user)
-        let source = CGEventSource(stateID: .hidSystemState)
+        let source = CGEventSource(stateID: .combinedSessionState)
         
         let keyCode: CGKeyCode
         switch key.lowercased() {
@@ -550,10 +549,14 @@ class InputController: ObservableObject {
         if modifiers.contains(.command) { flags.insert(.maskCommand) }
         if modifiers.contains(.shift) { flags.insert(.maskShift) }
         if modifiers.contains(.option) { flags.insert(.maskAlternate) }
+        if modifiers.contains(.control) { flags.insert(.maskControl) }
         
         keyDown?.flags = flags
         keyUp?.flags = flags
         
+        // Post to both Session and HID to ensure 100% reception across Electron, WebKit, and AppKit
+        keyDown?.post(tap: .cgAnnotatedSessionEventTap)
+        keyUp?.post(tap: .cgAnnotatedSessionEventTap)
         keyDown?.post(tap: .cghidEventTap)
         keyUp?.post(tap: .cghidEventTap)
     }
