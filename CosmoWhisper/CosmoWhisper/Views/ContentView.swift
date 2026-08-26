@@ -168,12 +168,10 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenDashboard"))) { _ in
             WindowManager.shared.showDashboard()
         }
-        .onReceive(Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(Timer.publish(every: 2.0, on: .main, in: .common).autoconnect()) { _ in
             let axTrusted = AXIsProcessTrusted()
-            let autoTrusted = InputController.shared.isAutomationTrusted
-            let combined = axTrusted && autoTrusted
-            if combined != isAccessibilityTrusted {
-                isAccessibilityTrusted = combined
+            if axTrusted != isAccessibilityTrusted {
+                isAccessibilityTrusted = axTrusted
             }
         }
     }
