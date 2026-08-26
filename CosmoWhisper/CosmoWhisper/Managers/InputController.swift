@@ -554,11 +554,9 @@ class InputController: ObservableObject {
         keyDown?.flags = flags
         keyUp?.flags = flags
         
-        // Post to both Session and HID to ensure 100% reception across Electron, WebKit, and AppKit
-        keyDown?.post(tap: .cgAnnotatedSessionEventTap)
-        keyUp?.post(tap: .cgAnnotatedSessionEventTap)
-        keyDown?.post(tap: .cghidEventTap)
-        keyUp?.post(tap: .cghidEventTap)
+        // Post single keystroke event to the active window session
+        keyDown?.post(tap: .cgSessionEventTap)
+        keyUp?.post(tap: .cgSessionEventTap)
     }
     
     private func handleFormatting(_ format: String) async {
