@@ -160,6 +160,15 @@ class AudioRecorder: ObservableObject {
     
     func startRecording() {
         guard !isRecording else { return }
+        
+        // Quota Check: If out of 60 free monthly minutes, redirect to Store immediately
+        if LicenseManager.shared.isOverQuota {
+            LogManager.shared.log("AudioRecorder: Free monthly quota reached (60 min/mo). Directing straight to store.")
+            WindowManager.shared.showDashboard()
+            NotificationCenter.default.post(name: NSNotification.Name("OpenAccountTab"), object: nil)
+            return
+        }
+        
         LogManager.shared.log("AudioRecorder: Starting Recording...")
         
         // 1. Immediately claim recording state so key-up is never lost
