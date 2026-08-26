@@ -21,6 +21,56 @@ struct AccountView: View {
             }
             .padding(.bottom, 8)
             
+            if license.isOverQuota {
+                HStack(alignment: .top, spacing: 14) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundColor(.orange)
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Monthly Free Cloud Limit Reached (60 / 60 min)")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text("You've reached your free 60 monthly cloud minutes. Subscribe to CosmoWhisper Pro for unlimited cloud speed, or switch to the 100% Free On-Device Local Model.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                if let url = URL(string: "https://cosmowhisper.com/pricing") { NSWorkspace.shared.open(url) }
+                            }) {
+                                Text("Upgrade to Pro")
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.orange)
+                                    .foregroundColor(.black)
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Button(action: {
+                                UserDefaults.standard.set("local", forKey: "transcriptionEngine")
+                            }) {
+                                Text("Switch to Free Local Model")
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.white.opacity(0.1))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+                .padding(16)
+                .background(Color.orange.opacity(0.12))
+                .cornerRadius(12)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.3), lineWidth: 1))
+            }
+            
             // --- SECTION 1: PROFILE / SIGN IN ---
             if !license.isLoggedIn {
                 // Multiplatform Sign In (Compliant with Apple Guideline 3.1.3b)

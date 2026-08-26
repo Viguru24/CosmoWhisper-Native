@@ -119,6 +119,9 @@ struct DashboardView: View {
         .onAppear {
             isAccessibilityTrusted = AXIsProcessTrusted()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenAccountTab"))) { _ in
+            selectedTab = "account"
+        }
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             let trusted = AXIsProcessTrusted()
             if trusted != isAccessibilityTrusted {

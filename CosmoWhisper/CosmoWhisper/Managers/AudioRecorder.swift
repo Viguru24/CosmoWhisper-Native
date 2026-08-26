@@ -293,9 +293,11 @@ class AudioRecorder: ObservableObject {
                 // Quota Check for Online Cloud
                 let engine = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "online"
                 if engine == "online" && LicenseManager.shared.isOverQuota {
-                    LogManager.shared.log("AudioRecorder: Free limit reached (60 min/week). Prompting upgrade.")
-                    NotificationCenter.default.post(name: NSNotification.Name("InsertText"), object: " [Free limit reached: 60 min/wk. Upgrade at cosmowhisper.com/pricing or switch to 100% Free Local Model] ")
-                    LicenseManager.shared.openPricingWebsite()
+                    LogManager.shared.log("AudioRecorder: Free monthly quota reached (60 min/mo). Opening store.")
+                    Task { @MainActor in
+                        WindowManager.shared.showDashboard()
+                        NotificationCenter.default.post(name: NSNotification.Name("OpenAccountTab"), object: nil)
+                    }
                     return
                 }
                 
