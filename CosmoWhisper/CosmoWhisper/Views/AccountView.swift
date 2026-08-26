@@ -336,8 +336,77 @@ struct AccountView: View {
                 }
             }
             
-            // --- SECTION 2: SHOP & PRO PLANS ---
-            SettingsCard(title: "CosmoWhisper Shop & Subscriptions", icon: "cart.fill") {
+            // --- SECTION 2: HOW BILLING & FREE QUOTA WORKS ---
+            SettingsCard(title: "How Quota & Subscriptions Work", icon: "info.circle.fill") {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(alignment: .top, spacing: 14) {
+                        Image(systemName: "gift.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                            .frame(width: 32)
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("1. Every User Gets 60 Free Cloud Minutes / Month")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Text("Your free 60 minutes renew every 30 days automatically. No credit card required.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Divider().opacity(0.1)
+                    
+                    HStack(alignment: .top, spacing: 14) {
+                        Image(systemName: "arrow.triangle.swap")
+                            .font(.title2)
+                            .foregroundColor(.orange)
+                            .frame(width: 32)
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("2. When Your 60 Minutes Are Used Up:")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Text("You are never locked out! You can choose:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.caption)
+                                    Text("Switch to 100% Free On-Device Local Model (Unlimited forever)").font(.caption).foregroundColor(.white)
+                                }
+                                HStack(spacing: 6) {
+                                    Image(systemName: "sparkles").foregroundColor(.yellow).font(.caption)
+                                    Text("Or Upgrade to Pro for unlimited ultra-fast Groq Cloud AI").font(.caption).foregroundColor(.white)
+                                }
+                            }
+                            .padding(.top, 4)
+                        }
+                    }
+                    
+                    Divider().opacity(0.1)
+                    
+                    HStack(alignment: .top, spacing: 14) {
+                        Image(systemName: "creditcard.fill")
+                            .font(.title2)
+                            .foregroundColor(.green)
+                            .frame(width: 32)
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("3. How to Start Paying / Upgrade")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Text("Upgrade with 1 click below using Apple In-App Purchase (Apple Pay) or through our official Web Shop.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            
+            // --- SECTION 3: SHOP & PRO PLANS ---
+            SettingsCard(title: "CosmoWhisper Plans & Upgrades", icon: "cart.fill") {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(alignment: .top, spacing: 16) {
                         Image(systemName: "sparkles")
@@ -346,10 +415,10 @@ struct AccountView: View {
                             .padding(.top, 2)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Unlock Unlimited Cloud Speed & Priority AI")
+                            Text("Choose the Plan That Fits Your Workflow")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            Text("Subscribe via our Web Shop or Mac App Store to unlock unlimited high-speed cloud transcription, vocabulary syncing, and priority AI.")
+                            Text("Subscribe via Apple In-App Purchase or our Web Shop. Existing Windows users can sign in above to activate Pro on Mac.")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -361,7 +430,7 @@ struct AccountView: View {
                             Text("CosmoWhisper Web Shop")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.white)
-                            Text("Purchase lifetime licenses, monthly subscriptions, or extra cloud minutes.")
+                            Text("Purchase monthly subscriptions, annual passes, or lifetime licenses.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
