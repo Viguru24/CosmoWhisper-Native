@@ -572,13 +572,9 @@ class InputController: ObservableObject {
     }
     
     func pasteText(_ text: String) async {
-        if !AXIsProcessTrusted() {
-            LogManager.shared.log("ABORT: Native Paste failed. Accessibility permissions are NOT granted.")
-            return
-        }
+        let isTrusted = AXIsProcessTrusted()
+        LogManager.shared.log("InputController: Pasting text (length: \(text.count)). AX Trusted: \(isTrusted)")
 
-        LogManager.shared.log("InputController: Requesting paste details...")
-        
         let useDirectTyping = UserDefaults.standard.bool(forKey: "useSimulation")
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboard")
         let shouldAutoSubmit = UserDefaults.standard.bool(forKey: "autoSubmit")

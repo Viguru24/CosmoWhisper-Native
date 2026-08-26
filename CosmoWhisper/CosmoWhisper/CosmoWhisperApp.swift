@@ -56,16 +56,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func checkAccessibilityPermissions() {
-        let options: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-        let accessibilityEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        
+        let accessibilityEnabled = AXIsProcessTrusted()
         LogManager.shared.log("PERMISSIONS: Accessibility Check Result: \(accessibilityEnabled)")
-        
-        if !accessibilityEnabled {
-            LogManager.shared.log("PERMISSIONS: Requesting Accessibility permissions with Prompt Option...")
-            // Redundant call to ensure prompt is triggered if system allows
-            let _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        }
     }
     
     func warmupSystem() {
