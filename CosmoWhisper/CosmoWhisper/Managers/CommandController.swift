@@ -490,10 +490,20 @@ public class CommandController {
         }
         
         Task.detached {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
+            let dateString = dateFormatter.string(from: Date())
+            let desktopPath = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path ?? "\(NSHomeDirectory())/Desktop"
+            let destinationFile = "\(desktopPath)/Screenshot \(dateString).png"
+            
             let p = Process()
             p.launchPath = "/usr/sbin/screencapture"
-            p.arguments = ["-i", "-c"] // Interactive + Clipboard
+            // -i: interactive area selection, -c: copy to clipboard, saves directly to Desktop file
+            p.arguments = ["-i", "-c", destinationFile]
             p.launch()
+            p.waitUntilExit()
+            
+            LogManager.shared.log("Command: Screenshot saved to \(destinationFile) and copied to clipboard.")
         }
     }
     
