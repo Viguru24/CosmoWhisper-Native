@@ -65,8 +65,7 @@ struct SettingsView: View {
                 Spacer()
                 
                 HStack(spacing: 8) {
-                    permissionBadge(isTrusted: isAccessibilityTrusted, label: "AX", fullLabel: "ACCESSIBILITY")
-                    permissionBadge(isTrusted: inputController.isAutomationTrusted, label: "AUTO", fullLabel: "AUTOMATION")
+                    permissionBadge(isTrusted: isAccessibilityTrusted, label: "ACCESSIBILITY", fullLabel: "ACCESSIBILITY")
                 }
             }
             
@@ -74,7 +73,7 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
             
-            if !isAccessibilityTrusted || !inputController.isAutomationTrusted {
+            if !isAccessibilityTrusted {
                 permissionWarningSection
             }
             
@@ -253,12 +252,23 @@ struct SettingsView: View {
     }
     
     private var mouseButtonRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Toggle(isOn: $inputController.useMouseButton) {
+        VStack(alignment: .leading, spacing: 14) {
+            Toggle(isOn: Binding(
+                get: { inputController.useMouseButton },
+                set: { val in
+                    inputController.useMouseButton = val
+                    UserDefaults.standard.set(val, forKey: "useMouseButton")
+                    if val && inputController.mouseButton == 0 {
+                        inputController.mouseButton = 2
+                        UserDefaults.standard.set(2, forKey: "mouseButton")
+                    }
+                    inputController.refreshMonitors()
+                }
+            )) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Mouse Shortcut")
                         .font(.headline)
-                    Text("Hold a side mouse button to record.")
+                    Text("Hold a mouse button to talk.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -266,25 +276,82 @@ struct SettingsView: View {
             .toggleStyle(SwitchToggleStyle(tint: theme.currentTheme.accent))
             
             if inputController.useMouseButton {
-                HStack {
-                    Text("Active Button")
+                HStack(spacing: 8) {
+                    Text("Selected:")
                         .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Menu {
+                        Button("Middle Click (Button 2)") {
+                            inputController.mouseButton = 2
+                            UserDefaults.standard.set(2, forKey: "mouseButton")
+                            inputController.refreshMonitors()
+                        }
+                        Button("Side / Back (Button 3)") {
+                            inputController.mouseButton = 3
+                            UserDefaults.standard.set(3, forKey: "mouseButton")
+                            inputController.refreshMonitors()
+                        }
+                        Button("Side / Forward (Button 4)") {
+                            inputController.mouseButton = 4
+                            UserDefaults.standard.set(4, forKey: "mouseButton")
+                            inputController.refreshMonitors()
+                        }
+                        Button("Right Click (Button 1)") {
+                            inputController.mouseButton = 1
+                            UserDefaults.standard.set(1, forKey: "mouseButton")
+                            inputController.refreshMonitors()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(mouseButtonLabel(for: inputController.mouseButton))
+                                .font(.system(size: 12, weight: .bold))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(6)
+                    }
+                    .fixedSize()
+                    
                     Spacer()
                     
                     Button(action: { 
                         inputController.isRecordingMouse.toggle()
                     }) {
-                        Text(inputController.isRecordingMouse ? "Listening..." : (inputController.mouseButton == 0 ? "RECORD" : "Button \(inputController.mouseButton)"))
-                            .font(.system(size: 10, weight: .bold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(inputController.isRecordingMouse ? Color.orange.opacity(0.3) : Color.white.opacity(0.1))
-                            .cornerRadius(6)
+                        HStack(spacing: 4) {
+                            if inputController.isRecordingMouse {
+                                Circle().fill(Color.orange).frame(width: 6, height: 6)
+                                Text("Click any mouse button now...")
+                            } else {
+                                Image(systemName: "cursorarrow.click")
+                                Text("Click to Custom Bind")
+                            }
+                        }
+                        .font(.system(size: 11, weight: .bold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(inputController.isRecordingMouse ? Color.orange.opacity(0.3) : Color.blue.opacity(0.15))
+                        .foregroundColor(inputController.isRecordingMouse ? .orange : .blue)
+                        .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
                 }
+                .padding(.top, 4)
                 .transition(.opacity)
             }
+        }
+    }
+    
+    private func mouseButtonLabel(for num: Int) -> String {
+        switch num {
+        case 1: return "Right Click"
+        case 2: return "Middle Click (Wheel)"
+        case 3: return "Side Button (Back)"
+        case 4: return "Side Button (Forward)"
+        default: return "Button \(num)"
         }
     }
     
