@@ -283,9 +283,8 @@ class AudioRecorder: ObservableObject {
                     return
                 }
                 
-                // Quota Check for Online Cloud
-                let engine = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "online"
-                if engine == "online" && LicenseManager.shared.isOverQuota {
+                // Global Quota Check (60 min/month free tier)
+                if LicenseManager.shared.isOverQuota {
                     LogManager.shared.log("AudioRecorder: Free monthly quota reached (60 min/mo). Opening store.")
                     Task { @MainActor in
                         WindowManager.shared.showDashboard()

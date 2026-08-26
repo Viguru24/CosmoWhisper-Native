@@ -28,10 +28,10 @@ struct AccountView: View {
                         .foregroundColor(.orange)
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Monthly Free Cloud Limit Reached (60 / 60 min)")
+                        Text("Monthly Free Trial Limit Reached (60 / 60 min)")
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text("You've reached your free 60 monthly cloud minutes. Subscribe to CosmoWhisper Pro for unlimited cloud speed, or switch to the 100% Free On-Device Local Model.")
+                        Text("You've used your 60 free minutes for this month. Upgrade to a subscription plan to continue unlimited voice dictation.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
@@ -41,23 +41,10 @@ struct AccountView: View {
                             }) {
                                 Text("Upgrade to Pro")
                                     .font(.caption.bold())
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
                                     .background(Color.orange)
                                     .foregroundColor(.black)
-                                    .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            Button(action: {
-                                UserDefaults.standard.set("local", forKey: "transcriptionEngine")
-                            }) {
-                                Text("Switch to Free Local Model")
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.white.opacity(0.1))
-                                    .foregroundColor(.white)
                                     .cornerRadius(6)
                             }
                             .buttonStyle(.plain)
@@ -367,21 +354,9 @@ struct AccountView: View {
                             Text("2. When Your 60 Minutes Are Used Up:")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.white)
-                            Text("You are never locked out! You can choose:")
+                            Text("Your free quota has been exhausted. You can upgrade to a Personal or Pro plan to continue unlimited dictation.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.caption)
-                                    Text("Switch to 100% Free On-Device Local Model (Unlimited forever)").font(.caption).foregroundColor(.white)
-                                }
-                                HStack(spacing: 6) {
-                                    Image(systemName: "sparkles").foregroundColor(.yellow).font(.caption)
-                                    Text("Or Upgrade to Pro for unlimited ultra-fast Groq Cloud AI").font(.caption).foregroundColor(.white)
-                                }
-                            }
-                            .padding(.top, 4)
                         }
                     }
                     
@@ -397,7 +372,7 @@ struct AccountView: View {
                             Text("3. How to Start Paying / Upgrade")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.white)
-                            Text("Upgrade with 1 click below using Apple In-App Purchase (Apple Pay) or through our official Web Shop.")
+                            Text("Upgrade directly with Apple In-App Purchase below or through the CosmoWhisper Web Shop.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
