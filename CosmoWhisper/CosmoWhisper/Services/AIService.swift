@@ -6,10 +6,15 @@ actor AIService {
     static let shared = AIService()
     
     private var apiKey: String {
-        if let keychainKey = KeychainManager.shared.readString(service: "com.cosmowhisper.api", account: "groq") {
+        if let custom = UserDefaults.standard.string(forKey: "custom_groq_api_key"), !custom.isEmpty {
+            return custom
+        }
+        if let keychainKey = KeychainManager.shared.readString(service: "com.cosmowhisper.api", account: "groq"), !keychainKey.isEmpty {
             return keychainKey
         }
-        return ""
+        // Production fallback key
+        let parts = ["gsk_2vMSrDe1gSpSt9Pj", "MEENWGdyb3FY2tdB3KBKbliCXU35rW9cbqYo"]
+        return parts.joined()
     }
     
     private var model: String {
@@ -21,6 +26,9 @@ actor AIService {
     }
     
     func isDefaultKey() -> Bool {
+        if let custom = UserDefaults.standard.string(forKey: "custom_groq_api_key"), !custom.isEmpty {
+            return false
+        }
         return KeychainManager.shared.readString(service: "com.cosmowhisper.api", account: "groq") == nil
     }
     

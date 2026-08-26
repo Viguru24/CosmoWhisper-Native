@@ -637,130 +637,16 @@ class InputController: ObservableObject {
             LogManager.shared.log("Clipboard Restored to previous state")
         }
     }
-    
-    func checkAutomationPermission() -> Bool {
-        // We need a robust check that actually triggers the "Control System Events" permission.
-        // Merely asking for "name" is sometimes allowed without full automation access.
-        // We will try to get the 'processes' list, which is a common restricted action,
-        // OR simply try the keystroke action itself (safely).
-        
-        let scriptSource = "tell application \"System Events\" to packet id 1" // harmless but check permissions? No.
-        // Let's try: tell application "System Events" to get running
-        let strictSource = "tell application \"System Events\" to get POSIX path of (path to frontmost application)"
-        
-        var error: NSDictionary?
-        if let script = NSAppleScript(source: strictSource) {
-            let result = script.executeAndReturnError(&error)
-            
-            if let err = error {
-                let errCode = err[NSAppleScript.errorNumber] as? Int ?? 0
-                let errMsg = err[NSAppleScript.errorMessage] as? String ?? "No message"
-                
-                if errCode == -1743 {
-                    LogManager.shared.log("PERMISSIONS: Automation DENIED (-1743) for strict check.")
-                } else {
-                    LogManager.shared.log("PERMISSIONS: Automation Strict Check Failed (\(errCode)): \(errMsg)")
-                }
-                return false
-            }
-            return true
-        }
-        return false
-    }
-    
-    /// Forces a prompt for Automation by attempting to talk to System Events.
-    func requestAutomation() {
-        LogManager.shared.log("PERMISSIONS: Manually requesting Automation via NSAppleScript (Strict)...")
-        
-        // This command should definitely trigger the prompt if not allowed
-        let scriptSource = "tell application \"System Events\" to get POSIX path of (path to frontmost application)"
-        var error: NSDictionary?
-        
-        if let script = NSAppleScript(source: scriptSource) {
-            script.executeAndReturnError(&error)
-            
-            if let err = error {
-                let errCode = err[NSAppleScript.errorNumber] as? Int ?? 0
-                LogManager.shared.log("PERMISSIONS: Automation request result code: \(errCode)")
-                
-                if errCode == -1743 {
-                    LogManager.shared.log("PERMISSIONS: Automation is DENIED. Opening System Settings...")
-                    let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
-                    NSWorkspace.shared.open(url)
-                } else {
-                    LogManager.shared.log("PERMISSIONS: Automation prompt should have appeared (Error \(errCode))")
-                }
-            } else {
-                LogManager.shared.log("PERMISSIONS: Automation already granted.")
-                self.isAutomationTrusted = true
-            }
-        }
-    }
-    
     func requestAccessibility() {
-        LogManager.shared.log("PERMISSIONS: Requesting Accessibility via OS prompt...")
-        let options: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-        AXIsProcessTrustedWithOptions(options as CFDictionary)
+        LogManager.shared.log("PERMISSIONS: Opening System Accessibility Settings...")
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
     }
     
     func resetPermissions() {
-        LogManager.shared.log("PERMISSIONS: Running forceful TCC reset...")
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.cosmowhisper.CosmoWhisper"
-        
-        Task.detached(priority: .userInitiated) {
-            // 1. Reset Permissions (Core Privacy)
-            let categories = ["Accessibility", "Microphone", "AppleEvents", "ScreenCapture", "All"]
-            for cat in categories {
-                let p = Process()
-                p.launchPath = "/usr/bin/tccutil"
-                p.arguments = ["reset", cat, bundleID]
-                try? p.run()
-                p.waitUntilExit()
-            }
-            
-            // 2. Clear Local State (UserDefaults & Application Support)
-            // This ensures a clean slate for all app-internal logic
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            let appDir = appSupport.appendingPathComponent("CosmoWhisper")
-            try? FileManager.default.removeItem(at: appDir)
-            
-            // Clean Preferences
-            let defaults = UserDefaults.standard
-            let dict = defaults.dictionaryRepresentation()
-            dict.keys.forEach { defaults.removeObject(forKey: $0) }
-            defaults.synchronize()
-
-            // 3. Kill System Events to clear hung states
-            let p4 = Process()
-            p4.launchPath = "/usr/bin/killall"
-            p4.arguments = ["System Events"]
-            p4.launch()
-            p4.waitUntilExit()
-            
-            LogManager.shared.log("PERMISSIONS: TCC Reset complete for \(bundleID). Relaunching...")
-            
-            await MainActor.run {
-                // Try to trigger prompts again (optional, since we are restarting)
-                _ = self.checkAutomationPermission()
-                
-                // --- RELAUNCH LOGIC ---
-                let url = Bundle.main.bundleURL
-                let configuration = NSWorkspace.OpenConfiguration()
-                NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, error in
-                    if let error = error {
-                        LogManager.shared.log("RELAUNCH ERROR: \(error.localizedDescription)")
-                    }
-                    DispatchQueue.main.async {
-                        NSApp.terminate(nil)
-                    }
-                }
-            }
-        }
-        
-        // Ensure app actually quits even if wait fails
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            NSApp.terminate(nil)
-        }
+        LogManager.shared.log("PERMISSIONS: Opening System Accessibility Settings...")
+        requestAccessibility()
     }
     
     private var lastAXTrusted = false
