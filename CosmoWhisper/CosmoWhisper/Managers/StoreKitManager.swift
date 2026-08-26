@@ -120,9 +120,9 @@ class StoreKitManager: ObservableObject {
         // If the user has an active Apple subscription, apply tier to LicenseManager
         if let highestTier = highestActiveTier(from: activeIDs) {
             LicenseManager.shared.tier = highestTier
-            LicenseManager.shared.weeklyLimitMinutes = 999999.0
+            LicenseManager.shared.monthlyLimitMinutes = 999999.0
             UserDefaults.standard.set(highestTier, forKey: "subscriptionTier")
-            LicenseManager.shared.recalculateLocalWeeklyUsage()
+            LicenseManager.shared.recalculateLocalMonthlyUsage()
             LogManager.shared.log("StoreKitManager: Unlocked active Apple subscription tier: \(highestTier)")
         }
     }

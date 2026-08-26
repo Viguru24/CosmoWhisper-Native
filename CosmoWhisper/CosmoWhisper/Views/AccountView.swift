@@ -186,7 +186,7 @@ struct AccountView: View {
                                         .cornerRadius(6)
                                     
                                     if license.tier.lowercased() == "free" {
-                                        Text("60 min / week free")
+                                        Text("60 min / month free")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
@@ -232,12 +232,12 @@ struct AccountView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(license.tier.lowercased() == "free" ? "Weekly Free Cloud Usage" : "Cloud Transcription Quota")
+                                    Text(license.tier.lowercased() == "free" ? "Monthly Free Cloud Usage" : "Cloud Transcription Quota")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                     
                                     if license.tier.lowercased() == "free" {
-                                        Text("\(String(format: "%.1f", license.weeklyUsageMinutes)) / \(Int(license.weeklyLimitMinutes)) minutes")
+                                        Text("\(String(format: "%.1f", license.monthlyUsageMinutes)) / \(Int(license.monthlyLimitMinutes)) minutes")
                                             .font(.system(size: 18, weight: .bold, design: .rounded))
                                             .foregroundColor(license.isOverQuota ? .red : .white)
                                     } else {
@@ -250,14 +250,14 @@ struct AccountView: View {
                                 Spacer()
                                 
                                 if license.tier.lowercased() == "free" {
-                                    Text("\(max(0, Int(license.weeklyLimitMinutes - license.weeklyUsageMinutes))) min left")
+                                    Text("\(max(0, Int(license.monthlyLimitMinutes - license.monthlyUsageMinutes))) min left")
                                         .font(.caption.bold())
                                         .foregroundColor(license.isOverQuota ? .red : .green)
                                 }
                             }
                             
                             if license.tier.lowercased() == "free" {
-                                let progress = min(1.0, license.weeklyUsageMinutes / license.weeklyLimitMinutes)
+                                let progress = min(1.0, license.monthlyUsageMinutes / license.monthlyLimitMinutes)
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         RoundedRectangle(cornerRadius: 6)
@@ -277,7 +277,7 @@ struct AccountView: View {
                                 }
                                 .frame(height: 10)
                                 
-                                Text("Your free 60 minutes renew every 7 days automatically. Local speech recognition is always 100% free and unlimited.")
+                                Text("Your free 60 minutes renew every 30 days automatically. Local speech recognition is always 100% free and unlimited.")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -286,8 +286,8 @@ struct AccountView: View {
                 }
             }
             
-            // --- SECTION 2: MAC APP STORE IN-APP PURCHASES ---
-            SettingsCard(title: "CosmoWhisper Pro Subscriptions", icon: "crown.fill") {
+            // --- SECTION 2: SHOP & PRO PLANS ---
+            SettingsCard(title: "CosmoWhisper Shop & Subscriptions", icon: "cart.fill") {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(alignment: .top, spacing: 16) {
                         Image(systemName: "sparkles")
@@ -299,13 +299,48 @@ struct AccountView: View {
                             Text("Unlock Unlimited Cloud Speed & Priority AI")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            Text("Subscribe via Apple In-App Purchase to unlock unlimited cloud transcription, custom vocabulary syncing, and priority Groq AI models.")
+                            Text("Subscribe via our Web Shop or Mac App Store to unlock unlimited high-speed cloud transcription, vocabulary syncing, and priority AI.")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
                     }
                     
-                    // Native StoreKit Subscription Options
+                    // Web Shop Link Card
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("CosmoWhisper Web Shop")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Text("Purchase lifetime licenses, monthly subscriptions, or extra cloud minutes.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            if let url = URL(string: "https://cosmowhisper.com/pricing") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.up.right.square.fill")
+                                Text("Visit Web Shop")
+                            }
+                            .font(.caption.bold())
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(12)
+                    .background(Color.white.opacity(0.04))
+                    .cornerRadius(10)
+                    
+                    // Native StoreKit Subscription Options (if available)
                     if !storeKit.products.isEmpty {
                         VStack(spacing: 10) {
                             ForEach(storeKit.products) { product in
@@ -342,36 +377,6 @@ struct AccountView: View {
                                 .cornerRadius(10)
                             }
                         }
-                    } else {
-                        // Fallback Display / Store Preview
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("CosmoWhisper Pro (Unlimited Cloud)")
-                                    .font(.subheadline.bold())
-                                    .foregroundColor(.white)
-                                Text("Unlimited transcription, priority cloud speed, and multi-device sync.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                Task { await storeKit.fetchProducts() }
-                            }) {
-                                Text("Check Store Plans")
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(12)
-                        .background(Color.white.opacity(0.04))
-                        .cornerRadius(10)
                     }
                     
                     // Restore & Legal Links (Mandatory for App Store Approval)
@@ -420,7 +425,7 @@ struct AccountView: View {
             Spacer()
         }
         .onAppear {
-            license.recalculateLocalWeeklyUsage()
+            license.recalculateLocalMonthlyUsage()
             if license.isLoggedIn {
                 Task { await license.fetchStatus() }
             }

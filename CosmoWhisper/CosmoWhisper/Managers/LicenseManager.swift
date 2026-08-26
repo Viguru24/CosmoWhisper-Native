@@ -8,8 +8,13 @@ class LicenseManager: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var userEmail: String = ""
     @Published var tier: String = "free" // "free", "personal", "professional", "medical"
-    @Published var weeklyUsageMinutes: Double = 0.0
-    @Published var weeklyLimitMinutes: Double = 60.0
+    @Published var monthlyUsageMinutes: Double = 0.0
+    @Published var monthlyLimitMinutes: Double = 60.0
+    
+    // Backward compatibility aliases
+    var weeklyUsageMinutes: Double { monthlyUsageMinutes }
+    var weeklyLimitMinutes: Double { monthlyLimitMinutes }
+    
     @Published var isOverQuota: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -26,26 +31,26 @@ class LicenseManager: ObservableObject {
         self.isLoggedIn = UserDefaults.standard.bool(forKey: "userLoggedIn")
         self.userEmail = UserDefaults.standard.string(forKey: "userEmail") ?? ""
         self.tier = UserDefaults.standard.string(forKey: "subscriptionTier") ?? "free"
-        self.weeklyLimitMinutes = (self.tier == "free") ? 60.0 : 999999.0
+        self.monthlyLimitMinutes = (self.tier == "free") ? 60.0 : 999999.0
         
-        recalculateLocalWeeklyUsage()
+        recalculateLocalMonthlyUsage()
         
         if isLoggedIn {
             Task { await fetchStatus() }
         }
     }
     
-    /// Recalculates usage accumulated in the last 7 rolling days
-    func recalculateLocalWeeklyUsage() {
-        let sevenDaysAgo = Date().addingTimeInterval(-7 * 24 * 3600).timeIntervalSince1970
+    /// Recalculates usage accumulated in the last 30 rolling days (1 Month)
+    func recalculateLocalMonthlyUsage() {
+        let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 3600).timeIntervalSince1970
         let records = UserDefaults.standard.array(forKey: "usage_records_v1") as? [[String: Any]] ?? []
         
-        // Filter records from the last 7 days
+        // Filter records from the last 30 days
         var totalMs: Double = 0.0
         var validRecords: [[String: Any]] = []
         
         for record in records {
-            if let timestamp = record["timestamp"] as? Double, timestamp >= sevenDaysAgo,
+            if let timestamp = record["timestamp"] as? Double, timestamp >= thirtyDaysAgo,
                let ms = record["duration_ms"] as? Double {
                 totalMs += ms
                 validRecords.append(record)
@@ -56,10 +61,14 @@ class LicenseManager: ObservableObject {
         UserDefaults.standard.set(validRecords, forKey: "usage_records_v1")
         
         let minutes = totalMs / 60000.0
-        self.weeklyUsageMinutes = (minutes * 10).rounded() / 10
-        self.isOverQuota = (self.tier == "free") && (self.weeklyUsageMinutes >= self.weeklyLimitMinutes)
+        self.monthlyUsageMinutes = (minutes * 10).rounded() / 10
+        self.isOverQuota = (self.tier == "free") && (self.monthlyUsageMinutes >= self.monthlyLimitMinutes)
         
-        LogManager.shared.log("LicenseManager: Weekly Usage: \(self.weeklyUsageMinutes)/\(self.weeklyLimitMinutes) min (Tier: \(self.tier), OverQuota: \(self.isOverQuota))")
+        LogManager.shared.log("LicenseManager: Monthly Usage: \(self.monthlyUsageMinutes)/\(self.monthlyLimitMinutes) min (Tier: \(self.tier), OverQuota: \(self.isOverQuota))")
+    }
+    
+    func recalculateLocalWeeklyUsage() {
+        recalculateLocalMonthlyUsage()
     }
     
     /// Reports usage after a transcription session
@@ -125,12 +134,12 @@ class LicenseManager: ObservableObject {
                     if let remoteTier = json["tier"] as? String {
                         self.tier = remoteTier
                         UserDefaults.standard.set(remoteTier, forKey: "subscriptionTier")
-                        self.weeklyLimitMinutes = (remoteTier.lowercased() == "free") ? 60.0 : 999999.0
+                        self.monthlyLimitMinutes = (remoteTier.lowercased() == "free") ? 60.0 : 999999.0
                     }
                     if let isOver = json["isOverLimit"] as? Bool {
                         self.isOverQuota = isOver
                     }
-                    recalculateLocalWeeklyUsage()
+                    recalculateLocalMonthlyUsage()
                     LogManager.shared.log("LicenseManager: Synced status with VPS -> Email: \(self.userEmail), Tier: \(self.tier), OverLimit: \(self.isOverQuota)")
                 }
             }
@@ -178,12 +187,12 @@ class LicenseManager: ObservableObject {
                 if let jwtTier = payload["tier"] as? String {
                     self.tier = jwtTier
                     UserDefaults.standard.set(jwtTier, forKey: "subscriptionTier")
-                    self.weeklyLimitMinutes = (jwtTier.lowercased() == "free") ? 60.0 : 999999.0
+                    self.monthlyLimitMinutes = (jwtTier.lowercased() == "free") ? 60.0 : 999999.0
                 }
             }
             
             UserDefaults.standard.set(true, forKey: "userLoggedIn")
-            recalculateLocalWeeklyUsage()
+            recalculateLocalMonthlyUsage()
             LogManager.shared.log("LicenseManager: Authenticated as \(self.userEmail) (Tier: \(self.tier))")
             
             // Sync live status with VPS
@@ -282,10 +291,10 @@ class LicenseManager: ObservableObject {
                     if let user = json["user"] as? [String: Any], let userTier = user["tier"] as? String {
                         self.tier = userTier
                         UserDefaults.standard.set(userTier, forKey: "subscriptionTier")
-                        self.weeklyLimitMinutes = (userTier.lowercased() == "free") ? 60.0 : 999999.0
+                        self.monthlyLimitMinutes = (userTier.lowercased() == "free") ? 60.0 : 999999.0
                     }
                     
-                    recalculateLocalWeeklyUsage()
+                    recalculateLocalMonthlyUsage()
                     LogManager.shared.log("LicenseManager: Magic code verified successfully for \(cleanEmail) (Tier: \(self.tier))")
                     
                     Task { @MainActor in
