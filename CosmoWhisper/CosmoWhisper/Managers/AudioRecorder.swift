@@ -4,9 +4,11 @@ import Combine
 import AudioToolbox
 
 // --- ACTOR FOR THREAD-SAFE AUDIO HARDWARE ---
+// --- ACTOR FOR THREAD-SAFE AUDIO HARDWARE ---
 actor AudioEngine {
     private var audioRecorder: AVAudioRecorder?
     private var isRecording = false
+    private var isPrimed = false
     
     enum EngineError: Error {
         case notAuthorized
@@ -15,28 +17,48 @@ actor AudioEngine {
     }
     
     func checkPermission() async -> Bool {
-        LogManager.shared.log("AudioEngine: Checking microphone authorization status...")
         let status = AVCaptureDevice.authorizationStatus(for: .audio)
-        LogManager.shared.log("AudioEngine: Current authorization status: \(status.rawValue)")
-        
         if status == .authorized { return true }
-        if status == .denied || status == .restricted { 
-            LogManager.shared.log("AudioEngine: Access denied or restricted.")
-            return false 
-        }
+        if status == .denied || status == .restricted { return false }
         
-        LogManager.shared.log("AudioEngine: Requesting microphone access...")
         return await withCheckedContinuation { continuation in
             AVCaptureDevice.requestAccess(for: .audio) { allowed in
-                LogManager.shared.log("AudioEngine: RequestAccess result: \(allowed)")
                 continuation.resume(returning: allowed)
             }
         }
     }
     
+    func prime(url: URL) {
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        
+        do {
+            let recorder = try AVAudioRecorder(url: url, settings: settings)
+            recorder.isMeteringEnabled = true
+            if recorder.prepareToRecord() {
+                self.audioRecorder = recorder
+                self.isPrimed = true
+                LogManager.shared.log("AudioEngine: Pre-warmed & primed.")
+            }
+        } catch {
+            LogManager.shared.log("AudioEngine: Prime warning: \(error.localizedDescription)")
+        }
+    }
+    
     func startRecording(url: URL) throws {
-        // 1. Setup Session
-        LogManager.shared.log("AudioEngine: Preparing to start recording at \(url.path)...")
+        // If already primed for this URL, just hit record() immediately
+        if let recorder = audioRecorder, isPrimed && recorder.url == url {
+            if recorder.record() {
+                self.isRecording = true
+                self.isPrimed = false
+                LogManager.shared.log("AudioEngine: Instant Record Started [Primed]")
+                return
+            }
+        }
         
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -49,35 +71,35 @@ actor AudioEngine {
             let recorder = try AVAudioRecorder(url: url, settings: settings)
             recorder.isMeteringEnabled = true
             
-            LogManager.shared.log("AudioEngine: Initialized AVAudioRecorder.")
-            
             if recorder.prepareToRecord() {
-                LogManager.shared.log("AudioEngine: prepareToRecord SUCCESS.")
                 if recorder.record() {
                     self.audioRecorder = recorder
                     self.isRecording = true
+                    self.isPrimed = false
                     LogManager.shared.log("AudioEngine: Recording Started [Actor]")
                 } else {
-                    LogManager.shared.log("AudioEngine: record() returned false.")
                     throw EngineError.recordFailed
                 }
             } else {
-                LogManager.shared.log("AudioEngine: prepareToRecord() returned false.")
                 throw EngineError.setupFailed("prepareToRecord returned false")
             }
         } catch {
-            LogManager.shared.log("AudioEngine: setupFailed with error: \(error.localizedDescription)")
             throw EngineError.setupFailed(error.localizedDescription)
         }
     }
     
-    func stopRecording() {
+    func stopRecording(urlForNextPrime: URL? = nil) {
         if let recorder = audioRecorder, recorder.isRecording {
             recorder.stop()
             LogManager.shared.log("AudioEngine: Recorder Stopped [Actor]")
         }
         audioRecorder = nil
         isRecording = false
+        
+        // Immediately re-prime for the next recording
+        if let nextURL = urlForNextPrime {
+            prime(url: nextURL)
+        }
     }
     
     func getLevels() -> Float {
@@ -106,6 +128,7 @@ class AudioRecorder: ObservableObject {
     @Published var audioLevel: Float = -160.0
     
     private var timer: Timer?
+    private var startingTask: Task<Void, Never>?
     private var processingTask: Task<Void, Never>?
     
     // --- Device Management ---
@@ -127,6 +150,8 @@ class AudioRecorder: ObservableObject {
         
         Task.detached(priority: .background) {
             await self.fetchAudioDevices()
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("cosmo_recording.m4a")
+            await self.engine.prime(url: url)
         }
         
         // Notifications
@@ -175,30 +200,25 @@ class AudioRecorder: ObservableObject {
     
     func startRecording() {
         guard !isRecording else { return }
-        LogManager.shared.log("AudioRecorder: Starting... (Requesting Actor)")
+        LogManager.shared.log("AudioRecorder: Starting Instant Recording...")
         
-        Task {
-            // 1. Check Permissions
-            let allowed = await engine.checkPermission()
-            if !allowed {
-                self.hasError = true
-                self.errorMessage = "Mic Access Denied"
-                LogManager.shared.log("AudioRecorder: Permission Denied")
-                return
-            }
-            
-            // 2. Start Engine
+        // 1. Immediately claim recording state so key-up is never lost
+        self.isRecording = true
+        self.hasError = false
+        self.errorMessage = nil
+        self.startMonitoring()
+        
+        let url = getFileURL()
+        self.startingTask = Task {
             do {
-                let url = getFileURL()
                 try await engine.startRecording(url: url)
-                self.isRecording = true
-                self.hasError = false
-                self.errorMessage = nil
-                self.startMonitoring()
                 LogManager.shared.log("AudioRecorder: Recording Active")
             } catch {
-                self.hasError = true
-                self.errorMessage = "Mic Failed"
+                await MainActor.run {
+                    self.isRecording = false
+                    self.hasError = true
+                    self.errorMessage = "Mic Failed"
+                }
                 LogManager.shared.log("AudioRecorder: Start Failed: \(error.localizedDescription)")
             }
         }
@@ -224,14 +244,19 @@ class AudioRecorder: ObservableObject {
         isProcessing = true
         
         let postRollMs = UserDefaults.standard.object(forKey: "postRollDelayMs") == nil ? 300 : UserDefaults.standard.integer(forKey: "postRollDelayMs")
+        let url = getFileURL()
         
         // 2. Stop Hardware with Post-Roll Hangover Delay (Background)
         Task {
+            // Ensure start operation finished before stopping
+            _ = await self.startingTask?.result
+            self.startingTask = nil
+            
             if postRollMs > 0 {
                 LogManager.shared.log("AudioRecorder: Applying Post-Roll padding (\(postRollMs)ms)...")
                 try? await Task.sleep(nanoseconds: UInt64(postRollMs) * 1_000_000)
             }
-            await engine.stopRecording()
+            await engine.stopRecording(urlForNextPrime: url)
             LogManager.shared.log("AudioRecorder: Engine Stopped.")
             LogManager.shared.log("AudioRecorder: Starting Processing.")
             await self.processAudioFile()
