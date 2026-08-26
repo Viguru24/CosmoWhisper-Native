@@ -399,37 +399,11 @@ struct OverviewView: View {
     }
     
     private func deepResetPermissions() {
-        LogManager.shared.log("UI: DEEP PERMISSION RESET INITIATED")
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.cosmowhisper.CosmoWhisper"
-        
-        Task.detached(priority: .userInitiated) {
-            let task = Process()
-            task.launchPath = "/usr/bin/tccutil"
-            task.arguments = ["reset", "All", bundleID]
-            
-            // Kill System Events to clear hung states
-            let task3 = Process()
-            task3.launchPath = "/usr/bin/killall"
-            task3.arguments = ["System Events"]
-            
-            do {
-                try task.run()
-                try? task3.run()
-                LogManager.shared.log("UI: Permissions reset triggered. Relaunching...")
-                
-                await MainActor.run {
-                    let url = Bundle.main.bundleURL
-                    let configuration = NSWorkspace.OpenConfiguration()
-                    NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
-                        DispatchQueue.main.async {
-                            NSApp.terminate(nil)
-                        }
-                    }
-                }
-            } catch {
-                LogManager.shared.log("UI ERROR: Failed to execute reset: \(error.localizedDescription)")
-            }
+        LogManager.shared.log("UI: Opening System Accessibility Settings...")
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
         }
+        InputController.shared.requestAccessibility()
     }
     
     private func loadRecentActivity() {
