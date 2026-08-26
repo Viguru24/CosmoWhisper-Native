@@ -207,56 +207,28 @@ class AudioRecorder: ObservableObject {
     @Published var isPreviewing = false
     
     func startPreview() {
-        guard !isRecording else { return }
-        LogManager.shared.log("AudioRecorder: Starting Preview...")
-        isPreviewing = true
-        startRecording()
+        // Sound check is handled passively
     }
     
     func stopPreview() {
-        if isPreviewing {
-            LogManager.shared.log("AudioRecorder: Stopping Preview...")
-            stopRecording()
-            // Reset flag AFTER stopRecording returns (since stopRecording checks it)
-            // But wait, stopRecording is async-ish.
-            // Let's rely on stopRecording to handle the logic if we set the flag correctly?
-            // Actually, existing logic: stopRecording checks isPreviewing.
-            // So we just call stopRecording, then set to false?
-            // No, stopRecording needs to know it WAS previewing to skip processing.
-            // So we set isPreviewing = false AFTER?
-            // Let's modify stopRecording to handle it clear.
-        }
+        // Sound check is handled passively
     }
     
     func stopRecording() {
         guard isRecording else { return }
         LogManager.shared.log("AudioRecorder: Stopping...")
         
-        let wasPreview = isPreviewing
-        if wasPreview { isPreviewing = false }
-        
         // 1. Stop UI immediately
         stopMonitoring()
         isRecording = false
-        
-        if !wasPreview {
-            isProcessing = true
-        }
+        isProcessing = true
         
         // 2. Stop Hardware (Background)
         Task {
             await engine.stopRecording()
             LogManager.shared.log("AudioRecorder: Engine Stopped.")
-            
-            if wasPreview {
-                LogManager.shared.log("AudioRecorder: Preview ended. No processing.")
-                // Cleanup file just in case
-                let url = getFileURL()
-                try? FileManager.default.removeItem(at: url)
-            } else {
-                LogManager.shared.log("AudioRecorder: Starting Processing.")
-                await self.processAudioFile()
-            }
+            LogManager.shared.log("AudioRecorder: Starting Processing.")
+            await self.processAudioFile()
         }
     }
     

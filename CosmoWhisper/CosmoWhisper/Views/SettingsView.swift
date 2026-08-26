@@ -131,16 +131,11 @@ struct SettingsView: View {
         }
         .onAppear { 
             isPulsing = true 
-            if !recorder.isRecording { recorder.startPreview() }
-            
             // Sync Launch at Login status with system
             let systemStatus = LaunchManager.shared.isRegistered
             if launchAtLogin != systemStatus {
                 launchAtLogin = systemStatus
             }
-        }
-        .onDisappear {
-            recorder.stopPreview()
         }
     }
     
