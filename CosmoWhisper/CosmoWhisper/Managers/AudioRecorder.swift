@@ -223,8 +223,14 @@ class AudioRecorder: ObservableObject {
         isRecording = false
         isProcessing = true
         
-        // 2. Stop Hardware (Background)
+        let postRollMs = UserDefaults.standard.object(forKey: "postRollDelayMs") == nil ? 300 : UserDefaults.standard.integer(forKey: "postRollDelayMs")
+        
+        // 2. Stop Hardware with Post-Roll Hangover Delay (Background)
         Task {
+            if postRollMs > 0 {
+                LogManager.shared.log("AudioRecorder: Applying Post-Roll padding (\(postRollMs)ms)...")
+                try? await Task.sleep(nanoseconds: UInt64(postRollMs) * 1_000_000)
+            }
             await engine.stopRecording()
             LogManager.shared.log("AudioRecorder: Engine Stopped.")
             LogManager.shared.log("AudioRecorder: Starting Processing.")

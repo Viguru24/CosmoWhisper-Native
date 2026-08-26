@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage("micSensitivity") private var micSensitivity = 0.5
     @AppStorage("playChimes") private var playChimes = true
     @AppStorage("widgetOpacity") private var widgetOpacity = 0.8
+    @AppStorage("postRollDelayMs") private var postRollDelayMs = 300.0
+    @AppStorage("preRollBufferMs") private var preRollBufferMs = 250.0
     @State private var isCalibrating = false
     @Binding var isAccessibilityTrusted: Bool
     @State private var isPulsing = false
@@ -564,6 +566,66 @@ struct SettingsView: View {
                     Text("Whisper").font(.caption).foregroundColor(.gray)
                     Spacer()
                     Text("Loud").font(.caption).foregroundColor(.gray)
+                }
+            }
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // Post-Roll Release Padding Slider
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Release Padding (Post-Roll)")
+                            .font(.headline)
+                        Text("Keeps recording briefly after releasing the button to capture trailing words.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Text("\(Int(postRollDelayMs)) ms")
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .foregroundColor(theme.currentTheme.accent)
+                }
+                
+                Slider(value: $postRollDelayMs, in: 50...800, step: 25)
+                    .accentColor(theme.currentTheme.accent)
+                
+                HStack {
+                    Text("Fast (50ms)").font(.caption2).foregroundColor(.gray)
+                    Spacer()
+                    Text("Standard (300ms)").font(.caption2).foregroundColor(.blue.opacity(0.8))
+                    Spacer()
+                    Text("Long (800ms)").font(.caption2).foregroundColor(.gray)
+                }
+            }
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // Pre-Roll Lead-in Buffer Slider
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Lead-in Buffer (Pre-Roll)")
+                            .font(.headline)
+                        Text("Primes the audio hardware to catch words spoken right before pressing.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Text("\(Int(preRollBufferMs)) ms")
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .foregroundColor(theme.currentTheme.accent)
+                }
+                
+                Slider(value: $preRollBufferMs, in: 0...500, step: 25)
+                    .accentColor(theme.currentTheme.accent)
+                
+                HStack {
+                    Text("0ms").font(.caption2).foregroundColor(.gray)
+                    Spacer()
+                    Text("Recommended (250ms)").font(.caption2).foregroundColor(.blue.opacity(0.8))
+                    Spacer()
+                    Text("500ms").font(.caption2).foregroundColor(.gray)
                 }
             }
             
