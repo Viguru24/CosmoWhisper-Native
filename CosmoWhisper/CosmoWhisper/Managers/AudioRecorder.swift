@@ -4,11 +4,9 @@ import Combine
 import AudioToolbox
 
 // --- ACTOR FOR THREAD-SAFE AUDIO HARDWARE ---
-// --- ACTOR FOR THREAD-SAFE AUDIO HARDWARE ---
 actor AudioEngine {
     private var audioRecorder: AVAudioRecorder?
     private var isRecording = false
-    private var isPrimed = false
     
     enum EngineError: Error {
         case notAuthorized
@@ -28,38 +26,7 @@ actor AudioEngine {
         }
     }
     
-    func prime(url: URL) {
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
-        
-        do {
-            let recorder = try AVAudioRecorder(url: url, settings: settings)
-            recorder.isMeteringEnabled = true
-            if recorder.prepareToRecord() {
-                self.audioRecorder = recorder
-                self.isPrimed = true
-                LogManager.shared.log("AudioEngine: Pre-warmed & primed.")
-            }
-        } catch {
-            LogManager.shared.log("AudioEngine: Prime warning: \(error.localizedDescription)")
-        }
-    }
-    
     func startRecording(url: URL) throws {
-        // If already primed for this URL, just hit record() immediately
-        if let recorder = audioRecorder, isPrimed && recorder.url == url {
-            if recorder.record() {
-                self.isRecording = true
-                self.isPrimed = false
-                LogManager.shared.log("AudioEngine: Instant Record Started [Primed]")
-                return
-            }
-        }
-        
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
             AVSampleRateKey: 44100,
@@ -75,8 +42,7 @@ actor AudioEngine {
                 if recorder.record() {
                     self.audioRecorder = recorder
                     self.isRecording = true
-                    self.isPrimed = false
-                    LogManager.shared.log("AudioEngine: Recording Started [Actor]")
+                    LogManager.shared.log("AudioEngine: Recording Started at \(url.lastPathComponent)")
                 } else {
                     throw EngineError.recordFailed
                 }
@@ -88,18 +54,13 @@ actor AudioEngine {
         }
     }
     
-    func stopRecording(urlForNextPrime: URL? = nil) {
+    func stopRecording() {
         if let recorder = audioRecorder, recorder.isRecording {
             recorder.stop()
             LogManager.shared.log("AudioEngine: Recorder Stopped [Actor]")
         }
         audioRecorder = nil
         isRecording = false
-        
-        // Immediately re-prime for the next recording
-        if let nextURL = urlForNextPrime {
-            prime(url: nextURL)
-        }
     }
     
     func getLevels() -> Float {
@@ -130,6 +91,7 @@ class AudioRecorder: ObservableObject {
     private var timer: Timer?
     private var startingTask: Task<Void, Never>?
     private var processingTask: Task<Void, Never>?
+    private var currentRecordingURL: URL?
     
     // --- Device Management ---
     @Published var availableDevices: [Device] = []
@@ -150,8 +112,6 @@ class AudioRecorder: ObservableObject {
         
         Task.detached(priority: .background) {
             await self.fetchAudioDevices()
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("cosmo_recording.m4a")
-            await self.engine.prime(url: url)
         }
         
         // Notifications
@@ -200,7 +160,7 @@ class AudioRecorder: ObservableObject {
     
     func startRecording() {
         guard !isRecording else { return }
-        LogManager.shared.log("AudioRecorder: Starting Instant Recording...")
+        LogManager.shared.log("AudioRecorder: Starting Recording...")
         
         // 1. Immediately claim recording state so key-up is never lost
         self.isRecording = true
@@ -208,10 +168,12 @@ class AudioRecorder: ObservableObject {
         self.errorMessage = nil
         self.startMonitoring()
         
-        let url = getFileURL()
+        let uniqueURL = FileManager.default.temporaryDirectory.appendingPathComponent("cosmo_recording_\(UUID().uuidString).m4a")
+        self.currentRecordingURL = uniqueURL
+        
         self.startingTask = Task {
             do {
-                try await engine.startRecording(url: url)
+                try await engine.startRecording(url: uniqueURL)
                 LogManager.shared.log("AudioRecorder: Recording Active")
             } catch {
                 await MainActor.run {
@@ -243,8 +205,13 @@ class AudioRecorder: ObservableObject {
         isRecording = false
         isProcessing = true
         
+        guard let fileURL = self.currentRecordingURL else {
+            isProcessing = false
+            return
+        }
+        self.currentRecordingURL = nil
+        
         let postRollMs = UserDefaults.standard.object(forKey: "postRollDelayMs") == nil ? 300 : UserDefaults.standard.integer(forKey: "postRollDelayMs")
-        let url = getFileURL()
         
         // 2. Stop Hardware with Post-Roll Hangover Delay (Background)
         Task {
@@ -256,10 +223,10 @@ class AudioRecorder: ObservableObject {
                 LogManager.shared.log("AudioRecorder: Applying Post-Roll padding (\(postRollMs)ms)...")
                 try? await Task.sleep(nanoseconds: UInt64(postRollMs) * 1_000_000)
             }
-            await engine.stopRecording(urlForNextPrime: url)
+            await engine.stopRecording()
             LogManager.shared.log("AudioRecorder: Engine Stopped.")
-            LogManager.shared.log("AudioRecorder: Starting Processing.")
-            await self.processAudioFile()
+            LogManager.shared.log("AudioRecorder: Starting Processing for \(fileURL.lastPathComponent).")
+            await self.processAudioFile(fileURL: fileURL)
         }
     }
     
@@ -282,10 +249,6 @@ class AudioRecorder: ObservableObject {
         audioLevel = -160.0
     }
     
-    private func getFileURL() -> URL {
-        return FileManager.default.temporaryDirectory.appendingPathComponent("cosmo_recording.m4a")
-    }
-    
     func forceReset() {
         LogManager.shared.log("AudioRecorder: [FORCE RESET]")
         stopMonitoring()
@@ -298,8 +261,7 @@ class AudioRecorder: ObservableObject {
     }
     
     // --- TEXT PROCESSING PIPELINE ---
-    private func processAudioFile() async {
-        let fileURL = getFileURL()
+    private func processAudioFile(fileURL: URL) async {
         
         // Use a new Task to ensure it runs even if the calling Task finishes
         self.processingTask = Task {
