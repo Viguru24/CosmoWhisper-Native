@@ -372,50 +372,64 @@ class AudioRecorder: ObservableObject {
     private func cleanText(_ input: String) -> String {
         var text = input
         
-        // Trim trailing newlines/spaces
-        if let range = text.range(of: "\\s+$", options: .regularExpression) {
-            text.removeSubrange(range)
-        }
-        text = text.trimmingCharacters(in: .newlines)
-        
-        // Commands normalization
-        let low = text.lowercased()
-        
-        // Paragraphs
-        if let range = text.range(of: "^(new|next) paragraph\\s*", options: [.regularExpression, .caseInsensitive]) {
-             text.replaceSubrange(range, with: "")
-             text = "\n\n" + text
+        // 1. Voice Formatting - Paragraphs Anywhere
+        let paragraphPatterns = [
+            "(?i)[,\\.\\?!;:]*\\s*\\b(?:new|next)\\s+paragraph\\b[,\\.\\?!;:]*\\s*",
+            "(?i)[,\\.\\?!;:]*\\s*\\bparagraph\\s+break\\b[,\\.\\?!;:]*\\s*"
+        ]
+        for pattern in paragraphPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern) {
+                let range = NSRange(text.startIndex..<text.endIndex, in: text)
+                text = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "\n\n")
+            }
         }
         
-        // New Lines
-        if let range = text.range(of: "^(new|next) line\\s*", options: [.regularExpression, .caseInsensitive]) {
-            text.replaceSubrange(range, with: "")
-            text = "\n" + text
+        // 2. Voice Formatting - New Lines Anywhere
+        let linePatterns = [
+            "(?i)[,\\.\\?!;:]*\\s*\\b(?:new|next)\\s+line\\b[,\\.\\?!;:]*\\s*",
+            "(?i)[,\\.\\?!;:]*\\s*\\bline\\s+break\\b[,\\.\\?!;:]*\\s*"
+        ]
+        for pattern in linePatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern) {
+                let range = NSRange(text.startIndex..<text.endIndex, in: text)
+                text = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "\n")
+            }
         }
         
-        // "Comma" -> ","
-        if low.contains("comma") {
-             if let regex = try? NSRegularExpression(pattern: "(?i)\\bcomma\\b") {
-                 let range = NSRange(text.startIndex..<text.endIndex, in: text)
-                 text = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: ",")
-             }
+        // 3. Voice Formatting - Common Punctuation Spoken Tokens
+        let punctuationReplacements: [(pattern: String, template: String)] = [
+            ("(?i)\\s*\\bcomma\\b", ","),
+            ("(?i)\\s*\\b(?:full stop|period)\\b", "."),
+            ("(?i)\\s*\\bquestion mark\\b", "?"),
+            ("(?i)\\s*\\b(?:exclamation mark|exclamation point)\\b", "!"),
+            ("(?i)\\s*\\b(?:semicolon|semi-colon|semi colon)\\b", ";"),
+            ("(?i)\\s*\\bcolon\\b", ":"),
+            ("(?i)\\b(?:open quote|open quotation|start quote)\\b\\s*", "\""),
+            ("(?i)\\s*\\b(?:close quote|close quotation|end quote)\\b", "\""),
+            ("(?i)\\b(?:open parenthesis|open paren)\\b\\s*", "("),
+            ("(?i)\\s*\\b(?:close parenthesis|close paren)\\b", ")")
+        ]
+        
+        for (pattern, template) in punctuationReplacements {
+            if let regex = try? NSRegularExpression(pattern: pattern) {
+                let range = NSRange(text.startIndex..<text.endIndex, in: text)
+                text = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: template)
+            }
         }
         
-        // "Period" -> "."
-        if low.contains("full stop") || low.contains("period") {
-             if let regex = try? NSRegularExpression(pattern: "(?i)\\b(full stop|period)\\b") {
-                 let range = NSRange(text.startIndex..<text.endIndex, in: text)
-                 text = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: ".")
-             }
+        // 4. Clean spaces before/after line breaks
+        text = text.replacingOccurrences(of: "[ \\t]+\\n", with: "\n", options: .regularExpression)
+        text = text.replacingOccurrences(of: "\\n[ \\t]+", with: "\n", options: .regularExpression)
+        
+        // 5. Short sentence trailing punctuation trim (only if no line breaks)
+        if !text.contains("\n") {
+            let wordCount = text.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ").count
+            if wordCount < 4 {
+                text = text.replacingOccurrences(of: "[\\.\\?!…]+[\\s]*$", with: "", options: .regularExpression)
+            }
         }
         
-        // Short sentence punctuation trim
-        let wordCount = text.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ").count
-        if wordCount < 6 {
-             text = text.replacingOccurrences(of: "[\\.\\?!…]+[\\s]*$", with: "", options: .regularExpression)
-        }
-        
-        // Replacements
+        // 6. User Custom Vocabulary Replacements
         if let data = UserDefaults.standard.data(forKey: "replacementsJSON_v3"),
            let items = try? JSONDecoder().decode([ReplacementItem].self, from: data) {
             for item in items {
@@ -432,6 +446,10 @@ class AudioRecorder: ObservableObject {
     
     private func isGarbage(_ text: String) -> Bool {
         if text.isEmpty { return true }
+        // Allow standalone newlines/paragraphs
+        if text == "\n" || text == "\n\n" || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return false
+        }
         
         let hallucinations = [
             "mbc", " дякую", "дякую!", "subtitles", "subtitle by", "watched by",
@@ -441,7 +459,7 @@ class AudioRecorder: ObservableObject {
         let low = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if hallucinations.contains(low) { return true }
         if text.components(separatedBy: "Bye").count > 3 { return true }
-        if text.count < 3 && !text.contains(where: { $0.isNumber }) { return true }
+        if text.count < 3 && !text.contains(where: { $0.isNumber }) && !text.contains("\n") { return true }
         
         return false
     }
