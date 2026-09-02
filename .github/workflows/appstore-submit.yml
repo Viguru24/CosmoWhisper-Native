@@ -1,0 +1,232 @@
+name: 🍎 Mac App Store — Build & Submit
+
+# Run manually from GitHub Actions tab with version inputs.
+# You can also trigger it by pushing a tag like v2.1.2
+on:
+  workflow_dispatch:
+    inputs:
+      marketing_version:
+        description: 'App version (e.g. 2.1.2)'
+        required: true
+        default: '2.1.2'
+      build_number:
+        description: 'Build number — must be higher than last submission'
+        required: true
+        default: '2'
+
+  push:
+    tags:
+      - 'mac-v*'
+
+jobs:
+  submit-to-app-store:
+    name: Build, Sign & Upload to App Store Connect
+    runs-on: macos-15
+
+    steps:
+      # ─────────────────────────────────────────────
+      # 1. CHECKOUT
+      # ─────────────────────────────────────────────
+      - name: ⬇️ Checkout mac-native-release
+        uses: actions/checkout@v4
+        with:
+          ref: mac-native-release
+
+      # ─────────────────────────────────────────────
+      # 2. XCODE
+      # ─────────────────────────────────────────────
+      - name: 🔨 Select latest Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app 2>/dev/null \
+          || sudo xcode-select -s /Applications/Xcode_16.1.app 2>/dev/null \
+          || sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null \
+          || sudo xcode-select -s /Applications/Xcode.app
+          echo "Using Xcode: $(xcodebuild -version | head -1)"
+
+      # ─────────────────────────────────────────────
+      # 3. IMPORT APPLE DISTRIBUTION CERTIFICATE
+      #    Secret: APPLE_DIST_CERTIFICATE_BASE64
+      #    (Export your "Apple Distribution" cert from
+      #     Keychain Access as .p12, then base64 encode it)
+      # ─────────────────────────────────────────────
+      - name: 🔑 Import Apple Distribution Certificate
+        env:
+          CERT_B64: ${{ secrets.APPLE_DIST_CERTIFICATE_BASE64 }}
+          CERT_PWD: ${{ secrets.APPLE_DIST_CERTIFICATE_PWD }}
+          KEYCHAIN_PWD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/dist_cert.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+
+          echo -n "$CERT_B64" | base64 --decode -o "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$CERT_PWD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          echo "✅ Certificate imported:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      # ─────────────────────────────────────────────
+      # 4. INSTALL MAC APP STORE PROVISIONING PROFILE
+      #    Secret: APPLE_PROVISIONING_PROFILE_BASE64
+      #    (Download the Mac App Store Distribution profile
+      #     from developer.apple.com, base64 encode it)
+      # ─────────────────────────────────────────────
+      - name: 📋 Install Provisioning Profile
+        env:
+          PROFILE_B64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PROFILE_PATH=$RUNNER_TEMP/profile.provisionprofile
+          echo -n "$PROFILE_B64" | base64 --decode -o "$PROFILE_PATH"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+
+          # Extract UUID from the profile
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin \
+            <<< "$(security cms -D -i "$PROFILE_PATH")")
+
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.provisionprofile
+          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
+          echo "✅ Installed profile UUID: $UUID"
+
+      # ─────────────────────────────────────────────
+      # 5. BUMP VERSION NUMBERS
+      # ─────────────────────────────────────────────
+      - name: 🔢 Set version ${{ inputs.marketing_version }} (build ${{ inputs.build_number }})
+        working-directory: CosmoWhisper
+        run: |
+          VERSION="${{ inputs.marketing_version || '2.1.2' }}"
+          BUILD="${{ inputs.build_number || '2' }}"
+
+          # Update MARKETING_VERSION and CURRENT_PROJECT_VERSION in the pbxproj
+          sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $VERSION;/g" \
+            CosmoWhisper.xcodeproj/project.pbxproj
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = $BUILD;/g" \
+            CosmoWhisper.xcodeproj/project.pbxproj
+
+          echo "✅ Version set to $VERSION ($BUILD)"
+
+          # Verify
+          grep "MARKETING_VERSION" CosmoWhisper.xcodeproj/project.pbxproj | head -2
+          grep "CURRENT_PROJECT_VERSION" CosmoWhisper.xcodeproj/project.pbxproj | head -2
+
+      # ─────────────────────────────────────────────
+      # 6. ARCHIVE (Universal: arm64 + x86_64)
+      # ─────────────────────────────────────────────
+      - name: 🏗️ Archive for App Store
+        working-directory: CosmoWhisper
+        run: |
+          gem install xcpretty --no-document 2>/dev/null || true
+
+          xcodebuild archive \
+            -project CosmoWhisper.xcodeproj \
+            -scheme CosmoWhisper \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/CosmoWhisper.xcarchive" \
+            -destination "generic/platform=macOS" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM=9AAQ3L289K \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            2>&1 | tee build.log | xcpretty || (cat build.log && exit 1)
+
+          echo "✅ Archive created"
+          ls -la "$RUNNER_TEMP/CosmoWhisper.xcarchive"
+
+      # ─────────────────────────────────────────────
+      # 7. EXPORT .pkg FOR APP STORE
+      # ─────────────────────────────────────────────
+      - name: 📦 Export App Store Package
+        run: |
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>destination</key>
+              <string>export</string>
+              <key>teamID</key>
+              <string>9AAQ3L289K</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.cosmowhisper.CosmoWhisper</key>
+                  <string>$PROFILE_UUID</string>
+              </dict>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          PLIST
+
+          mkdir -p "$RUNNER_TEMP/export"
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/CosmoWhisper.xcarchive" \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            2>&1 | xcpretty || true
+
+          echo "✅ Export contents:"
+          ls -la "$RUNNER_TEMP/export/"
+
+      # ─────────────────────────────────────────────
+      # 8. UPLOAD TO APP STORE CONNECT
+      #    Secrets needed:
+      #      APPLE_ID  (your Apple ID email)
+      #      APPLE_APP_SPECIFIC_PASSWORD
+      #        → generate at appleid.apple.com
+      #        → App-Specific Passwords section
+      # ─────────────────────────────────────────────
+      - name: 🚀 Upload to App Store Connect
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ASP: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          PKG_PATH=$(find "$RUNNER_TEMP/export" -name "*.pkg" | head -1)
+
+          if [ -z "$PKG_PATH" ]; then
+            echo "❌ No .pkg found in export directory"
+            ls -la "$RUNNER_TEMP/export/"
+            exit 1
+          fi
+
+          echo "📤 Uploading: $PKG_PATH"
+
+          xcrun altool --upload-app \
+            -f "$PKG_PATH" \
+            -t macos \
+            -u "$APPLE_ID" \
+            -p "$APPLE_ASP" \
+            --verbose
+
+          echo "✅ Upload complete — check App Store Connect in ~15 minutes"
+
+      # ─────────────────────────────────────────────
+      # 9. SAVE ARTIFACTS (for manual upload if needed)
+      # ─────────────────────────────────────────────
+      - name: 💾 Save .pkg as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CosmoWhisper-AppStore-${{ inputs.marketing_version || '2.1.2' }}-build${{ inputs.build_number || '2' }}
+          path: ${{ runner.temp }}/export/
+          retention-days: 14
+
+      - name: 💾 Save archive as artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CosmoWhisper-xcarchive-debug
+          path: ${{ runner.temp }}/CosmoWhisper.xcarchive/
+          retention-days: 3
