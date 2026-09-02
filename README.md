@@ -7,6 +7,8 @@
 
 <br/>
 
+[![Official Website](https://img.shields.io/badge/🌐%20Official%20Website-CosmoWhisper.com-8B5CF6?style=for-the-badge&logo=google-chrome&logoColor=white)](https://cosmowhisper.com)
+[![Leave a Review](https://img.shields.io/badge/⭐%20Leave%20a%20Review-CosmoWhisper.com-FFC107?style=for-the-badge&logo=star&logoColor=black)](https://cosmowhisper.com/#reviews)
 [![Download macOS DMG](https://img.shields.io/badge/📥%20Download-macOS_DMG_v2.1.2-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Viguru24/CosmoWhisper-Native/releases/download/v2.1.2-mac/CosmoWhisper_v2.1.2_macOS.dmg)
 [![Download Windows Setup](https://img.shields.io/badge/📥%20Download-Windows_Setup_v2.2.18-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Viguru24/CosmoWhisper-Downloads/releases/download/v2.2.18/CosmoWhisper-Setup-2.2.18.exe)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20On--Device-00ff88?style=for-the-badge&logo=shield)](https://github.com/Viguru24/CosmoWhisper-Native)
@@ -15,12 +17,21 @@
 <p align="center">
   <a href="#-quick-install">📥 <b>Quick Install</b></a> •
   <a href="#-key-features">✨ <b>Features</b></a> •
+  <a href="#-leave-a-review--feedback">⭐ <b>Reviews & Feedback</b></a> •
   <a href="#-feature-comparison">📊 <b>Comparison</b></a> •
   <a href="#-architecture">🛠️ <b>Architecture</b></a> •
   <a href="#-ecosystem">🌟 <b>Ecosystem</b></a>
 </p>
 
 </div>
+
+---
+
+## ⭐ Leave a Review & Community Feedback
+
+Have you been using CosmoWhisper for your daily workflow, coding, or writing? We'd love your feedback!
+- 💬 **[Share your Review on CosmoWhisper.com](https://cosmowhisper.com/#reviews)**: Your ratings and feedback directly shape our roadmap and upcoming engine optimizations.
+- 🌐 Visit **[CosmoWhisper.com](https://cosmowhisper.com)** for guides, smart command tutorials, and product updates.
 
 ---
 
@@ -56,6 +67,7 @@
 ### Windows 10 & 11 (64-bit)
 1. **[📥 Download CosmoWhisper-Setup-2.2.18.exe](https://github.com/Viguru24/CosmoWhisper-Downloads/releases/download/v2.2.18/CosmoWhisper-Setup-2.2.18.exe)**.
 2. Run the installer and launch CosmoWhisper from your System Tray.
+3. Or install via Microsoft Store: [Get CosmoWhisper on Microsoft Store](https://apps.microsoft.com/detail/9MTNN4KVNHLV).
 
 ---
 
@@ -84,5 +96,5 @@ Explore other high-performance sovereign software:
 ---
 
 <div align="center">
-  <sub>Released under the MIT License • Built with ❤️ by <a href="https://github.com/Viguru24">Viguru24</a></sub>
+  <sub>Released under the MIT License • Built with ❤️ by <a href="https://github.com/Viguru24">Viguru24</a> • <a href="https://cosmowhisper.com">CosmoWhisper.com</a></sub>
 </div>
