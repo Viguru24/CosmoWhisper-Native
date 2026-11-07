@@ -450,6 +450,14 @@ namespace CosmoWhisper.Managers
             {
                 var info = new FileInfo(filePath);
                 if (info.Length < 1000) { File.Delete(filePath); return; }
+                
+                // --- SILENCE CHECK (VAD Light) ---
+                if (IsSilentWav(filePath))
+                {
+                    DiagnosticManager.Shared.Log("Recording discarded: Silence detected.", "AUDIO");
+                    File.Delete(filePath);
+                    return;
+                }
 
                 string app = GetCurrentFocusedApp();
                 VocabularyManager.Shared.SetContext(app.Split(' ')[0]);
@@ -523,6 +531,29 @@ namespace CosmoWhisper.Managers
             { 
                 try { File.Delete(filePath); } catch { } 
             }
+        }
+        
+        private bool IsSilentWav(string path)
+        {
+            try
+            {
+                using var reader = new WaveFileReader(path);
+                float max = 0;
+                var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
+                int read;
+                while ((read = reader.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < read; i += 2)
+                    {
+                        short sample = (short)((buffer[i + 1] << 8) | buffer[i]);
+                        float sample32 = Math.Abs(sample / 32768f);
+                        if (sample32 > max) max = sample32;
+                        if (max > Sensitivity * 0.1) return false; // Early exit if we find sound above threshold
+                    }
+                }
+                return max < (Sensitivity * 0.02); // Very low threshold for absolute silence
+            }
+            catch { return false; } // If we can't read it, assume it's not silent to be safe
         }
 
         public async Task<List<DeviceInformation>> EnumerateInputDevices()

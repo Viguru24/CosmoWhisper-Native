@@ -180,7 +180,12 @@ namespace CosmoWhisper.Services
             
             if (result == SyncResult.Unauthorized)
             {
+                AppState.Shared.IsAccessBlocked = true;
                 SessionExpired?.Invoke();
+            }
+            else if (result == SyncResult.Success)
+            {
+                AppState.Shared.IsAccessBlocked = false;
             }
             
             StatsUpdated?.Invoke();

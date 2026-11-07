@@ -70,7 +70,8 @@ namespace CosmoWhisper.Services
         {
             if (AppState.Shared.IsAccessBlocked)
             {
-                LogEvent("[transcribe] 🛑 ACCESS BLOCKED: Account is flagged in dashboard.");
+                LogEvent("[transcribe] 🛑 ACCESS BLOCKED: Account is flagged in dashboard. Triggering re-sync...");
+                _ = Task.Run(() => AccountService.Shared.CheckAuthStatusAsync());
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 
@@ -376,7 +377,8 @@ namespace CosmoWhisper.Services
         {
             if (AppState.Shared.IsAccessBlocked)
             {
-                LogEvent("[command] 🛑 ACCESS BLOCKED: Account is flagged in dashboard.");
+                LogEvent("[command] 🛑 ACCESS BLOCKED: Account is flagged in dashboard. Triggering re-sync...");
+                _ = Task.Run(() => AccountService.Shared.CheckAuthStatusAsync());
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 

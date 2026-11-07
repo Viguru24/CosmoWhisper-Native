@@ -9,6 +9,7 @@ using CosmoWhisper.Managers;
 using CosmoWhisper;
 using System.IO;
 using System.Threading.Tasks;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
@@ -105,6 +106,10 @@ namespace CosmoWhisper.Managers
                             if (!string.IsNullOrEmpty(email)) p.UserEmail = email;
                             if (!string.IsNullOrEmpty(tier)) p.UserTier = tier;
                             PreferenceManager.Shared.Save();
+
+                            // Step 1.5: Force clear blocked state and start heartbeat
+                            AppState.Shared.IsAccessBlocked = false;
+                            AccountService.Shared.StartHeartbeat();
 
                             // Step 2: Update UI
                             _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => {

@@ -21,7 +21,8 @@ namespace CosmoWhisper.Managers
             "translated by", "amara.org", "ted.com", "copyright", "all rights reserved", 
             "the end.", "bye bye.", "thanks for watching", "thank you for watching", "thank you.",
             "subtitle", "this is the end of the video",
-            "subtracting", "help me", "subtracting help me", "subtracting, help me"
+            "subtracting", "help me", "subtracting help me", "subtracting, help me",
+            "subtitles by the amara.org community", "subtitles by the amara.org", "amara.org community"
         };
 
 
@@ -88,7 +89,13 @@ namespace CosmoWhisper.Managers
             if (ShortHallucinations.Contains(low)) return true;
             // Only discard if the ENTIRE segment is a known hallucination phrase.
             // Using Contains was too aggressive and stripped valid sentences containing these words.
-            if (PhraseHallucinations.Any(h => low == h.ToLower().Trim())) return true;
+            if (PhraseHallucinations.Any(h => low == h.ToLower().Trim() || low.Contains(h.ToLower().Trim()))) 
+            {
+                // If it's a known silence artifact and the segment is short, it's garbage.
+                // We allow it if the segment is long (e.g. 15+ words) because it might be a coincidence.
+                if (text.Split(' ').Length < 15) return true;
+            }
+            
             if (text.Split("Bye").Length > 3) return true;
             if (text.Length < 3 && !text.Any(char.IsDigit)) return true;
 

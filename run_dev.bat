@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 
 echo 🚀 Launching CosmoWhisper Development (Orange)...
 echo 🛑 Stopping clashing processes...

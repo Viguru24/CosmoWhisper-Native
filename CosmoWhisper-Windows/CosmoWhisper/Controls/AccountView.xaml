@@ -31,13 +31,22 @@
                         <TextBlock x:Name="AccountUserName" Text="Cosmo User" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
                         <TextBlock x:Name="AccountTierStatus" Text="Free Tier" Foreground="#00E676" FontSize="14"/>
                     </StackPanel>
-                    <Button Grid.Column="2" Content="Sign Out" Background="#20FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" Padding="15,8" Click="SignOut_Click">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="8"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnRefreshStatus" Content="🔄" Background="#20FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" Padding="12,8" Margin="0,0,10,0" ToolTip="Refresh Account Status" Click="RefreshStatus_Click">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button Content="Sign Out" Background="#20FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" Padding="15,8" Click="SignOut_Click">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 

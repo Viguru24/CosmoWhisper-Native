@@ -39,7 +39,7 @@
                                     <Setter TargetName="Border" Property="BorderBrush" Value="#40FFFFFF"/>
                                     <Setter TargetName="Border" Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect Color="#00F7FF" BlurRadius="25" ShadowDepth="0" Opacity="0.4"/>
+                                            <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="2" Opacity="0.3"/>
                                         </Setter.Value>
                                     </Setter>
                                     <Trigger.EnterActions>
@@ -72,150 +72,75 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="PrefTabButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Padding" Value="14,0"/>
+                <Setter Property="Margin" Value="0,0,8,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="16" BorderThickness="1" BorderBrush="#15FFFFFF">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="#10FFFFFF"/>
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="#30FFFFFF"/>
+                                </Trigger>
+                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Active">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ThemeSecondaryBrush}"/>
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#151A2C"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
         <Style x:Key="SidebarButton" TargetType="Button">
-
             <Setter Property="Background" Value="Transparent"/>
-
-            <Setter Property="Foreground" Value="White"/>
-
-            <Setter Property="FontSize" Value="16"/>
-
-            <Setter Property="Height" Value="50"/>
-
+            <Setter Property="Foreground" Value="#A1A1AA"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="44"/>
             <Setter Property="BorderThickness" Value="0"/>
-
-            <Setter Property="Padding" Value="20,0"/>
-
+            <Setter Property="Padding" Value="14,0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
-
                 <Setter.Value>
-
                     <ControlTemplate TargetType="Button">
-
-                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="12" Margin="8,4">
-
-                            <Border.RenderTransform>
-
-                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-
-                            </Border.RenderTransform>
-
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="10" Margin="6,2" BorderThickness="1" BorderBrush="Transparent">
                             <Grid>
-
-                                <!-- Left Accent Line (Hidden by default) -->
-
-                                <Border x:Name="AccentLine" Width="4" Height="20" HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource ThemeGlowBrush}" Opacity="0" Margin="-4,0,0,0"/>
-
-                                
-
-                                <ContentPresenter x:Name="Content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0"/>
-
+                                <!-- Left Active Pill Indicator -->
+                                <Border x:Name="AccentLine" Width="3" Height="18" HorizontalAlignment="Left" CornerRadius="1.5" Background="{DynamicResource ThemeAccentBrush}" Opacity="0" Margin="4,0,0,0"/>
+                                <ContentPresenter x:Name="Content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0"/>
                             </Grid>
-
                         </Border>
-
                         <ControlTemplate.Triggers>
-
                             <Trigger Property="IsMouseOver" Value="True">
-
-                                <Setter TargetName="BtnBorder" Property="Background">
-
-                                    <Setter.Value>
-
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-
-                                            <GradientStop Color="#40FFFFFF" Offset="0"/>
-
-                                            <GradientStop Color="#10FFFFFF" Offset="0.5"/>
-
-                                            <GradientStop Color="#05FFFFFF" Offset="1"/>
-
-                                        </LinearGradientBrush>
-
-                                    </Setter.Value>
-
-                                </Setter>
-
-                                <Setter TargetName="AccentLine" Property="Opacity" Value="1"/>
-
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#60FFFFFF"/>
-
-                                <Setter TargetName="BtnBorder" Property="BorderThickness" Value="1"/>
-
-                                <Trigger.EnterActions>
-
-                                    <BeginStoryboard>
-
-                                        <Storyboard>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.05" Duration="0:0:0.2"/>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.05" Duration="0:0:0.2"/>
-
-                                            <DoubleAnimation Storyboard.TargetName="AccentLine" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-
-                                        </Storyboard>
-
-                                    </BeginStoryboard>
-
-                                </Trigger.EnterActions>
-
-                                <Trigger.ExitActions>
-
-                                    <BeginStoryboard>
-
-                                        <Storyboard>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
-
-                                            <DoubleAnimation Storyboard.TargetName="AccentLine" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
-
-                                        </Storyboard>
-
-                                    </BeginStoryboard>
-
-                                </Trigger.ExitActions>
-
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#1C1C21"/>
+                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#27272A"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
-
                             <Trigger Property="IsPressed" Value="True">
-
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#1AFFFFFF"/>
-
-                                <Trigger.EnterActions>
-
-                                    <BeginStoryboard>
-
-                                        <Storyboard>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.98" Duration="0:0:0.1"/>
-
-                                            <DoubleAnimation Storyboard.TargetName="BtnBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.98" Duration="0:0:0.1"/>
-
-                                        </Storyboard>
-
-                                    </BeginStoryboard>
-
-                                </Trigger.EnterActions>
-
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#16161A"/>
                             </Trigger>
-
                             <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Active">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#30FFFFFF"/>
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#202025"/>
+                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#33333A"/>
                                 <Setter TargetName="AccentLine" Property="Opacity" Value="1"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
 
 
@@ -330,7 +255,7 @@
 
                                 <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
 
-                                    <Border x:Name="DropDownBorder" Background="#1A1C30" BorderThickness="1" BorderBrush="#40FFFFFF" CornerRadius="8"/>
+                                    <Border x:Name="DropDownBorder" Background="#18181B" BorderThickness="1" BorderBrush="#27272A" CornerRadius="8"/>
 
                                     <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
 
@@ -384,7 +309,7 @@
 
                             <Trigger Property="IsSelected" Value="True">
 
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#007AFF"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
 
                             </Trigger>
 
@@ -441,7 +366,7 @@
 
         <Style TargetType="Menu">
 
-            <Setter Property="Background" Value="#1A1C30"/>
+            <Setter Property="Background" Value="#18181B"/>
 
             <Setter Property="Foreground" Value="White"/>
 
@@ -451,7 +376,7 @@
 
         <Style TargetType="MenuItem">
 
-            <Setter Property="Background" Value="#1A1C30"/>
+            <Setter Property="Background" Value="#18181B"/>
 
             <Setter Property="Foreground" Value="White"/>
 
@@ -466,33 +391,7 @@
 
         <!-- PREMIUM AMBIENT NEBULA BACKGROUND -->
 
-        <Canvas x:Name="CosmicBackground" IsHitTestVisible="False">
-
-            <!-- Deep Space Base -->
-
-            <Rectangle Width="2000" Height="2000" Canvas.Left="-500" Canvas.Top="-500">
-
-                <Rectangle.Fill>
-
-                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5">
-
-                        <GradientStop Color="{DynamicResource ThemeBgStartColor}" Offset="0"/>
-
-                        <GradientStop Color="{DynamicResource ThemeBgMidColor}" Offset="0.7"/>
-
-                        <GradientStop Color="{DynamicResource ThemeBgEndColor}" Offset="1"/>
-
-                    </RadialGradientBrush>
-
-                </Rectangle.Fill>
-
-            </Rectangle>
-
-
-
-            <!-- Simplified Gradient Only (Blobs Removed) -->
-
-        </Canvas>
+        <!-- Clean Studio Canvas (Nebula Removed) -->
 
 
 
@@ -502,43 +401,11 @@
 
         <!-- Premium Glass Container -->
 
-        <Border x:Name="RootContentBorder" CornerRadius="30" Margin="20">
-
-            <Border.Background>
-
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-
-                    <GradientStop Color="#B21E293B" Offset="0"/> <!-- 70% opacity premium slate -->
-
-                    <GradientStop Color="#CC0F172A" Offset="1"/>
-
-                </LinearGradientBrush>
-
-            </Border.Background>
-
-            <Border.BorderBrush>
-
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-
-                    <GradientStop Color="#40FFFFFF" Offset="0"/>
-
-                    <GradientStop Color="#10FFFFFF" Offset="0.5"/>
-
-                    <GradientStop Color="#30FFFFFF" Offset="1"/>
-
-                </LinearGradientBrush>
-
-            </Border.BorderBrush>
-
+        <Border x:Name="RootContentBorder" CornerRadius="22" Margin="16" Background="#121215" BorderBrush="#27272A" BorderThickness="1">
             <Border.Effect>
-
-                <DropShadowEffect BlurRadius="50" Color="Black" Opacity="0.5" ShadowDepth="0"/>
-
+                <DropShadowEffect BlurRadius="36" Color="#000000" Opacity="0.6" ShadowDepth="6"/>
             </Border.Effect>
-
-            <Border BorderBrush="#1AFFFFFF" BorderThickness="1.2" CornerRadius="30">
-
-                <Grid x:Name="MainContainer">
+            <Grid x:Name="MainContainer">
 
                     <Grid.ColumnDefinitions>
 
@@ -558,58 +425,24 @@
 
                     <!-- Sidebar (Menu) -->
 
-                    <Border Grid.Column="0" CornerRadius="30,0,0,30" BorderBrush="#1AFFFFFF" BorderThickness="0,0,1,0">
-
-                        <Border.Background>
-
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-
-                                <GradientStop Color="#40FFFFFF" Offset="0"/> <!-- Light top sheen -->
-
-                                <GradientStop Color="#00FFFFFF" Offset="0.2"/>
-
-                                <GradientStop Color="#00FFFFFF" Offset="0.8"/>
-
-                                <GradientStop Color="#20000000" Offset="1"/> <!-- Dark bottom shadow -->
-
-                            </LinearGradientBrush>
-
-                        </Border.Background>
-
+                    <Border Grid.Column="0" CornerRadius="22,0,0,22" Background="#0E0E11" BorderBrush="#27272A" BorderThickness="0,0,1,0">
                         <Grid>
-
                             <Grid.RowDefinitions>
-
                                 <RowDefinition Height="Auto"/>
-
                                 <RowDefinition Height="*"/>
-
                                 <RowDefinition Height="Auto"/>
-
                             </Grid.RowDefinitions>
 
-
-
-                            <!-- Premium Logo Section (Pinned Top) -->
-                            <StackPanel Grid.Row="0" Margin="0,30,0,20" HorizontalAlignment="Center">
-                                <Image Source="sidebar_logo.png" Width="60" Height="60" HorizontalAlignment="Center" Margin="0,0,0,12" RenderOptions.BitmapScalingMode="HighQuality">
-                                    <Image.Effect>
-                                        <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
-                                    </Image.Effect>
-                                </Image>
+                            <!-- Clean Minimalist Logo Section -->
+                            <StackPanel Grid.Row="0" Margin="0,26,0,22" HorizontalAlignment="Center">
+                                <Border Width="56" Height="56" CornerRadius="14" Background="Transparent" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                    <Image Source="sidebar_logo.png" Width="56" Height="56" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Border>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="Cosmo" FontSize="22" FontWeight="ExtraBold" Foreground="#00F7FF">
-                                        <TextBlock.Effect>
-                                            <DropShadowEffect Color="#00F7FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-                                        </TextBlock.Effect>
-                                    </TextBlock>
-                                    <TextBlock Text="Whisper" FontSize="22" FontWeight="ExtraBold" Foreground="#BF5AF2" Margin="2,0,0,0">
-                                        <TextBlock.Effect>
-                                            <DropShadowEffect Color="#BF5AF2" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-                                        </TextBlock.Effect>
-                                    </TextBlock>
+                                    <TextBlock Text="Cosmo" FontSize="19" FontWeight="Bold" Foreground="#F4F4F5"/>
+                                    <TextBlock Text="Whisper" FontSize="19" FontWeight="Normal" Foreground="#A1A1AA" Margin="4,0,0,0"/>
                                 </StackPanel>
-                                <Border Height="2" Width="40" Background="#4000F7FF" HorizontalAlignment="Center" Margin="0,4,0,0" CornerRadius="1"/>
+                                <TextBlock Text="VOICE INTELLIGENCE" FontSize="8.5" FontWeight="SemiBold" Foreground="#71717A" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
 
 
@@ -623,124 +456,51 @@
                                     <!-- Main Navigation -->
 
                                     <Button x:Name="BtnDashboard" Style="{DynamicResource SidebarButton}" Click="Dashboard_Click">
-
                                         <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F4CA;" Foreground="#00F7FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Dashboard" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
+                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" 
+                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            </Grid>
+                                            <TextBlock Text="Dashboard" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
-
                                     </Button>
-
-                                    <Button x:Name="BtnSmartCommands" Style="{DynamicResource SidebarButton}" Click="SmartCommands_Click">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x26A1;" Foreground="#FFD700" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Smart Commands" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-
-
-                                    <Separator Background="#10FFFFFF" Margin="20,15" Height="1"/>
-
-                                    
-
-                                    <!-- Settings Group -->
-
-                                    <TextBlock Text="SETTINGS" Margin="22,5,0,12" Foreground="White" Opacity="0.3" FontSize="10" FontWeight="ExtraBold"/>
-
-                                    <Button x:Name="BtnMicrophone" Style="{DynamicResource SidebarButton}" Click="Microphone_Click">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F3A4;" Foreground="#FF453A" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Microphone" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-                                    <Button x:Name="BtnVocabulary" Style="{DynamicResource SidebarButton}" Click="Vocabulary_Click">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F5E3;" Foreground="#32D74B" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Vocabulary" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-                                    <Button x:Name="BtnNarration" Style="{DynamicResource SidebarButton}" Click="Narration_Click">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F50A;" Foreground="#BF5AF2" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Narration" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-                                    <Button x:Name="BtnIntelligence" Style="{DynamicResource SidebarButton}" Click="Intelligence_Click">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="&#x1F9E0;" Foreground="#FF9F0A" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Intelligence" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-                                    
-
-                                    <!-- Preferences Group + Appearance Hooked In -->
-
-                                    <Button x:Name="BtnPreferences" Style="{DynamicResource SidebarButton}" Click="Preferences_Click" MouseRightButtonDown="Preferences_MouseRightButtonDown">
-
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock x:Name="SidebarGearIcon" Text="&#x2699;" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-
-                                            <TextBlock Text="Preferences" VerticalAlignment="Center" FontWeight="SemiBold"/>
-
-                                        </StackPanel>
-
-                                    </Button>
-
-
-
-                                    
-
-
-
-
-
-
 
                                     <Button x:Name="BtnAccount" Style="{DynamicResource SidebarButton}" Click="Account_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#x1F464;" Foreground="#0A84FF" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Account" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M12,12 C14.21,12 16,10.21 16,8 C16,5.79 14.21,4 12,4 C9.79,4 8,5.79 8,8 C8,10.21 9.79,12 12,12 Z M12,14 C9.33,14 4,15.34 4,18 L4,20 L20,20 L20,18 C20,15.34 14.67,14 12,14 Z" 
+                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            </Grid>
+                                            <TextBlock Text="Account" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="BtnSmartCommands" Style="{DynamicResource SidebarButton}" Click="SmartCommands_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M13,2 L4.5,13.5 L11,13.5 L9.5,22 L19.5,10.5 L13,10.5 Z" 
+                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            </Grid>
+                                            <TextBlock Text="Smart Commands" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
                                     <Button x:Name="BtnLibrary" Style="{DynamicResource SidebarButton}" Click="Library_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#x1F4DA;" Foreground="#FF2D55" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M4,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L4,20 C4,18 4,6 4,4 Z M6,6 L6,18 L18,18 L18,6 Z" 
+                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            </Grid>
+                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="BtnPreferences" Style="{DynamicResource SidebarButton}" Click="Preferences_Click" MouseRightButtonDown="Preferences_MouseRightButtonDown">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <TextBlock x:Name="SidebarGearIcon" Text="⚙" FontSize="16" Foreground="#A1A1AA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <TextBlock Text="Preferences" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
@@ -755,129 +515,8 @@
                             <StackPanel Grid.Row="2" Margin="10,0,10,30">
                                 <Separator Background="#10FFFFFF" Margin="20,0,20,15" Height="1"/>
                                 
-                                <!-- User Profile Information -->
-                                <Border Background="#15FFFFFF" CornerRadius="12" Margin="10,0,10,15" Padding="15,12">
-                                    <StackPanel>
-                                        <TextBlock x:Name="TxtUserEmail" Text="Not Logged In" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="12" FontWeight="SemiBold" Opacity="0.8" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="Cosmo Account Status" Foreground="White" Opacity="0.4" FontSize="9" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                                
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
-
-                                     <Button Width="24" Height="24" Margin="4" ToolTip="Ocean Blue" Click="ThemeOcean_Click">
-
-                                         <Button.Template>
-
-                                             <ControlTemplate TargetType="Button">
-
-                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                     <Ellipse Fill="#3b82f6" Margin="4"/>
-
-                                                 </Border>
-
-                                                 <ControlTemplate.Triggers>
-
-                                                     <Trigger Property="IsMouseOver" Value="True">
-
-                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                     </Trigger>
-
-                                                 </ControlTemplate.Triggers>
-
-                                             </ControlTemplate>
-
-                                         </Button.Template>
-
-                                     </Button>
-
-                                     <Button Width="24" Height="24" Margin="4" ToolTip="Sunset Glow" Click="ThemeSunset_Click">
-
-                                         <Button.Template>
-
-                                             <ControlTemplate TargetType="Button">
-
-                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                     <Ellipse Fill="#ec4899" Margin="4"/>
-
-                                                 </Border>
-
-                                                 <ControlTemplate.Triggers>
-
-                                                     <Trigger Property="IsMouseOver" Value="True">
-
-                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                     </Trigger>
-
-                                                 </ControlTemplate.Triggers>
-
-                                             </ControlTemplate>
-
-                                         </Button.Template>
-
-                                     </Button>
-
-                                     <Button Width="24" Height="24" Margin="4" ToolTip="Forest Night" Click="ThemeForest_Click">
-
-                                         <Button.Template>
-
-                                             <ControlTemplate TargetType="Button">
-
-                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                     <Ellipse Fill="#10b981" Margin="4"/>
-
-                                                 </Border>
-
-                                                 <ControlTemplate.Triggers>
-
-                                                     <Trigger Property="IsMouseOver" Value="True">
-
-                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                     </Trigger>
-
-                                                 </ControlTemplate.Triggers>
-
-                                             </ControlTemplate>
-
-                                         </Button.Template>
-
-                                     </Button>
-
-                                     <Button Width="24" Height="24" Margin="4" ToolTip="Purple Dream" Click="ThemePurple_Click">
-
-                                         <Button.Template>
-
-                                             <ControlTemplate TargetType="Button">
-
-                                                 <Border CornerRadius="12" Background="#20FFFFFF" x:Name="ThemeBorder">
-
-                                                     <Ellipse Fill="#9333ea" Margin="4"/>
-
-                                                 </Border>
-
-                                                 <ControlTemplate.Triggers>
-
-                                                     <Trigger Property="IsMouseOver" Value="True">
-
-                                                         <Setter TargetName="ThemeBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                     </Trigger>
-
-                                                 </ControlTemplate.Triggers>
-
-                                             </ControlTemplate>
-
-                                         </Button.Template>
-
-                                     </Button>
-
-                                 </StackPanel>
+                                <!-- Hidden for controller compatibility but removed from visual layout -->
+                                <TextBlock x:Name="TxtUserEmail" Visibility="Collapsed"/>
 
                                 <Button Style="{DynamicResource SidebarButton}" Click="Exit_Click">
                                     <StackPanel Orientation="Horizontal">
@@ -890,9 +529,7 @@
                                     </StackPanel>
                                 </Button>
 
-                                <TextBlock Text="Version 2.2.80.0-PRO" Foreground="White" Opacity="0.3" FontSize="10" HorizontalAlignment="Center" Margin="0,15,10,0"/>
-
-                                <TextBlock Text="CosmoWhisper Native" Foreground="White" Opacity="0.15" FontSize="9" HorizontalAlignment="Center" Margin="0,2,10,0"/>
+                                <TextBlock Text="v2.3.4.0-PRO" Foreground="White" Opacity="0.25" FontSize="8" HorizontalAlignment="Center" Margin="0,15,0,0"/>
 
                             </StackPanel>
 
@@ -1151,11 +788,16 @@
 
 
 
-                            <!-- Preferences Header -->
-
                             <StackPanel x:Name="PreferencesHeader" Visibility="Collapsed">
                                 <TextBlock Text="Preferences" Foreground="White" FontSize="28" FontWeight="Bold"/>
-                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="14"/>
+                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Button x:Name="TabPrefGeneral" Content="General" Click="TabPrefGeneral_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                    <Button x:Name="TabPrefMicrophone" Content="Microphone" Click="TabPrefMicrophone_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                    <Button x:Name="TabPrefVocabulary" Content="Vocabulary" Click="TabPrefVocabulary_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                    <Button x:Name="TabPrefNarration" Content="Narration" Click="TabPrefNarration_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                    <Button x:Name="TabPrefIntelligence" Content="Intelligence" Click="TabPrefIntelligence_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                </StackPanel>
                             </StackPanel>
 
 
@@ -1253,8 +895,6 @@
 
     </Border>
 
-</Border>
-
 
 
 
@@ -1263,7 +903,7 @@
 
         <Border x:Name="ToastContainer" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,30,0,0" 
 
-                Background="#1A1C30" CornerRadius="12" BorderBrush="#007AFF" BorderThickness="1" Padding="20,12" 
+                Background="#18181B" CornerRadius="12" BorderBrush="#27272A" BorderThickness="1" Padding="20,12" 
 
                 Visibility="Collapsed" Opacity="0">
 
@@ -1419,7 +1059,7 @@
 
             </Border>
 
-            <Border x:Name="VaultContent" Width="400" MaxHeight="550" Height="Auto" Background="#1A1C30" CornerRadius="20" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border x:Name="VaultContent" Width="400" MaxHeight="550" Height="Auto" Background="#18181B" CornerRadius="20" BorderBrush="#27272A" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.RenderTransform>
                     <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                 </Border.RenderTransform>
@@ -1511,7 +1151,7 @@
                 </Border.Effect>
             </Border>
 
-            <Border x:Name="OnboardingBorder" Width="600" MinHeight="540" Height="Auto" MaxHeight="650" Background="#1A1C30" CornerRadius="30" BorderBrush="#40FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border x:Name="OnboardingBorder" Width="600" MinHeight="540" Height="Auto" MaxHeight="650" Background="#18181B" CornerRadius="30" BorderBrush="#27272A" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="40" Color="Black" Opacity="0.6" ShadowDepth="0"/>
                 </Border.Effect>

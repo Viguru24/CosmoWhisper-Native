@@ -28,6 +28,10 @@ namespace CosmoWhisper.Controls
         {
             DashboardWindow.Instance?.SignOut_Click(sender, e);
         }
+        private void RefreshStatus_Click(object sender, RoutedEventArgs e)
+        {
+            DashboardWindow.Instance?.RefreshStatus_Click(sender, e);
+        }
 
         private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
         {

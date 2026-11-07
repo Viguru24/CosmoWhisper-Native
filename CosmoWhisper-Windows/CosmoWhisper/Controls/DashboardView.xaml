@@ -16,11 +16,55 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
+            <!-- SECTION: QUICK SETTINGS -->
+            <Grid Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Local vs Cloud Mode -->
+                <Border Grid.Column="0" Background="#18181B" CornerRadius="14" Padding="22" BorderBrush="#27272A" BorderThickness="1">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Pretty Circular Orb -->
+                        <Border x:Name="ToggleLocalWhisperControl" Width="52" Height="52" CornerRadius="26" Background="#222228" BorderBrush="#33333A" BorderThickness="1" Cursor="Hand" MouseLeftButtonDown="ToggleLocalWhisper_Click" HorizontalAlignment="Center">
+                            <Grid>
+                                <!-- Glow Effect -->
+                                <Ellipse x:Name="LocalWhisperGlow" Fill="{DynamicResource ThemeAccentBrush}" Opacity="0.1" Margin="-2"/>
+                                <!-- Symbol inside Orb -->
+                                <TextBlock x:Name="LocalWhisperIcon" Text="☁" FontSize="26" Foreground="{DynamicResource ThemeForegroundBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Dynamic Status Text -->
+                        <TextBlock x:Name="TxtLocalWhisperStatus" Text="Connected to Cloud" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                        <TextBlock Text="Automatic audio translation mode" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="10" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Auto Submit Mode -->
+                <Border Grid.Column="2" Background="#18181B" CornerRadius="14" Padding="22" BorderBrush="#27272A" BorderThickness="1">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Pretty Circular Orb -->
+                        <Border x:Name="ToggleAutoSubmitControl" Width="52" Height="52" CornerRadius="26" Background="#222228" BorderBrush="#33333A" BorderThickness="1" Cursor="Hand" MouseLeftButtonDown="ToggleAutoSubmit_Click" HorizontalAlignment="Center">
+                            <Grid>
+                                <!-- Glow Effect -->
+                                <Ellipse x:Name="AutoSubmitGlow" Fill="{DynamicResource ThemeSecondaryBrush}" Opacity="0.1" Margin="-2"/>
+                                <!-- Symbol inside Orb -->
+                                <TextBlock x:Name="AutoSubmitIcon" Text="✕" FontSize="20" Foreground="{DynamicResource ThemeForegroundBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Dynamic Status Text -->
+                        <TextBlock x:Name="TxtAutoSubmitStatus" Text="No Enter" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                        <TextBlock Text="Press Enter after dictating" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="10" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
             <!-- Store Lite Banner -->
-            <Border x:Name="StoreLiteBanner" Visibility="Collapsed" Background="#FF1E293B" CornerRadius="12" BorderBrush="#00F7FF" BorderThickness="1.5" Margin="0,0,0,30">
-                <Border.Effect>
-                    <DropShadowEffect Color="#00F7FF" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
-                </Border.Effect>
+            <Border x:Name="StoreLiteBanner" Visibility="Collapsed" Background="#18181B" CornerRadius="12" BorderBrush="#27272A" BorderThickness="1" Margin="0,0,0,24">
                 <Grid Margin="20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -28,8 +72,8 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
-                    <Border Background="#2000F7FF" Width="42" Height="42" CornerRadius="10" Margin="0,0,15,0">
-                        <TextBlock Text="&#x1F6D2;" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Foreground="#00F7FF"/>
+                    <Border Background="#202025" BorderBrush="#2E2E35" BorderThickness="1" Width="40" Height="40" CornerRadius="10" Margin="0,0,15,0">
+                        <TextBlock Text="✦" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}"/>
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -37,34 +81,15 @@
                         <TextBlock Text="Limited to 60 mins/month. Want full access?" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.7" FontSize="13"/>
                     </StackPanel>
 
-                    <Border Grid.Column="2" Background="#007AFF" CornerRadius="8" Padding="15,8" Cursor="Hand" MouseLeftButtonDown="GetFullAccess_Click" VerticalAlignment="Center">
+                    <Border Grid.Column="2" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="8" Padding="16,8" Cursor="Hand" MouseLeftButtonDown="GetFullAccess_Click" VerticalAlignment="Center">
                         <TextBlock Text="Upgrade at CosmoWhisper.com" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="SemiBold"/>
                     </Border>
                 </Grid>
             </Border>
 
             <!-- Pro Banner -->
-            <Border x:Name="ProBanner" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderThickness="1.5" Margin="0,0,0,30">
-                <Border.BorderBrush>
-                    <LinearGradientBrush x:Name="ProBorderGradient" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="{DynamicResource ThemeAccentColor}" Offset="0"/>
-                        <GradientStop Color="#55FFFFFF" Offset="0.5"/>
-                        <GradientStop Color="#BF5AF2" Offset="1"/>
-                    </LinearGradientBrush>
-                </Border.BorderBrush>
-                <Border.Triggers>
-                    <EventTrigger RoutedEvent="Loaded">
-                        <BeginStoryboard>
-                            <Storyboard RepeatBehavior="Forever">
-                                <PointAnimation Storyboard.TargetName="ProBorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:4" AutoReverse="True"/>
-                                <PointAnimation Storyboard.TargetName="ProBorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:4" AutoReverse="True"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                </Border.Triggers>
-                <Border.Effect>
-                    <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="20" ShadowDepth="0" Opacity="0.2"/>
-                </Border.Effect>
+            <Border x:Name="ProBanner" Background="#18181B" CornerRadius="14" BorderBrush="#27272A" BorderThickness="1" Margin="0,0,0,25">
+                
 
                 <Grid Margin="25">
                     <Grid.RowDefinitions>
@@ -94,9 +119,7 @@
                     <Grid Grid.Row="1">
                         <Border Height="6" Background="#20FFFFFF" CornerRadius="3"/>
                         <Border x:Name="UsageProgressBar" HorizontalAlignment="Left" Width="300" Height="6" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="3">
-                            <Border.Effect>
-                                <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
-                            </Border.Effect>
+                            
                         </Border>
                     </Grid>
                 </Grid>
@@ -117,13 +140,11 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Total Words -->
-                <Border Grid.Column="0" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" Height="100" Margin="0,0,10,0" BorderBrush="{DynamicResource ThemeAccentBrush}" BorderThickness="1" Opacity="0.9">
-                    <Border.Effect>
-                        <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
-                    </Border.Effect>
+                <Border Grid.Column="0" Background="#18181B" CornerRadius="12" Height="100" Margin="0,0,10,0" BorderBrush="#27272A" BorderThickness="1">
+                    
                     <StackPanel VerticalAlignment="Center" Margin="25,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <TextBlock Text="&#x1F4AC;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
+                            <TextBlock Text="•" FontSize="14" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,8,0"/>
                             <TextBlock Text="TOTAL WORDS" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                         </StackPanel>
                         <TextBlock x:Name="StatTotalWords" Text="0" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
@@ -131,13 +152,11 @@
                 </Border>
 
                 <!-- Time Saved -->
-                <Border Grid.Column="1" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" Height="100" Margin="5,0,5,0" BorderBrush="{DynamicResource ThemeSecondaryBrush}" BorderThickness="1" Opacity="0.9">
-                    <Border.Effect>
-                        <DropShadowEffect Color="{DynamicResource ThemeSecondaryColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
-                    </Border.Effect>
+                <Border Grid.Column="1" Background="#18181B" CornerRadius="12" Height="100" Margin="5,0,5,0" BorderBrush="#27272A" BorderThickness="1">
+                    
                     <StackPanel VerticalAlignment="Center" Margin="25,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <TextBlock Text="&#x1F4C8;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
+                            <TextBlock Text="•" FontSize="14" Foreground="#A1A1AA" Margin="0,0,8,0"/>
                             <TextBlock Text="TIME SAVED" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                         </StackPanel>
                         <TextBlock x:Name="StatTimeSaved" Text="0h" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
@@ -145,13 +164,11 @@
                 </Border>
 
                 <!-- Transcriptions -->
-                <Border Grid.Column="2" Background="{DynamicResource ThemeSurfaceBrush}" CornerRadius="12" BorderBrush="{DynamicResource ThemeGlowBrush}" BorderThickness="1" Opacity="0.9">
-                    <Border.Effect>
-                        <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="10" ShadowDepth="0" Opacity="0.1"/>
-                    </Border.Effect>
+                <Border Grid.Column="2" Background="#18181B" CornerRadius="12" Height="100" BorderBrush="#27272A" BorderThickness="1">
+                    
                     <StackPanel VerticalAlignment="Center" Margin="25,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <TextBlock Text="&#x1F504;" FontSize="12" Opacity="0.7" Margin="0,0,10,0"/>
+                            <TextBlock Text="•" FontSize="14" Foreground="#71717A" Margin="0,0,8,0"/>
                             <TextBlock Text="TRANSCRIPTIONS" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="10" FontWeight="Bold"/>
                         </StackPanel>
                         <TextBlock x:Name="StatTranscriptions" Text="0" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>

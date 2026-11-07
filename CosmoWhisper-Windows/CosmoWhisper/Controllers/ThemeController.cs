@@ -15,10 +15,10 @@ namespace CosmoWhisper.Controllers
         {
         }
 
-        public void ApplyOcean() => ApplyTheme("#4f46e5", "#3b82f6", "#06b6d4", "#020617", "#0a0f1d", "#050A14", "#1e293b");
-        public void ApplySunset() => ApplyTheme("#f59e0b", "#ec4899", "#e11d48", "#110005", "#1a000a", "#050002", "#450a1a");
-        public void ApplyForest() => ApplyTheme("#10b981", "#34d399", "#a7f3d0", "#021102", "#0a1a0a", "#000500", "#0a3b1a");
-        public void ApplyPurple() => ApplyTheme("#9333ea", "#a855f7", "#f472b6", "#0a0211", "#15021a", "#05000a", "#2e0a45");
+        public void ApplyOcean() => ApplyTheme("#10B981", "#27272A", "#A1A1AA", "#09090B", "#121215", "#09090B", "#18181B");
+        public void ApplySunset() => ApplyTheme("#F59E0B", "#27272A", "#D4D4D8", "#09090B", "#121215", "#09090B", "#18181B");
+        public void ApplyForest() => ApplyTheme("#10B981", "#1E2922", "#34D399", "#09090B", "#0F1612", "#09090B", "#141C17");
+        public void ApplyPurple() => ApplyTheme("#FFFFFF", "#27272A", "#D4D4D8", "#09090B", "#121215", "#09090B", "#18181B");
 
         public void ApplyTheme(string accent, string glow, string secondary, string bgStart, string bgMid, string bgEnd, string surface)
         {

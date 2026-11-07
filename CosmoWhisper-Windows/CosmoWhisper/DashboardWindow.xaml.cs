@@ -825,6 +825,11 @@ namespace CosmoWhisper
         // private async void PerformLogin_Click(object sender, RoutedEventArgs e) => await _dashboard.PerformLogin(TxtLoginEmail.Text, TxtLoginPassword.Password);
         public void ActivateLicense_Click(object sender, RoutedEventArgs e) => _dashboard.ActivateLicense(TxtLicense.Text);
         public void SignOut_Click(object sender, RoutedEventArgs e) => _dashboard.SignOut();
+        public async void RefreshStatus_Click(object sender, RoutedEventArgs e)
+        {
+            await _dashboard.CheckAuthStatus();
+            ShowToast("Account Status Refreshed", "🔄");
+        }
 
         public void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://CosmoWhisper.com/pricing", UseShellExecute = true });
         public void SignUp_Click(object sender, RoutedEventArgs e)

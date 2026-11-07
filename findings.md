@@ -1,21 +1,19 @@
-# Findings - Voice Recognition and Dictation Quality Issues
+# Findings - Account Sync Issues
 
-## CRITICAL BUG IDENTIFIED: Over-aggressive Garbage Filtering
-- **Observation**: `TextProcessor.IsGarbage` uses `low.Contains(h)` for `PhraseHallucinations`.
-- **Impact**: Any sentence containing common phrases like "thank you", "subtitle", or "subtracting" is being discarded entirely.
-- **Cause**: Line 86 in `TextProcessor.cs`: `if (PhraseHallucinations.Any(h => low.Contains(h))) return true;`.
-- **Resolution**: Change `Contains` to a check that only discards if the *entire* segment is the hallucination, or if the hallucination makes up the bulk of the (short) segment.
+## 1. Stale Local State in Native App
+- **Discovery**: `AccountService.SignOut()` explicitly sets `AppState.Shared.IsAccessBlocked = true` to prevent unauthenticated access. However, the login flow via `ProtocolHandler.cs` sets the `AuthToken` but **never resets** `IsAccessBlocked` to `false`.
+- **Impact**: After logging back in, the app remains in a "Blocked" UI state until the next Heartbeat pulse (30-second interval) or until a `SyncStatus` call is manually triggered.
+- **Root Cause**: Lack of state reset in the `auth` protocol handler.
 
-## Issue 1: "New line" and "New paragraph" commands not working
-- **Observation**: The user says this wasn't a problem before.
-- **Hypothesis**: The issue might be related to the `IsGarbage` check filtering out the commands if they are transcribed with any hallucination-like artifacts, OR the `CleanText` regexes were modified in a way that broke them (though my recent expansion should have helped).
-- **Correction**: Revert Cloud-forcing heuristic in `AIService.cs` as the user explicitly wants Local-only if configured.
+## 2. Heartbeat/Sync Delay
+- **Discovery**: The Heartbeat loop runs every 30 seconds. If a user unblocks themselves in the dashboard and returns to the app, they may have to wait up to 30 seconds for the app to realize the block is gone.
+- **SSE Status**: The app has an SSE listener (`status-stream`), but it depends on the Heartbeat being active. If Heartbeat was stopped during logout, the SSE listener won't restart until the heartbeat does.
 
-## Issue 2: Poor Dictation Quality / Losing Words
-- **Direct Cause**: The `IsGarbage` bug mentioned above. If a user speaks a long sentence and it ends with "thank you" or "bye", the entire sentence is deleted.
-- **Secondary Cause**: Prompt aggression.
+## 3. SSE Buffering (Potential)
+- **Discovery**: The Nginx configuration for `api.cosmowhisper.com` lacks `proxy_buffering off`. This can cause SSE events (like "unblock") to be held in the Nginx buffer, preventing real-time updates.
 
-## Plan for Implementation
-1. **Revert** the Cloud-forcing heuristic in `AIService.cs`.
-2. **Fix `IsGarbage`** in `TextProcessor.cs` to use `==` instead of `Contains` for hallucination detection, or at least only apply `Contains` if the text is very short.
-3. **Refine `PhraseHallucinations`**: Move some phrases to `ShortHallucinations` or separate "discard if contains" vs "discard if matches".
+## 4. Duplicate Check Logic
+- **Discovery**: `AIService` checks `AppState.Shared.IsAccessBlocked` before every transcription. If this flag is stuck at `true`, the user is permanently locked out locally regardless of server status.
+
+---
+*Last Updated: 2026-05-07*

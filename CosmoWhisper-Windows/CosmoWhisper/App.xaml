@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:CosmoWhisper"
-             StartupUri="WidgetWindow.xaml">
+             ShutdownMode="OnExplicitShutdown"
+>
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -13,25 +14,25 @@
         <FontFamily x:Key="MainFont">Inter, Segoe UI, Roboto, sans-serif</FontFamily>
         <FontFamily x:Key="DisplayFont">Outfit, Inter, Segoe UI semibold</FontFamily>
         
-        <!-- DYNAMIC THEME TOKENS -->
-        <Color x:Key="ThemeAccentColor">#4f46e5</Color>
+        <!-- DYNAMIC THEME TOKENS (DIRECTION B: CRISP OBSIDIAN & ZINC GREY) -->
+        <Color x:Key="ThemeAccentColor">#10B981</Color>
         <SolidColorBrush x:Key="ThemeAccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
         
-        <Color x:Key="ThemeForegroundColor">White</Color>
+        <Color x:Key="ThemeForegroundColor">#F4F4F5</Color>
         <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{DynamicResource ThemeForegroundColor}"/>
 
-        <Color x:Key="ThemeGlowColor">#3b82f6</Color>
+        <Color x:Key="ThemeGlowColor">#27272A</Color>
         <SolidColorBrush x:Key="ThemeGlowBrush" Color="{DynamicResource ThemeGlowColor}"/>
 
-        <Color x:Key="ThemeSecondaryColor">#22d3ee</Color>
+        <Color x:Key="ThemeSecondaryColor">#A1A1AA</Color>
         <SolidColorBrush x:Key="ThemeSecondaryBrush" Color="{DynamicResource ThemeSecondaryColor}"/>
 
-        <Color x:Key="ThemeSurfaceColor">#1e293b</Color>
-        <SolidColorBrush x:Key="ThemeSurfaceBrush" Color="{DynamicResource ThemeSurfaceColor}" Opacity="0.6"/>
+        <Color x:Key="ThemeSurfaceColor">#18181B</Color>
+        <SolidColorBrush x:Key="ThemeSurfaceBrush" Color="{DynamicResource ThemeSurfaceColor}" Opacity="0.95"/>
 
-        <Color x:Key="ThemeBgStartColor">#020617</Color>
-        <Color x:Key="ThemeBgMidColor">#0a0f1d</Color>
-        <Color x:Key="ThemeBgEndColor">#050A14</Color>
+        <Color x:Key="ThemeBgStartColor">#09090B</Color>
+        <Color x:Key="ThemeBgMidColor">#121215</Color>
+        <Color x:Key="ThemeBgEndColor">#09090B</Color>
 
         <LinearGradientBrush x:Key="ThemeBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="{DynamicResource ThemeBgStartColor}" Offset="0"/>
@@ -39,11 +40,11 @@
             <GradientStop Color="{DynamicResource ThemeBgEndColor}" Offset="1"/>
         </LinearGradientBrush>
 
-        <Color x:Key="AccentColor">#007AFF</Color>
+        <Color x:Key="AccentColor">#10B981</Color>
         <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
         
-        <Color x:Key="GlassColor">#050505</Color>
-        <SolidColorBrush x:Key="GlassBrush" Color="{DynamicResource ThemeBgStartColor}" Opacity="0.8"/>
+        <Color x:Key="GlassColor">#121215</Color>
+        <SolidColorBrush x:Key="GlassBrush" Color="{DynamicResource ThemeBgStartColor}" Opacity="0.95"/>
 
         <!-- GLOBAL STYLES -->
         <Style TargetType="TextBlock">
@@ -98,6 +99,89 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+            <!-- GLOBAL STORYBOARDS -->
+            <!-- Idle Breathing -->
+            <Storyboard x:Key="IdleBreathingAnimation" RepeatBehavior="Forever" AutoReverse="True">
+                <DoubleAnimation Storyboard.TargetName="VisualizerPanel" Storyboard.TargetProperty="Opacity" From="0.3" To="0.8" Duration="0:0:2">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseInOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+            <!-- Pulse Animation -->
+            <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetName="OrbGlow" 
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="0.3" To="0.7" Duration="0:0:1.2" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetName="OrbScale" 
+                                 Storyboard.TargetProperty="ScaleX"
+                                 From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetName="OrbScale" 
+                                 Storyboard.TargetProperty="ScaleY"
+                                 From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
+            </Storyboard>
+
+            <!-- Thinking Dots Animation (staggered pulse) -->
+            <Storyboard x:Key="ThinkingDotsAnimation" RepeatBehavior="Forever">
+                <!-- Dot 1 -->
+                <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot1" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"/>
+                <!-- Dot 2 -->
+                <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot2" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"/>
+                <!-- Dot 3 -->
+                <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="Dot3" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"/>
+            </Storyboard>
+
+            <!-- AI Thinking Glow -->
+            <Storyboard x:Key="ThinkingAnimation" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetName="ThinkingAura" Storyboard.TargetProperty="Opacity" From="0.1" To="0.9" Duration="0:0:1" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleX" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleY" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetName="ThinkingAuraRotation" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:4"/>
+            </Storyboard>
+
+            <!-- Command Confirmed Ripple -->
+            <Storyboard x:Key="RippleAnimation">
+                <DoubleAnimation Storyboard.TargetName="RippleEffect" Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.8"/>
+                <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleX" From="1" To="4" Duration="0:0:0.8"/>
+                <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleY" From="1" To="4" Duration="0:0:0.8"/>
+            </Storyboard>
+
+            <!-- Haptic Jiggle (Physical Feel) -->
+            <Storyboard x:Key="JiggleAnimation">
+                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleX">
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="1.05"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="0.95"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
+                </DoubleAnimationUsingKeyFrames>
+                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleY">
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="0.95"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="1.05"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
+                </DoubleAnimationUsingKeyFrames>
+            </Storyboard>
+
+            <!-- Iridescent Border Animation -->
+            <Storyboard x:Key="IridescentAnimation" RepeatBehavior="Forever">
+                <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:3" AutoReverse="True"/>
+                <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:3" AutoReverse="True"/>
+            </Storyboard>
+
+            <!-- Moon Satellite Animation -->
+            <Storyboard x:Key="SatelliteAnimation" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetName="SatelliteRotation" 
+                                 Storyboard.TargetProperty="Angle" 
+                                 From="0" To="360" Duration="0:0:2.5"/>
+                <DoubleAnimation Storyboard.TargetName="SatelliteOrb" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="1" To="0.4" Duration="0:0:1.25" AutoReverse="True"/>
+            </Storyboard>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -43,8 +43,10 @@ namespace CosmoWhisper.Controllers
             var p = PreferenceManager.Shared.Preferences;
 
             if (Window.ToggleClipboard != null) UpdateToggle(Window.ToggleClipboard, p.RestoreClipboard);
+            if (Window.TogglePasteMode != null) UpdateToggle(Window.TogglePasteMode, p.UsePasteMode);
             if (Window.ToggleAutoSubmit != null) UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
             if (Window.ToggleAutoCopy != null) UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
+            if (Window.ToggleSpeechPolish != null) UpdateToggle(Window.ToggleSpeechPolish, p.EnableSpeechPolish);
             if (Window.TxtBackupPath != null) Window.TxtBackupPath.Text = p.BackupDirectory;
             if (Window.TxtHotkey != null) UpdateActivationUI();
 
@@ -53,7 +55,21 @@ namespace CosmoWhisper.Controllers
             if (Window.ToggleManusNarration != null) UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
             if (Window.ToggleLocalWhisper != null) UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
             if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
+            if (Window.ToggleForceDirectApi != null) UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
+            if (Window.ToggleAlwaysOnTop != null) UpdateToggle(Window.ToggleAlwaysOnTop, p.AlwaysOnTop);
             UpdateLocalOnlyUI();
+
+            if (Window.ComboLocalVoiceEngine != null)
+            {
+                foreach (System.Windows.Controls.ComboBoxItem item in Window.ComboLocalVoiceEngine.Items)
+                {
+                    if (item.Tag?.ToString() == p.LocalVoiceEngine)
+                    {
+                        Window.ComboLocalVoiceEngine.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
 
 
 
@@ -116,6 +132,71 @@ namespace CosmoWhisper.Controllers
         public void UpdateToggle(Border toggle, bool isOn)
         {
             if (toggle == null) return;
+
+            if (toggle.Name == "ToggleLocalWhisperControl")
+            {
+                if (isOn)
+                {
+                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+                    if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = "💻";
+                    if (Window.LocalWhisperGlow != null)
+                    {
+                        Window.LocalWhisperGlow.Opacity = 0.35;
+                        Window.LocalWhisperGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+                    }
+                }
+                else
+                {
+                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+                    if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = "☁";
+                    if (Window.LocalWhisperGlow != null)
+                    {
+                        Window.LocalWhisperGlow.Opacity = 0.35;
+                        Window.LocalWhisperGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
+                    }
+                }
+
+                if (Window.TxtLocalWhisperStatus != null)
+                {
+                    string engineName = LocalModelManager.Shared.ActiveEngineName;
+                    Window.TxtLocalWhisperStatus.Text = isOn ? engineName : "Connected to Cloud";
+                }
+                return;
+            }
+
+            if (toggle.Name == "ToggleAutoSubmitControl")
+            {
+                if (isOn)
+                {
+                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
+                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "↵";
+                    if (Window.AutoSubmitGlow != null)
+                    {
+                        Window.AutoSubmitGlow.Opacity = 0.35;
+                        Window.AutoSubmitGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
+                    }
+                }
+                else
+                {
+                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#20FFFFFF"));
+                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#80FFFFFF"));
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "✕";
+                    if (Window.AutoSubmitGlow != null)
+                    {
+                        Window.AutoSubmitGlow.Opacity = 0.05;
+                    }
+                }
+
+                if (Window.TxtAutoSubmitStatus != null)
+                {
+                    Window.TxtAutoSubmitStatus.Text = isOn ? "Press Enter" : "No Enter";
+                }
+                return;
+            }
+
             toggle.Background = isOn
                 ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"))
                 : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#30FFFFFF"));
@@ -132,6 +213,15 @@ namespace CosmoWhisper.Controllers
             p.RestoreClipboard = !p.RestoreClipboard;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleClipboard, p.RestoreClipboard);
+        }
+        
+        public void TogglePasteMode()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.UsePasteMode = !p.UsePasteMode;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.TogglePasteMode, p.UsePasteMode);
+            Window.ShowToast(p.UsePasteMode ? "Instant Paste Enabled" : "Natural Typing Enabled", "\uD83D\uDCCB");
         }
 
         public void ToggleAutoSubmit()
@@ -485,6 +575,15 @@ try {{
 
 
 
+        public void ToggleSpeechPolish()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.EnableSpeechPolish = !p.EnableSpeechPolish;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleSpeechPolish, p.EnableSpeechPolish);
+            Window.ShowToast(p.EnableSpeechPolish ? "AI Speech Polish Enabled \u2728" : "Standard Whisper Active (Legacy)", p.EnableSpeechPolish ? "\u2728" : "\u2699");
+        }
+
         public void ToggleRegionalSpelling()
         {
             var p = PreferenceManager.Shared.Preferences;
@@ -536,6 +635,8 @@ try {{
 
         public void SetDateFormat(string format)
         {
+            if (string.IsNullOrEmpty(format)) return;
+
             var p = PreferenceManager.Shared.Preferences;
             if (p.SelectedDateFormat != format)
             {
@@ -546,6 +647,8 @@ try {{
 
         public void SetTimeFormat(string format)
         {
+            if (string.IsNullOrEmpty(format)) return;
+
             var p = PreferenceManager.Shared.Preferences;
             if (p.SelectedTimeFormat != format)
             {
@@ -574,18 +677,44 @@ try {{
         {
             var p = PreferenceManager.Shared.Preferences;
             p.UseLocalWhisper = !p.UseLocalWhisper;
+            
+            // Sync with LocalOnly to ensure AIService logic is triggered reliably
+            p.UseLocalWhisperOnly = p.UseLocalWhisper;
+            
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
-            Window.ShowToast(p.UseLocalWhisper ? "Local Whisper Enabled" : "Local Whisper Disabled", "🔌");
+            
+            string status = p.UseLocalWhisper ? "Offline Mode (Local) Enabled" : "Cloud Mode (Groq) Enabled";
+            string icon = p.UseLocalWhisper ? "🛡️" : "☁️";
+            Window.ShowToast(status, icon);
         }
 
         public void ToggleForceCloudProxy()
         {
             var p = PreferenceManager.Shared.Preferences;
             p.ForceCloudProxy = !p.ForceCloudProxy;
+            if (p.ForceCloudProxy)
+            {
+                p.ForceDirectApi = false;
+                if (Window.ToggleForceDirectApi != null) UpdateToggle(Window.ToggleForceDirectApi, false);
+            }
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
             Window.ShowToast(p.ForceCloudProxy ? "VPN Mode Enabled" : "VPN Mode Disabled", "🛡️");
+        }
+
+        public void ToggleForceDirectApi()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.ForceDirectApi = !p.ForceDirectApi;
+            if (p.ForceDirectApi)
+            {
+                p.ForceCloudProxy = false;
+                if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, false);
+            }
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
+            Window.ShowToast(p.ForceDirectApi ? "Direct API Only Enabled" : "Direct API Only Disabled", "⚡");
         }
 
         public void ToggleLocalOnly()
@@ -615,6 +744,33 @@ try {{
 
             if (Window.LocalOverlayIcon != null)
                 Window.LocalOverlayIcon.Text = isOn ? "🛡️" : "🌐";
+        }
+
+        public void ToggleAlwaysOnTop()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.AlwaysOnTop = !p.AlwaysOnTop;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleAlwaysOnTop, p.AlwaysOnTop);
+            
+            Window.ApplyAlwaysOnTop();
+            Window.ShowToast(p.AlwaysOnTop ? "Always on Top Enabled" : "Always on Top Disabled", "📌");
+        }
+
+        public void LocalVoiceEngineChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox cb && cb.SelectedItem is System.Windows.Controls.ComboBoxItem item)
+            {
+                string tag = item.Tag?.ToString() ?? "ParakeetRedux";
+                var p = PreferenceManager.Shared.Preferences;
+                if (p.LocalVoiceEngine != tag)
+                {
+                    p.LocalVoiceEngine = tag;
+                    PreferenceManager.Shared.Save();
+                    string friendlyName = tag == "WhisperTiny" ? "Whisper Tiny (77MB Fallback)" : "Parakeet Redux (High Accuracy)";
+                    Window.ShowToast($"Local Engine: {friendlyName}", "🎙️");
+                }
+            }
         }
     }
 }

@@ -19,7 +19,16 @@ Write-Host "0. Synchronizing Versions..." -ForegroundColor Cyan
 if ($LASTEXITCODE -ne 0) { throw "Version sync failed!" }
 
 # Ensure clean state
-if (Test-Path $PayloadDir) { Remove-Item $PayloadDir -Recurse -Force }
+if (Test-Path $PayloadDir) { 
+    Write-Host "Cleaning Payload directory..." -ForegroundColor Gray
+    Get-ChildItem $PayloadDir -Recurse | ForEach-Object {
+        try {
+            Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+        } catch {
+            Write-Warning "Could not remove $($_.Name): $($_.Exception.Message)"
+        }
+    }
+}
 New-Item -ItemType Directory -Force -Path $ImagesDir | Out-Null
 
 Write-Host "1. Building WPF Application..." -ForegroundColor Cyan
