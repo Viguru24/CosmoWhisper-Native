@@ -1,0 +1,171 @@
+<UserControl x:Class="CosmoWhisper.Controls.SmartCommandsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,4,16,32">
+            <Grid Margin="0,0,0,18">
+                <Button HorizontalAlignment="Right" Style="{StaticResource SecondaryButtonStyle}" Click="OpenLibraryWeb_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE774;" FontSize="13" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,8,0"/>
+                        <TextBlock Text="Browse Smart Commands" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Text Sorcery Section -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE945;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                <TextBlock Text="Text Sorcery" Style="{StaticResource SectionTitleStyle}" FontSize="20"/>
+            </StackPanel>
+            <WrapPanel Margin="0,0,0,28">
+                <!-- World Eater (Select All) -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF3B82F6" Offset="0"/>
+                            <GradientStop Color="#FF06B6D4" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="World Eater" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Select All'" Foreground="#FFFFFF" Opacity="0.85" FontSize="12" Margin="0,4,0,0" FontStyle="Italic"/>
+                        <TextBlock Text="Consume every character in the field. Leave nothing behind." Foreground="#FFFFFF" Opacity="0.92" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Apocalypse (Delete All) -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFEF4444" Offset="0"/>
+                            <GradientStop Color="#FFB91C1C" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="Apocalypse" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Delete All'" Foreground="#FFFFFF" Opacity="0.85" FontSize="12" Margin="0,4,0,0" FontStyle="Italic"/>
+                        <TextBlock Text="Nuke the field. Start fresh. No regrets." Foreground="#FFFFFF" Opacity="0.92" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Cloner (Copy) -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF8B5CF6" Offset="0"/>
+                            <GradientStop Color="#FF6D28D9" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="The Cloner" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Copy That'" Foreground="#FFFFFF" Opacity="0.85" FontSize="12" Margin="0,4,0,0" FontStyle="Italic"/>
+                        <TextBlock Text="Steal it. Stash it. It's yours now." Foreground="#FFFFFF" Opacity="0.92" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Manifest (Paste) -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF10B981" Offset="0"/>
+                            <GradientStop Color="#FF059669" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="Manifest" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Paste That'" Foreground="#FFFFFF" Opacity="0.85" FontSize="12" Margin="0,4,0,0" FontStyle="Italic"/>
+                        <TextBlock Text="Dump the payload. Bring it into reality." Foreground="#FFFFFF" Opacity="0.92" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Time Travel (Undo) -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFF59E0B" Offset="0"/>
+                            <GradientStop Color="#FFD97706" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="Time Travel" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Undo That'" Foreground="#FFFFFF" Opacity="0.85" FontSize="12" Margin="0,4,0,0" FontStyle="Italic"/>
+                        <TextBlock Text="Mistakes were made. Go back. GO BACK!" Foreground="#FFFFFF" Opacity="0.92" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <!-- Portal Gun (App Launcher) -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE754;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                <TextBlock Text="Portal Gun" Style="{StaticResource SectionTitleStyle}" FontSize="20"/>
+            </StackPanel>
+            <TextBlock Text="Say &quot;Open [App]&quot; or web commands to teleport instantly." Style="{StaticResource CardDescriptionStyle}" Margin="0,0,0,14"/>
+            <WrapPanel Margin="0,0,0,16">
+                <!-- The Writer -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF374151" Offset="0"/>
+                            <GradientStop Color="#FF1F2937" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="The Writer" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Open Word'" Foreground="#93C5FD" FontSize="12" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Summon the blank page. Let the words flow." Foreground="#FFFFFF" Opacity="0.85" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Navigator -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF0D9488" Offset="0"/>
+                            <GradientStop Color="#FF0F766E" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="The Navigator" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Open Microsoft'" Foreground="#A5F3FC" FontSize="12" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Teleport directly to Microsoft.com or other sites." Foreground="#FFFFFF" Opacity="0.85" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Searcher -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF4F46E5" Offset="0"/>
+                            <GradientStop Color="#FF4338CA" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="The Searcher" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Search [Query]'" Foreground="#C7D2FE" FontSize="12" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Launch Google search for any topic instantly." Foreground="#FFFFFF" Opacity="0.85" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Streamer -->
+                <Border Width="220" Height="130" Style="{DynamicResource PremiumTileStyle}" Margin="0,0,12,12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFE11D48" Offset="0"/>
+                            <GradientStop Color="#FFBE123C" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="16" VerticalAlignment="Center">
+                        <TextBlock Text="The Streamer" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'YouTube [Query]'" Foreground="#FECDD3" FontSize="12" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Find videos on YouTube or Utube immediately." Foreground="#FFFFFF" Opacity="0.85" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

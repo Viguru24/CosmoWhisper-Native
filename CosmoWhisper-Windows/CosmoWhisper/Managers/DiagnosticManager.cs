@@ -1,37 +1,45 @@
 using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using CosmoWhisper.Interfaces;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
-    public class DiagnosticManager
+    public interface IDiagnosticManager
     {
-        public static DiagnosticManager Shared { get; } = new DiagnosticManager();
+        void Log(string message, string category = "INFO");
+        void TakeSnapshot(string error, Dictionary<string, object> state);
+    }
 
-        private readonly string _logPath;
-        private readonly string _snapshotPath;
-        private readonly object _lock = new object();
+    public class DiagnosticManager : IDiagnosticManager
+    {
+        public static DiagnosticManager Shared => (DiagnosticManager)ServiceLocator.GetService<IDiagnosticManager>();
 
-        public DiagnosticManager()
+        private string? _logPath;
+        private string? _snapshotPath;
+        private readonly IPreferenceManager _preferenceManager;
+        private readonly ILogger? _logger;
+
+        public DiagnosticManager(IPreferenceManager preferenceManager, ILogger? logger = null)
         {
-            string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "diagnostics");
-            Directory.CreateDirectory(appData);
+            _preferenceManager = preferenceManager;
+            _logger = logger;
+            Initialize();
+        }
 
-            _logPath = Path.Combine(appData, "live_flight_recorder.log");
-            _snapshotPath = Path.Combine(appData, "last_error_snapshot.json");
-
-            // Direct project root link for the AI to "tail"
-            // Using a relative path to the repo root if possible, or just a known location
-            try 
+        private void Initialize()
+        {
+            try
             {
-                // Set up a TraceListener to catch all Debug/Trace.WriteLine calls
-                Trace.Listeners.Clear();
-                Trace.Listeners.Add(new TextWriterTraceListener(File.Create(_logPath)));
-                Trace.AutoFlush = true;
-                
+                string appData = _preferenceManager.AppDataFolder;
+                string diagDir = Path.Combine(appData, "diagnostics");
+                Directory.CreateDirectory(diagDir);
+
+                _logPath = Path.Combine(diagDir, "live_flight_recorder.log");
+                _snapshotPath = Path.Combine(diagDir, "last_error_snapshot.json");
+
                 Log("Diagnostic Flight Recorder Initialized.");
             }
             catch (Exception ex)
@@ -42,16 +50,31 @@ namespace CosmoWhisper.Managers
 
         public void Log(string message, string category = "INFO")
         {
-            lock (_lock)
+            if (string.IsNullOrEmpty(_logPath)) return;
+
+            string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
+            FileLogger.WriteBoundedLine(_logPath, entry);
+
+            string formatted = $"[{category}] {message}";
+            if (_logger != null)
             {
-                string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
-                Debug.WriteLine(entry);
-                // Also write to a "volatile" log in the project root for the AI to see easily
-                try 
+                if (category.Equals("ERROR", StringComparison.OrdinalIgnoreCase) ||
+                    category.Equals("CRITICAL", StringComparison.OrdinalIgnoreCase))
                 {
-                    File.AppendAllText("cosmo_terminal.log", entry + Environment.NewLine);
+                    _logger.LogError(formatted);
                 }
-                catch { }
+                else if (category.Equals("WARN", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(formatted);
+                }
+                else
+                {
+                    _logger.LogInformation(formatted);
+                }
+            }
+            else
+            {
+                FileLogger.WriteShared(category, message);
             }
         }
 
@@ -59,29 +82,26 @@ namespace CosmoWhisper.Managers
         {
             try
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("{");
-                sb.AppendLine($"  \"timestamp\": \"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}\",");
-                sb.AppendLine($"  \"error\": \"{error.Replace("\"", "\\\"")}\",");
-                sb.AppendLine("  \"state\": {");
-                
-                int count = 0;
+                var safeState = new Dictionary<string, string>();
                 foreach (var kvp in state)
                 {
-                    string val = kvp.Value?.ToString()?.Replace("\"", "\\\"")?.Replace("\n", "\\n")?.Replace("\r", "\\r") ?? "null";
-                    sb.Append($"    \"{kvp.Key}\": \"{val}\"");
-                    if (++count < state.Count) sb.AppendLine(",");
-                    else sb.AppendLine("");
+                    safeState[kvp.Key] = kvp.Value?.ToString() ?? "null";
                 }
-                
-                sb.AppendLine("  }");
-                sb.AppendLine("}");
 
-                File.WriteAllText(_snapshotPath, sb.ToString());
-                // Also copy to root for easy access
-                File.WriteAllText("last_diagnostic_snapshot.json", sb.ToString());
-                
-                Log($"SNAPSHOT TAKEN: Check last_diagnostic_snapshot.json", "CRITICAL");
+                var payload = new
+                {
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                    error,
+                    state = safeState
+                };
+
+                string json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+
+                if (!string.IsNullOrEmpty(_snapshotPath))
+                {
+                    File.WriteAllText(_snapshotPath, json);
+                    Log($"SNAPSHOT TAKEN: Check {_snapshotPath}", "CRITICAL");
+                }
             }
             catch (Exception ex)
             {

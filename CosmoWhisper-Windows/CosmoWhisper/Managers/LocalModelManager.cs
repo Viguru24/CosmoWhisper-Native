@@ -1,185 +1,150 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Whisper.net;
-using Whisper.net.Ggml;
+using CosmoWhisper.Interfaces;
+using CosmoWhisper.Managers.Engines;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
-    public class LocalModelManager
+    public class LocalModelManager : ILocalModelManager
     {
-        public static LocalModelManager Shared { get; } = new LocalModelManager();
-        
-        private string _modelPath;
-        private WhisperFactory _factory;
-        private bool _isDownloading = false;
+        public static LocalModelManager Shared => (LocalModelManager)ServiceLocator.GetService<ILocalModelManager>();
 
-        public bool IsReady => File.Exists(_modelPath) && _factory != null;
+        private readonly WhisperSpeechEngine _whisperEngine;
+        private readonly ParakeetSpeechEngine _parakeetEngine;
+        private readonly ILogger? _logger;
+        private ISpeechEngine _activeEngine;
+        private Task? _initTask;
 
-        public LocalModelManager()
+        public bool IsReady => ResolveActiveEngine().IsReady || _whisperEngine.IsReady;
+        public string ActiveEngineName => ResolveActiveEngine().EngineName;
+
+        public LocalModelManager(ILogger? logger = null)
         {
+            _logger = logger;
             string appData = PreferenceManager.Shared.AppDataFolder;
-            string modelDir = Path.Combine(appData, "models");
-            Directory.CreateDirectory(modelDir);
-            _modelPath = Path.Combine(modelDir, "ggml-tiny.en.bin");
-            LogEvent($"[LocalModel] Path: {_modelPath}");
+            _whisperEngine = new WhisperSpeechEngine(appData, logger);
+            _parakeetEngine = new ParakeetSpeechEngine(appData, logger);
+
+            _activeEngine = ResolveActiveEngine();
+            LogEvent($"[LocalModel] Initialized router. Preferred Engine: {PreferenceManager.Shared.Preferences.LocalVoiceEngine}, Active Engine: {_activeEngine.EngineName}");
+
+            PreferenceManager.Shared.PreferencesUpdated += OnPreferencesUpdated;
         }
+
+        private void OnPreferencesUpdated()
+        {
+            var resolved = ResolveActiveEngine();
+            if (resolved != _activeEngine)
+            {
+                LogEvent($"[LocalModel] Active engine switched from '{_activeEngine.EngineName}' to '{resolved.EngineName}'");
+                _activeEngine = resolved;
+            }
+        }
+
+        private ISpeechEngine ResolveActiveEngine()
+        {
+            string pref = PreferenceManager.Shared.Preferences.LocalVoiceEngine;
+            if (string.Equals(pref, "WhisperTiny", StringComparison.OrdinalIgnoreCase))
+            {
+                return _whisperEngine;
+            }
+
+            // Default or ParakeetRedux
+            if (_parakeetEngine.AreModelFilesPresent())
+            {
+                return _parakeetEngine;
+            }
+
+            // Safe Fallback: if Parakeet files are missing, fall back to Whisper
+            LogEvent("[LocalModel] Parakeet files not detected. Falling back to Whisper engine.");
+            return _whisperEngine;
+        }
+
         public void Initialize()
         {
-            LogEvent("[LocalModel] Initialize() called. Starting Task...");
-            // Fire and forget initialization
-            Task.Run(InitializeAsync);
+            LogEvent("[LocalModel] Initialize() called. Initializing engines...");
+            _ = EnsureInitializedAsync();
+        }
+
+        public Task EnsureInitializedAsync()
+        {
+            return _initTask ??= InitializeAsync();
         }
 
         private async Task InitializeAsync()
         {
-            LogEvent("[LocalModel] 🚀 Initializing...");
-            if (File.Exists(_modelPath))
+            // Initialize both so fallback is always instantaneous
+            var whisperInit = _whisperEngine.InitializeAsync();
+            var parakeetInit = _parakeetEngine.InitializeAsync();
+            await Task.WhenAll(whisperInit, parakeetInit);
+
+            _activeEngine = ResolveActiveEngine();
+            LogEvent($"[LocalModel] Engines initialized. Ready: {IsReady} (Active: {_activeEngine.EngineName})");
+        }
+
+        public async Task<string> TranscribeAsync(string wavFilePath, string prompt = "", string language = "en")
+        {
+            _activeEngine = ResolveActiveEngine();
+
+            if (_activeEngine.IsReady)
             {
-                try 
+                try
                 {
-                    // Try to load with GPU acceleration
-                    try
-                    {
-                        var builder = WhisperFactory.FromPath(_modelPath);
-                        // Standard FromPath might not take bool in 1.9.0 directly? 
-                        // Actually, looking at docs, it's often RuntimeOptions or Builder.
-                        // Let's rely on the Runtime package being present.
-                        // If 1.9.0 doesn't support explicit bool, we might need a different approach.
-                        // Wait, let's try the Builder pattern if available or just the standard call
-                        // usually having the DLL is enough.
-                        // Verification: The user said "Can the local model be uploaded to VRAM?".
-                        // If I can't be sure about the API, I should probably stick to the safest bet:
-                        // The `Whisper.net.Runtime.Cuda` package *replaces* the native library.
-                        // So `FromPath` *should* automatically use it if the DLL is loaded.
-                        // BUT, we can try to force it via `RuntimeOptions` if that class exists.
-                        // Let's assume standard behavior for now to avoid compilation errors if API differs.
-                         _factory = WhisperFactory.FromPath(_modelPath);
-                        LogEvent("[LocalModel] ✅ Model loaded successfully (GPU/CPU Auto-detect).");
-                    }
-                    catch (Exception ex)
-                    {
-                         LogEvent($"[LocalModel] ⚠️ Model load error: {ex.Message}");
-                         throw; 
-                    }
-                    await RunSelfTest();
+                    return await _activeEngine.TranscribeAsync(wavFilePath, prompt, language);
                 }
                 catch (Exception ex)
                 {
-                     LogEvent($"[LocalModel] ⚠️ Error loading existing model: {ex.Message}");
-                     try { File.Delete(_modelPath); } catch { } // Corrupt? Re-download.
-                     await DownloadModelAsync();
+                    LogEvent($"[LocalModel] ⚠️ Primary engine '{_activeEngine.EngineName}' failed: {ex.Message}. Attempting Whisper fallback...");
+                    if (_activeEngine != _whisperEngine && _whisperEngine.IsReady)
+                    {
+                        return await _whisperEngine.TranscribeAsync(wavFilePath, prompt, language);
+                    }
+                    return $"Error: Transcription failed - {ex.Message}";
                 }
             }
-            else
+
+            // Fallback to Whisper if active isn't ready
+            if (_whisperEngine.IsReady)
             {
-                await DownloadModelAsync();
+                LogEvent("[LocalModel] Primary engine not ready. Using Whisper fallback...");
+                return await _whisperEngine.TranscribeAsync(wavFilePath, prompt, language);
             }
+
+            return "Error: Local voice engines are still initializing or downloading.";
         }
 
-        private async Task DownloadModelAsync()
+        public async Task WarmUp()
         {
-            if (_isDownloading) return;
-            _isDownloading = true;
-
-            try
-            {
-                LogEvent("[LocalModel] 📥 Starting background download...");
-                
-                using (var client = new HttpClient())
-                {
-                    // Use a reliable source for ggml models compatible with whisper.cpp
-                    // Using the official huggingface repo for whisper.cpp models
-                    string url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin"; 
-                    
-                    using (var s = await client.GetStreamAsync(url))
-                    using (var fs = new FileStream(_modelPath, FileMode.Create))
-                    {
-                        await s.CopyToAsync(fs);
-                    }
-                }
-
-                LogEvent("[LocalModel] ✅ Download complete. Loading model...");
-                _factory = WhisperFactory.FromPath(_modelPath);
-                LogEvent("[LocalModel] ✅ Model ready for use.");
-                await RunSelfTest();
-            }
-            catch (Exception ex)
-            {
-                LogEvent($"[LocalModel] ❌ Download failed: {ex.Message}");
-                try { if (File.Exists(_modelPath)) File.Delete(_modelPath); } catch { }
-            }
-            finally
-            {
-                _isDownloading = false;
-            }
-        }
-
-        public async Task<string> TranscribeAsync(string wavFilePath)
-        {
-            if (!IsReady) 
-            {
-                if (!_isDownloading) Initialize(); // Retry init if needed
-                return "Error: Local model is still downloading.";
-            }
-
-            LogEvent($"[LocalModel] 📝 Transcribing {wavFilePath}...");
-            try
-            {
-                using (var processor = _factory.CreateBuilder()
-                    .WithLanguage("en")
-                    .WithThreads(System.Environment.ProcessorCount) // Use all available cores for maximum speed
-                    .Build())
-                {
-                    using (var fileStream = File.OpenRead(wavFilePath))
-                    {
-                        string result = "";
-                        await foreach (var segment in processor.ProcessAsync(fileStream))
-                        {
-                            result += segment.Text;
-                        }
-                        
-                        var finalResult = result.Trim();
-                        LogEvent($"[LocalModel] 🗣️ Transcription result: {finalResult}");
-                        return finalResult;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogEvent($"[LocalModel] ❌ Transcription failed: {ex.Message}");
-                return $"Error: Local transcription failed - {ex.Message}";
-            }
+            await _activeEngine.WarmUpAsync();
         }
 
         public async Task RunSelfTest()
         {
             if (!IsReady) return;
-            LogEvent("[LocalModel] 🧪 Running Self-Test...");
+            LogEvent("[LocalModel] 🧪 Running Self-Test on active engine...");
             try
             {
-                // Create a 1-second silence WAV
                 string tempWav = Path.Combine(Path.GetTempPath(), "cosmo_selftest.wav");
                 using (var ms = new MemoryStream())
                 {
                     using (var writer = new BinaryWriter(ms))
                     {
-                        // WAV Header for 16kHz Mono 16-bit
                         writer.Write(new char[] { 'R', 'I', 'F', 'F' });
-                        writer.Write(32036); // ChunkSize
+                        writer.Write(32036);
                         writer.Write(new char[] { 'W', 'A', 'V', 'E' });
                         writer.Write(new char[] { 'f', 'm', 't', ' ' });
-                        writer.Write(16); // Subchunk1Size
-                        writer.Write((short)1); // AudioFormat (PCM)
-                        writer.Write((short)1); // NumChannels
-                        writer.Write(16000); // SampleRate
-                        writer.Write(32000); // ByteRate
-                        writer.Write((short)2); // BlockAlign
-                        writer.Write((short)16); // BitsPerSample
+                        writer.Write(16);
+                        writer.Write((short)1);
+                        writer.Write((short)1);
+                        writer.Write(16000);
+                        writer.Write(32000);
+                        writer.Write((short)2);
+                        writer.Write((short)16);
                         writer.Write(new char[] { 'd', 'a', 't', 'a' });
-                        writer.Write(32000); // Subchunk2Size (1 sec)
-                        for (int i = 0; i < 16000; i++) writer.Write((short)0); // Silence
+                        writer.Write(32000);
+                        for (int i = 0; i < 16000; i++) writer.Write((short)0);
                     }
                     File.WriteAllBytes(tempWav, ms.ToArray());
                 }
@@ -190,20 +155,14 @@ namespace CosmoWhisper.Managers
             }
             catch (Exception ex)
             {
-                 LogEvent($"[LocalModel] ❌ Self-Test Failed: {ex.Message}");
+                LogEvent($"[LocalModel] ❌ Self-Test Failed: {ex.Message}");
             }
         }
 
         private void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            if (_logger != null) _logger.LogInformation(msg);
+            else FileLogger.WriteShared("INFO", msg);
         }
     }
 }

@@ -1,0 +1,166 @@
+<UserControl x:Class="CosmoWhisper.Controls.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,4,16,24">
+            <!-- SECTION: QUICK SETTINGS -->
+            <Grid Margin="0,0,0,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="18"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Local vs Cloud Mode -->
+                <Border Grid.Column="0" Style="{StaticResource CardContainerStyle}" Padding="22">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border x:Name="ToggleLocalWhisperControl" Width="52" Height="52" CornerRadius="26" Background="{DynamicResource ThemeSubtleSurfaceBrush}" BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}" BorderThickness="1" Cursor="Hand" Focusable="True" MouseLeftButtonDown="ToggleLocalWhisper_Click" HorizontalAlignment="Center">
+                            <Grid>
+                                <Ellipse x:Name="LocalWhisperGlow" Fill="{DynamicResource ThemeAccentBrush}" Opacity="0.1" Margin="-2"/>
+                                <TextBlock x:Name="LocalWhisperIcon" Style="{StaticResource FluentIconStyle}" Text="&#xE753;" FontSize="22" Foreground="{DynamicResource ThemeForegroundBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock x:Name="TxtLocalWhisperStatus" Text="Connected to Cloud" Style="{StaticResource CardTitleStyle}" FontSize="14" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                        <TextBlock Text="Automatic audio translation mode" Style="{StaticResource MicroLabelStyle}" FontSize="11" FontWeight="Normal" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Auto Submit Mode -->
+                <Border Grid.Column="2" Style="{StaticResource CardContainerStyle}" Padding="22">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border x:Name="ToggleAutoSubmitControl" Width="52" Height="52" CornerRadius="26" Background="{DynamicResource ThemeSubtleSurfaceBrush}" BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}" BorderThickness="1" Cursor="Hand" Focusable="True" MouseLeftButtonDown="ToggleAutoSubmit_Click" HorizontalAlignment="Center">
+                            <Grid>
+                                <Ellipse x:Name="AutoSubmitGlow" Fill="{DynamicResource ThemeSecondaryBrush}" Opacity="0.1" Margin="-2"/>
+                                <TextBlock x:Name="AutoSubmitIcon" Style="{StaticResource FluentIconStyle}" Text="&#xE711;" FontSize="20" Foreground="{DynamicResource ThemeForegroundBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock x:Name="TxtAutoSubmitStatus" Text="No Enter" Style="{StaticResource CardTitleStyle}" FontSize="14" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                        <TextBlock Text="Press Enter after dictating" Style="{StaticResource MicroLabelStyle}" FontSize="11" FontWeight="Normal" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Store Lite Banner -->
+            <Border x:Name="StoreLiteBanner" Visibility="Collapsed" Style="{StaticResource CardContainerStyle}" Padding="20" Margin="0,0,0,22">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{DynamicResource ThemeAccentSubtleBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" Width="40" Height="40" CornerRadius="10" Margin="0,0,15,0">
+                        <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE734;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock Text="Microsoft Store Edition (Lite)" Style="{StaticResource CardTitleStyle}" FontSize="15"/>
+                        <TextBlock Text="Limited to 60 mins/month. Unlock unlimited access on Pro." Style="{StaticResource CardDescriptionStyle}" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="Upgrade at CosmoWhisper.com" Style="{StaticResource PrimaryButtonStyle}" Click="GetFullAccess_Click" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Pro Banner -->
+            <Border x:Name="ProBanner" Style="{StaticResource CardContainerStyle}" Padding="22" Margin="0,0,0,22">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{DynamicResource ThemeAccentSubtleBrush}" Width="36" Height="36" CornerRadius="9" Margin="0,0,14,0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE945;" FontSize="16" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="TxtTierStatus" Text="Pro Unlocked" Style="{StaticResource CardTitleStyle}" FontSize="14"/>
+                                <TextBlock x:Name="TierIcon" Text="" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Emoji, Segoe UI" Foreground="{DynamicResource ThemeAccentBrush}" Margin="6,0,0,0" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="TxtUsageLabel" Text="Usage Limit Removed" Style="{StaticResource CardDescriptionStyle}" FontSize="12" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock x:Name="TxtUsageStats" Grid.Column="2" VerticalAlignment="Center" Foreground="{DynamicResource ThemeForegroundBrush}" FontWeight="Bold" FontSize="14" Text="1.7 / &#x221E;"/>
+                    </Grid>
+
+                    <!-- Progress Bar -->
+                    <Grid Grid.Row="1">
+                        <Border Height="6" Background="{DynamicResource ThemeSubtleSurfaceBrush}" CornerRadius="3"/>
+                        <Border x:Name="UsageProgressBar" HorizontalAlignment="Left" Width="300" Height="6" Background="{DynamicResource ThemeAccentBrush}" CornerRadius="3"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Stats Section Header -->
+            <Grid Margin="0,10,0,14">
+                <TextBlock Text="Performance Snapshot" Style="{StaticResource SectionTitleStyle}" FontSize="19" VerticalAlignment="Center"/>
+                <Button x:Name="BtnResetStats" HorizontalAlignment="Right" Style="{StaticResource SecondaryButtonStyle}" Click="ResetStats_Click" Padding="12,6" FontSize="12">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE72C;" FontSize="11" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,6,0"/>
+                        <TextBlock Text="Reset All" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Stats Cards Row -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Total Words -->
+                <Border Grid.Column="0" Style="{StaticResource CardContainerStyle}" Padding="22,18" MinHeight="96">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource ThemeAccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="TOTAL WORDS" Style="{StaticResource MicroLabelStyle}" FontSize="10"/>
+                        </StackPanel>
+                        <TextBlock x:Name="StatTotalWords" Text="0" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Time Saved -->
+                <Border Grid.Column="2" Style="{StaticResource CardContainerStyle}" Padding="22,18" MinHeight="96">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource ThemeSuccessBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="TIME SAVED" Style="{StaticResource MicroLabelStyle}" FontSize="10"/>
+                        </StackPanel>
+                        <TextBlock x:Name="StatTimeSaved" Text="0h" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Transcriptions -->
+                <Border Grid.Column="4" Style="{StaticResource CardContainerStyle}" Padding="22,18" MinHeight="96">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource ThemeSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="TRANSCRIPTIONS" Style="{StaticResource MicroLabelStyle}" FontSize="10"/>
+                        </StackPanel>
+                        <TextBlock x:Name="StatTranscriptions" Text="0" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

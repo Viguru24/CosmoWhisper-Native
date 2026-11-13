@@ -14,18 +14,11 @@
         <WindowChrome GlassFrameThickness="0" CornerRadius="0" CaptionHeight="0" ResizeBorderThickness="0"/>
     </WindowChrome.WindowChrome>
 
-    <Border CornerRadius="20" BorderThickness="1" BorderBrush="#30FFFFFF">
-        <Border.Background>
-            <RadialGradientBrush GradientOrigin="0.5,0.2" Center="0.5,0.2" RadiusX="1.5" RadiusY="1">
-                <GradientStop Color="#FF1A1E2E" Offset="0"/>
-                <GradientStop Color="#FF0B0E17" Offset="1"/>
-            </RadialGradientBrush>
-        </Border.Background>
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="20" ShadowDepth="10" Opacity="0.5" Direction="270"/>
-        </Border.Effect>
-
-        <Grid Margin="25">
+    <Border CornerRadius="16"
+            Background="{DynamicResource ThemeSurfaceBrush}"
+            BorderThickness="1"
+            BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}">
+        <Grid Margin="26">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -34,59 +27,51 @@
             </Grid.RowDefinitions>
 
             <!-- Title -->
-            <TextBlock Text="CosmoWhisper" 
-                       FontSize="22" FontWeight="Bold" 
-                       HorizontalAlignment="Center"
-                       Effect="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}">
-                <TextBlock.Foreground>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#00C6FF" Offset="0"/>
-                        <GradientStop Color="#0072FF" Offset="1"/>
-                    </LinearGradientBrush>
-                </TextBlock.Foreground>
-            </TextBlock>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="Cosmo" FontFamily="{DynamicResource DisplayFont}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ThemeForegroundBrush}"/>
+                <TextBlock Text="Whisper" FontFamily="{DynamicResource DisplayFont}" FontSize="20" FontWeight="Normal" Foreground="{DynamicResource ThemeAccentBrush}" Margin="3,0,0,0"/>
+            </StackPanel>
 
             <!-- Stats Block -->
-            <Border Grid.Row="1" Background="#20FFFFFF" CornerRadius="12" Margin="0,20" Padding="15">
+            <Border Grid.Row="1" Style="{StaticResource SubtlePanelStyle}" Margin="0,18,0,14" Padding="16">
                 <StackPanel>
-                    <TextBlock Text="SESSION STATS" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" Margin="0,0,0,5"/>
-                    <TextBlock x:Name="TxtStats" 
-                               Text="124 Words Saved Today" 
-                               FontSize="14" FontWeight="SemiBold" Foreground="White" 
-                               TextWrapping="Wrap" />
+                    <TextBlock Text="SESSION STATS" Style="{StaticResource MicroLabelStyle}" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="TxtStats"
+                               Text="124 Words Saved Today"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource ThemeForegroundBrush}"
+                               TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Fun Message -->
             <TextBlock Grid.Row="2" x:Name="TxtFunMessage"
-                       Text="See you later, space cowboy!" 
-                       FontSize="13" Foreground="#B0B0B0" 
-                       TextWrapping="Wrap" TextAlignment="Center"
-                       VerticalAlignment="Center" Margin="0,0,0,20" FontStyle="Italic"/>
+                       Text="See you later, space cowboy!"
+                       FontSize="13"
+                       Foreground="{DynamicResource ThemeSecondaryBrush}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="0,0,0,18"/>
 
             <!-- Buttons -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Keep Whispering" Width="130" Height="40"
-                        Background="#15FFFFFF" Foreground="White" BorderThickness="1" BorderBrush="#30FFFFFF"
-                        Margin="0,0,15,0"
-                        Click="Cancel_Click" Cursor="Hand">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="20"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-                
-                <Button Content="Exit App" Width="100" Height="40"
-                        Background="#FF453A" Foreground="White" BorderThickness="0"
-                        Click="Exit_Click" Cursor="Hand">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="20"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                <Button Content="Keep Whispering"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        MinWidth="140"
+                        Height="38"
+                        Margin="0,0,12,0"
+                        Click="Cancel_Click"/>
+
+                <Button Content="Quit App"
+                        Style="{StaticResource DangerButtonStyle}"
+                        MinWidth="110"
+                        Height="38"
+                        Click="Exit_Click"/>
             </StackPanel>
         </Grid>
     </Border>
 </Window>
+
+

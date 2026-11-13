@@ -27,21 +27,20 @@ namespace CosmoWhisper.Controllers
         private void InitializeVoices()
         {
             if (Window.ComboVoice == null) return;
-            Window.ComboVoice.Items.Clear();
 
-            // 1. Add Neural Voices (OpenAI)
-            string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer" };
-            foreach (var nv in neuralVoices)
+            // Save currently selected tag if any
+            string? currentTag = null;
+            if (Window.ComboVoice.SelectedItem is ComboBoxItem selected)
             {
-                Window.ComboVoice.Items.Add(new ComboBoxItem 
-                { 
-                    Content = $"🌐 {nv} (Neural AI)", 
-                    Tag = nv,
-                    FontWeight = FontWeights.Bold
-                });
+                currentTag = selected.Tag?.ToString();
             }
 
+            Window.ComboVoice.Items.Clear();
+
+            // 1. Add System Voices (Local) - Filtered to George and Hazel
+            string[] allowedBasics = { "George", "Hazel" };
             var voices = SpeechSynthesizer.AllVoices
+                .Where(v => allowedBasics.Any(name => v.DisplayName.Contains(name)))
                 .OrderBy(v => v.DisplayName.Contains("George") ? 0 : 1)
                 .ThenBy(v => v.DisplayName);
 
@@ -50,24 +49,21 @@ namespace CosmoWhisper.Controllers
                 Window.ComboVoice.Items.Add(new ComboBoxItem 
                 { 
                     Content = v.DisplayName.Contains("George") ? $"👑 {v.DisplayName} (Default)" : $"✨ {v.DisplayName}", 
-                    Tag = v.Id // Use unique ID for technical precision
+                    Tag = v.Id
                 });
             }
 
             var p = PreferenceManager.Shared.Preferences;
+            string targetVoice = !string.IsNullOrEmpty(currentTag) ? currentTag : p.SelectedVoice;
             bool selectionMade = false;
             
-            // Try to restore user preference
-            if (!string.IsNullOrEmpty(p.SelectedVoice))
+            // Try to match the target preference
+            if (!string.IsNullOrEmpty(targetVoice))
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
                 {
-                    if (item.Tag?.ToString() == p.SelectedVoice)
+                    if (item.Tag?.ToString() == targetVoice)
                     {
-                        // If it's a neural voice but we have no key, don't auto-select it
-                        bool isNeural = !item.Content.ToString().Contains("✨") && !item.Content.ToString().Contains("👑");
-                        if (isNeural && string.IsNullOrWhiteSpace(p.OpenAIApiKey)) continue;
-
                         Window.ComboVoice.SelectedItem = item;
                         selectionMade = true;
                         break;
@@ -75,7 +71,7 @@ namespace CosmoWhisper.Controllers
                 }
             }
             
-            // If No Preference OR Neural Voice failed (no key), Force Fallback to George
+            // Fallback: Default to George
             if (!selectionMade)
             {
                 foreach (ComboBoxItem item in Window.ComboVoice.Items)
@@ -84,14 +80,12 @@ namespace CosmoWhisper.Controllers
                     if (content.Contains("George") || content.Contains("👑"))
                     {
                         Window.ComboVoice.SelectedItem = item;
-                        p.SelectedVoice = item.Tag?.ToString() ?? ""; // Sync preference
                         selectionMade = true;
                         break;
                     }
                 }
             }
 
-            // Absolute fallback to first item
             if (!selectionMade && Window.ComboVoice.Items.Count > 0) 
                 Window.ComboVoice.SelectedIndex = 0;
         }
@@ -141,7 +135,7 @@ namespace CosmoWhisper.Controllers
 
         public void OutputDeviceChanged()
         {
-            if (Window.ComboOutput.SelectedItem is ComboBoxItem item && item.Tag is int index)
+            if (Window.ComboOutput?.SelectedItem is ComboBoxItem item && item.Tag is int index)
             {
                 var p = PreferenceManager.Shared.Preferences;
                 p.OutputDeviceIndex = index;
@@ -150,140 +144,108 @@ namespace CosmoWhisper.Controllers
             }
         }
 
-
-
         public async Task PlaySample()
         {
             if (Window.BtnPlaySample == null) return;
             string originalContent = "▷ Play Sample";
+            string audioFile = "";
 
             try
             {
-                string text = !string.IsNullOrWhiteSpace(Window.TxtPlayground.Text)
+                string text = !string.IsNullOrWhiteSpace(Window.TxtPlayground?.Text)
                     ? Window.TxtPlayground.Text
                     : "Hello, I am CosmoWhisper, your advanced AI assistant.";
 
-                string voice = "alloy";
-                bool isLocal = false;
+                string voice = "George";
 
-                if (Window.ComboVoice.SelectedItem is ComboBoxItem item)
+                if (Window.ComboVoice?.SelectedItem is ComboBoxItem item)
                 {
-                    voice = (item.Tag?.ToString() ?? "alloy").Trim();
+                    voice = (item.Tag?.ToString() ?? "George").Trim();
                     string content = item.Content?.ToString() ?? "";
-                    isLocal = content.Contains("✨") || content.Contains("👑");
-                    DiagnosticManager.Shared.Log($"PlaySample UI Selection: '{content}' (Tag='{voice}'), isLocal={isLocal}", "VOICE");
-                }
-
-                // Reference preferences directly to ensure we have the latest Saved key
-                var p = PreferenceManager.Shared.Preferences;
-                string apiKey = p.OpenAIApiKey?.Trim() ?? "";
-
-                if (!isLocal && string.IsNullOrWhiteSpace(apiKey))
-                {
-                    _ = CosmoMessage.Show("OpenAI Key Required", "Neural voices (like Alloy or Nova) require an OpenAI API Key.\n\nPlease enter your key and click the 💾 Save button first.", "\uD83D\uDD11");
-                    return;
+                    DiagnosticManager.Shared.Log($"PlaySample UI Selection: '{content}' (Tag='{voice}')", "VOICE");
                 }
 
                 Window.BtnPlaySample.Content = "Generating...";
                 Window.BtnPlaySample.IsEnabled = false;
 
-                string audioFile = "";
-
-                if (isLocal)
+                using (var synth = new SpeechSynthesizer())
                 {
-                    using (var synth = new SpeechSynthesizer())
+                    var voices = SpeechSynthesizer.AllVoices;
+                    // Prioritize ID match, then DisplayName, then partial name
+                    var selectedVoice = voices.FirstOrDefault(v => v.Id == voice) 
+                                     ?? voices.FirstOrDefault(v => v.DisplayName == voice)
+                                     ?? voices.FirstOrDefault(v => v.DisplayName.Contains(voice, StringComparison.OrdinalIgnoreCase));
+                                     
+                    if (selectedVoice != null) 
                     {
-                        var voices = SpeechSynthesizer.AllVoices;
-                        // Prioritize ID match, then DisplayName, then partial name
-                        var selectedVoice = voices.FirstOrDefault(v => v.Id == voice) 
-                                         ?? voices.FirstOrDefault(v => v.DisplayName == voice)
-                                         ?? voices.FirstOrDefault(v => v.DisplayName.Contains(voice, StringComparison.OrdinalIgnoreCase));
-                                         
-                        if (selectedVoice != null) 
-                        {
-                            synth.Voice = selectedVoice;
-                            DiagnosticManager.Shared.Log($"Voice Success: Loaded {selectedVoice.DisplayName}", "VOICE");
-                        }
-                        else
-                        {
-                            DiagnosticManager.Shared.Log($"Voice Warning: Could not find '{voice}', using system default", "WARN");
-                        }
+                        synth.Voice = selectedVoice;
+                        DiagnosticManager.Shared.Log($"Voice Success: Loaded {selectedVoice.DisplayName}", "VOICE");
+                    }
+                    else
+                    {
+                        DiagnosticManager.Shared.Log($"Voice Warning: Could not find '{voice}', using system default", "WARN");
+                    }
 
-                        try
-                        {
-                            synth.Options.SpeakingRate = 1.0;
-                            synth.Options.AudioVolume = 1.0; // Max volume
+                    try
+                    {
+                        synth.Options.SpeakingRate = 1.0;
+                        synth.Options.AudioVolume = 1.0; // Max volume
 
-                            DiagnosticManager.Shared.Log($"Plain Text Synthesis (Default Settings)", "VOICE");
-                            var stream = await synth.SynthesizeTextToStreamAsync(text);
-                            audioFile = await SaveStreamToTempFile(stream);
-                        }
-                        catch (Exception innerEx)
+                        DiagnosticManager.Shared.Log($"Plain Text Synthesis (Default Settings)", "VOICE");
+                        using var stream = await synth.SynthesizeTextToStreamAsync(text);
+                        audioFile = await SaveStreamToTempFile(stream);
+                    }
+                    catch (Exception innerEx)
+                    {
+                        DiagnosticManager.Shared.Log($"Safe Fallback: Options failed, trying bare synthesis: {innerEx.Message}", "WARN");
+                        
+                        // RESET everything for the bare attempt
+                        using (var safeSynth = new SpeechSynthesizer())
                         {
-                            DiagnosticManager.Shared.Log($"Safe Fallback: Options failed, trying bare synthesis: {innerEx.Message}", "WARN");
-                            
-                            // RESET everything for the bare attempt
-                            using (var safeSynth = new SpeechSynthesizer())
-                            {
-                                if (selectedVoice != null) safeSynth.Voice = selectedVoice;
-                                var safeStream = await safeSynth.SynthesizeTextToStreamAsync(text);
-                                audioFile = await SaveStreamToTempFile(safeStream);
-                            }
+                            if (selectedVoice != null) safeSynth.Voice = selectedVoice;
+                            using var safeStream = await safeSynth.SynthesizeTextToStreamAsync(text);
+                            audioFile = await SaveStreamToTempFile(safeStream);
                         }
                     }
-                }
-                else
-                {
-                    // Always use 1.0 speed for AI voices
-                    audioFile = await AIService.Shared.GenerateSpeech(text, voice, 1.0, apiKey);
                 }
 
                 if (audioFile.StartsWith("Error:"))
                 {
-                    Window.BtnPlaySample.Content = "❌ Failed";
-                    
-                    if (audioFile.Contains("insufficient_quota"))
-                    {
-                        _ = CosmoMessage.Show("Credits Required", 
-                            "It looks like your OpenAI account has run out of credits.\n\nTo use neural high-fidelity voices, please add a small balance (e.g. $5) to your OpenAI Billing Dashboard.", 
-                            "\uD83D\uDCA2");
-                    }
-                    else if (audioFile.Contains("invalid_api_key"))
-                    {
-                        _ = CosmoMessage.Show("Invalid API Key", 
-                            "The OpenAI API key you entered is not being recognized.\n\nPlease double-check the key in Voice Studio and click Save again.", 
-                            "\u26A0\uFE0F");
-                    }
-                    else
-                    {
-                        _ = CosmoMessage.Show("Speech Error", audioFile, "🔊");
-                    }
+                    Window.BtnPlaySample.Content = "Failed";
+                    _ = CosmoMessage.Show("Speech Error", audioFile, "\uE767");
                     await Task.Delay(2000);
                 }
                 else
                 {
-                    Window.BtnPlaySample.Content = "🔊 Playing...";
+                    Window.BtnPlaySample.Content = "Playing...";
                     await AudioRecorder.Shared.PlayAudio(audioFile);
-                    await Task.Delay(4000); // Increased wait for playback
                 }
             }
             catch (Exception ex)
             {
                 var state = new Dictionary<string, object>
                 {
-                    { "Voice", Window.ComboVoice.SelectedItem?.ToString() ?? "null" },
-                    { "Text", Window.TxtPlayground.Text },
+                    { "Voice", Window.ComboVoice?.SelectedItem?.ToString() ?? "null" },
+                    { "Text", Window.TxtPlayground?.Text ?? "" },
                     { "Pitch", PreferenceManager.Shared.Preferences.VoicePitch },
                     { "Speed", PreferenceManager.Shared.Preferences.VoiceSpeed },
                     { "Volume", PreferenceManager.Shared.Preferences.VoiceVolume }
                 };
                 DiagnosticManager.Shared.TakeSnapshot(ex.Message, state);
                 
-                _ = CosmoMessage.Show("Narration Error", ex.Message, "❌");
+                _ = CosmoMessage.Show("Narration Error", ex.Message, "\uE783");
                 System.Diagnostics.Debug.WriteLine($"Narration Error: {ex.Message}");
             }
             finally
             {
+                try
+                {
+                    if (!string.IsNullOrEmpty(audioFile) && !audioFile.StartsWith("Error:") && File.Exists(audioFile))
+                    {
+                        File.Delete(audioFile);
+                    }
+                }
+                catch { }
                 Window.BtnPlaySample.Content = originalContent;
                 Window.BtnPlaySample.IsEnabled = true;
             }
@@ -303,3 +265,5 @@ namespace CosmoWhisper.Controllers
         }
     }
 }
+
+

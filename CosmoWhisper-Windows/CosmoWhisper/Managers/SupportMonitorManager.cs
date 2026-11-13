@@ -44,12 +44,13 @@ namespace CosmoWhisper.Managers
                     if (activity != null)
                     {
                         // New Ticket Detection
-                        if (_lastTicketId != null && activity.LatestTicketId != _lastTicketId)
+                        if (_lastTicketId != null && !string.IsNullOrEmpty(activity.LatestTicketId) && activity.LatestTicketId != _lastTicketId)
                         {
-                            // Gravity Claw Notification
+                            string message = activity.LatestTicketMessage ?? string.Empty;
+                            string preview = message.Substring(0, Math.Min(60, message.Length));
                             TrayManager.Shared?.ShowBalloon(
                                 "🆕 New Support Ticket", 
-                                $"Message: {activity.LatestTicketMessage.Substring(0, Math.Min(60, activity.LatestTicketMessage.Length))}...", 
+                                $"Message: {preview}...", 
                                 ToolTipIcon.Info
                             );
                         }
@@ -58,13 +59,23 @@ namespace CosmoWhisper.Managers
                         _lastTicketId = activity.LatestTicketId;
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Support Monitor Loop Error: {ex.Message}");
                 }
 
-                // Poll every 60 seconds (conservative to not spam Netlify)
-                await Task.Delay(60000, token);
+                try
+                {
+                    await Task.Delay(60000, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 

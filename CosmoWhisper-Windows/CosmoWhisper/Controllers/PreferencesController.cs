@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input;
 using Button = System.Windows.Controls.Button;
+using ToggleButton = System.Windows.Controls.Primitives.ToggleButton;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
@@ -23,6 +24,7 @@ using ComboBoxItem = System.Windows.Controls.ComboBoxItem;
 using TextBox = System.Windows.Controls.TextBox;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Colors = System.Windows.Media.Colors;
 
@@ -43,16 +45,32 @@ namespace CosmoWhisper.Controllers
             var p = PreferenceManager.Shared.Preferences;
 
             if (Window.ToggleClipboard != null) UpdateToggle(Window.ToggleClipboard, p.RestoreClipboard);
+            if (Window.TogglePasteMode != null) UpdateToggle(Window.TogglePasteMode, p.UsePasteMode);
             if (Window.ToggleAutoSubmit != null) UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
             if (Window.ToggleAutoCopy != null) UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
+            if (Window.ToggleSpeechPolish != null) UpdateToggle(Window.ToggleSpeechPolish, p.EnableSpeechPolish);
             if (Window.TxtBackupPath != null) Window.TxtBackupPath.Text = p.BackupDirectory;
             if (Window.TxtHotkey != null) UpdateActivationUI();
 
-            // Intelligence View Manus Agent (grouped here for simple preference sync)
-            if (Window.ToggleManusAgent != null) UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
-            if (Window.ToggleManusNarration != null) UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
+            if (Window.ToggleLocalWhisper != null) UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
+            if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
+            if (Window.ToggleForceDirectApi != null) UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
+            if (Window.ToggleAlwaysOnTop != null) UpdateToggle(Window.ToggleAlwaysOnTop, p.AlwaysOnTop);
+            UpdateLocalOnlyUI();
 
-            UpdateInsertionUI();
+            if (Window.ComboLocalVoiceEngine != null)
+            {
+                foreach (System.Windows.Controls.ComboBoxItem item in Window.ComboLocalVoiceEngine.Items)
+                {
+                    if (item.Tag?.ToString() == p.LocalVoiceEngine)
+                    {
+                        Window.ComboLocalVoiceEngine.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+
+
 
             // Widget Opacity
             if (Window.SldWidgetOpacity != null)
@@ -107,113 +125,76 @@ namespace CosmoWhisper.Controllers
                 }
             }
 
-            if (Window.TxtApiKey != null)
-            {
-                Window.TxtApiKey.Password = p.OpenAIApiKey;
-            }
-
-            if (Window.TxtOpenAIApiKey_Int != null)
-            {
-                Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-            }
-
-            if (Window.TxtGroqApiKey != null)
-            {
-                Window.TxtGroqApiKey.Password = p.GroqApiKey;
-                Window.TxtGroqApiKey.PasswordChanged += (s, e) =>
-                {
-                    if (p.IsAIUnlocked)
-                    {
-                        p.GroqApiKey = Window.TxtGroqApiKey.Password;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
-            }
-
-
-            if (Window.TxtAnthropicApiKey != null)
-            {
-                Window.TxtAnthropicApiKey.Password = p.AnthropicApiKey;
-                Window.TxtAnthropicApiKey.PasswordChanged += (s, e) =>
-                {
-                    if (p.IsAIUnlocked)
-                    {
-                        p.AnthropicApiKey = Window.TxtAnthropicApiKey.Password;
-                        PreferenceManager.Shared.Save();
-                    }
-                };
-            }
         }
 
-        public async void SaveApiKey()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            
-            // Determine which field contains the "current" edit
-            string newKey = Window.TxtApiKey?.Password ?? "";
-            
-            // If the user is in the Intelligence tab, that field is the source of truth for the save click
-            if (Window.IntelligenceView != null && Window.IntelligenceView.Visibility == Visibility.Visible)
-            {
-                if (Window.TxtOpenAIApiKey_Int != null && !string.IsNullOrEmpty(Window.TxtOpenAIApiKey_Int.Password))
-                {
-                    newKey = Window.TxtOpenAIApiKey_Int.Password;
-                }
-            }
 
-            p.OpenAIApiKey = newKey.Trim();
-            
-            // Force Sync both UI fields to the final trimmed value
-            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = p.OpenAIApiKey;
-            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = p.OpenAIApiKey;
-            
-            PreferenceManager.Shared.Save();
-
-            // Success feedback
-            await Window.ShowDialogAsync("API Key Secured", 
-                "Your OpenAI API Key has been successfully saved and synced across all modules.\n\nNeural High-Fidelity voices are now active.", 
-                "\u2728");
-        }
-
-        public async void DeleteApiKey()
-        {
-            bool confirm = await Window.ShowDialogAsync("Delete API Key?", 
-                "Are you sure you want to remove your API key? This will disable neural high-fidelity voices.", 
-                "\u26A0\uFE0F", true);
-
-            if (!confirm) return;
-
-            var p = PreferenceManager.Shared.Preferences;
-            p.OpenAIApiKey = "";
-            if (Window.TxtApiKey != null) Window.TxtApiKey.Password = "";
-            if (Window.TxtOpenAIApiKey_Int != null) Window.TxtOpenAIApiKey_Int.Password = "";
-            PreferenceManager.Shared.Save();
-            
-            Window.ShowToast("OpenAI Key Deleted", "\uD83D\uDDD1");
-        }
-
-        public void OpenOpenAIKeyLink()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "https://platform.openai.com/api-keys",
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                Window.ShowToast("Could not open link", "\u26A0");
-            }
-        }
-
-        public void UpdateToggle(Border toggle, bool isOn)
+        public void UpdateToggle(ToggleButton? toggle, bool isOn)
         {
             if (toggle == null) return;
-            toggle.Background = isOn
-                ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"))
-                : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#30FFFFFF"));
+            toggle.IsChecked = isOn;
+        }
+
+        public void UpdateToggle(Border? toggle, bool isOn)
+        {
+            if (toggle == null) return;
+
+            var successBrush = Application.Current.TryFindResource("ThemeSuccessBrush") as Brush ?? Brushes.MediumSeaGreen;
+            var accentBrush = Application.Current.TryFindResource("ThemeAccentBrush") as Brush ?? Brushes.DodgerBlue;
+            var subtleBrush = Application.Current.TryFindResource("ThemeSubtleSurfaceBrush") as Brush ?? Brushes.DimGray;
+            var hoverBorderBrush = Application.Current.TryFindResource("ThemeCardBorderHoverBrush") as Brush ?? Brushes.Gray;
+
+            if (toggle.Name == "ToggleLocalWhisperControl")
+            {
+                var stateBrush = isOn ? successBrush : accentBrush;
+                toggle.Background = stateBrush;
+                toggle.BorderBrush = stateBrush;
+                if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = isOn ? "\uE7F4" : "\uE753";
+                if (Window.LocalWhisperGlow != null)
+                {
+                    Window.LocalWhisperGlow.Opacity = 0.35;
+                    Window.LocalWhisperGlow.Fill = stateBrush;
+                }
+
+                if (Window.TxtLocalWhisperStatus != null)
+                {
+                    string engineName = LocalModelManager.Shared.ActiveEngineName;
+                    Window.TxtLocalWhisperStatus.Text = isOn ? engineName : "Connected to Cloud";
+                }
+                return;
+            }
+
+            if (toggle.Name == "ToggleAutoSubmitControl")
+            {
+                if (isOn)
+                {
+                    toggle.Background = successBrush;
+                    toggle.BorderBrush = successBrush;
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "\uE751";
+                    if (Window.AutoSubmitGlow != null)
+                    {
+                        Window.AutoSubmitGlow.Opacity = 0.35;
+                        Window.AutoSubmitGlow.Fill = successBrush;
+                    }
+                }
+                else
+                {
+                    toggle.Background = subtleBrush;
+                    toggle.BorderBrush = hoverBorderBrush;
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "\uE711";
+                    if (Window.AutoSubmitGlow != null)
+                    {
+                        Window.AutoSubmitGlow.Opacity = 0.05;
+                    }
+                }
+
+                if (Window.TxtAutoSubmitStatus != null)
+                {
+                    Window.TxtAutoSubmitStatus.Text = isOn ? "Press Enter" : "No Enter";
+                }
+                return;
+            }
+
+            toggle.Background = isOn ? accentBrush : subtleBrush;
 
             if (toggle.Child is System.Windows.Shapes.Ellipse ellipse)
             {
@@ -228,6 +209,15 @@ namespace CosmoWhisper.Controllers
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleClipboard, p.RestoreClipboard);
         }
+        
+        public void TogglePasteMode()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.UsePasteMode = !p.UsePasteMode;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.TogglePasteMode, p.UsePasteMode);
+            Window.ShowToast(p.UsePasteMode ? "Instant Paste Enabled" : "Natural Typing Enabled", "\uE77F");
+        }
 
         public void ToggleAutoSubmit()
         {
@@ -235,7 +225,7 @@ namespace CosmoWhisper.Controllers
             p.AutoSubmit = !p.AutoSubmit;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
-            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "\u26A1");
+            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "\uE751");
         }
 
         public void ToggleAutoCopy()
@@ -244,29 +234,10 @@ namespace CosmoWhisper.Controllers
             p.AutoCopy = !p.AutoCopy;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
-            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uD83D\uDCCB");
+            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uE8C8");
         }
 
-        public void SetInsertionMode(InsertionMethod method)
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.InsertionMode = method;
-            PreferenceManager.Shared.Save();
-            UpdateInsertionUI();
-        }
 
-        public void UpdateInsertionUI()
-        {
-            if (Window.BtnFastPaste == null || Window.BtnDirectType == null) return;
-            var p = PreferenceManager.Shared.Preferences;
-            bool isFast = p.InsertionMode == InsertionMethod.FastPaste;
-
-            Window.BtnFastPaste.Opacity = isFast ? 1.0 : 0.6;
-            Window.BtnFastPaste.BorderBrush = isFast ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF")) : Brushes.Transparent;
-
-            Window.BtnDirectType.Opacity = !isFast ? 1.0 : 0.6;
-            Window.BtnDirectType.BorderBrush = !isFast ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF")) : Brushes.Transparent;
-        }
 
 
         public void UpdateWidgetOpacity(double value)
@@ -292,32 +263,38 @@ namespace CosmoWhisper.Controllers
 
             try
             {
-                var (password, name) = await Window.GetVaultPasswordAsync();
-                if (string.IsNullOrEmpty(password)) return;
+                // Prompt for Name AND Password
+                var result = await Window.GetVaultPasswordAsync(false);
+                string? name = result.name;
+                string? password = result.password;
 
-                btn.Content = "??? Securing Vault...";
+                if (string.IsNullOrWhiteSpace(name)) return; // User cancelled
+
+                btn.Content = "Backing Up...";
                 btn.IsEnabled = false;
 
                 var p = PreferenceManager.Shared.Preferences;
                 string destDir = p.BackupDirectory;
                 Directory.CreateDirectory(destDir);
 
-                string vaultPath = await VaultManager.Shared.CreateVaultAsync(name, password, destDir);
+                // Pass password to manager
+                string backupPath = await VaultManager.Shared.CreateBackupAsync(name, password ?? "", destDir);
                 
-                await System.Threading.Tasks.Task.Delay(1000);
+                await System.Threading.Tasks.Task.Delay(500);
 
-                btn.Content = "? Vault Secured";
-                long size = new FileInfo(vaultPath).Length;
+                btn.Content = "✓ Secured";
+                long size = new FileInfo(backupPath).Length;
                 string sizeDisplay = size < 1024 * 1024 ? $"{(size / 1024.0):F1} KB" : $"{(size / (1024.0 * 1024.0)):F2} MB";
+                string type = string.IsNullOrEmpty(password) ? "Unencrypted ZIP" : "Encrypted Vault";
 
-                await Window.ShowDialogAsync("Vault Created", 
-                    $"Universal Encryption Successful!\n\nVault: {Path.GetFileName(vaultPath)}\nSize: {sizeDisplay}\n\nYour environment is now secured with 256-bit AES.", 
-                    "\uD83D\uDEE1");
+                await Window.ShowDialogAsync("Backup Complete", 
+                    $"Configuration successfully saved!\n\nFile: {Path.GetFileName(backupPath)}\nType: {type}\nSize: {sizeDisplay}", 
+                    "\uE73E");
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "\u274C");
-                btn.Content = "\u274C Failed";
+                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "\uE783");
+                btn.Content = "Failed";
             }
             finally
             {
@@ -329,7 +306,12 @@ namespace CosmoWhisper.Controllers
 
         public async void RestoreBackup()
         {
-            // Force reset to prevent lockouts, relying on modal UI to prevent re-entry
+            if (_isRestoreInProgress) 
+            {
+                Window.ShowToast("Restore already in progress...", "\uE823");
+                return;
+            }
+
             _isRestoreInProgress = true; 
 
             try
@@ -339,92 +321,134 @@ namespace CosmoWhisper.Controllers
 
                 if (!Directory.Exists(destDir))
                 {
-                    await Window.ShowDialogAsync("No Backups", "No backup directory found.", "\uD83D\uDCC2");
+                    await Window.ShowDialogAsync("Backup Folder Missing", $"Directory not found: {destDir}\n\nPlease check your backup path in Settings.", "\uE8B7");
                     return;
                 }
 
-                var vaults = VaultManager.Shared.GetAvailableVaults(destDir);
-                if (vaults.Count == 0)
+                Window.ShowToast("Scanning Backups...", "\uE721");
+                var backups = VaultManager.Shared.GetAvailableBackups(destDir);
+                if (backups.Count == 0 || backups == null)
                 {
-                    await Window.ShowDialogAsync("Vault Not Found", "No encrypted vaults (.vault) found.", "\uD83D\uDD0D");
+                    await Window.ShowDialogAsync("Backup Not Found", "No backup files found in the backup directory.", "\uE721");
                     return;
                 }
 
-                string? selectedVaultName = await Window.ShowListDialogAsync("Select Vault", "Choose a restore point:", vaults, "\uD83D\uDEE1");
-                if (string.IsNullOrEmpty(selectedVaultName)) return;
-
-                string selectedVaultPath = Path.Combine(destDir, selectedVaultName);
-
-                var (password, _) = await Window.GetVaultPasswordAsync(true);
-                if (string.IsNullOrEmpty(password)) return;
-
-                // 1. Verify Password First
-                var (isValid, verifyMsg) = await VaultManager.Shared.VerifyVault(selectedVaultPath, password);
-                if (!isValid)
+                string? selectedBackup = await Window.ShowListDialogAsync("Restore Backup", "Select a restore point to apply:", backups, "\uE81C");
+                if (string.IsNullOrEmpty(selectedBackup)) 
                 {
-                    await Window.ShowDialogAsync("Verification Failed", verifyMsg, "\u274C");
                     return;
                 }
 
-                // 2. Warn User about Restart
-                bool confirm = await Window.ShowDialogAsync("Restart Required", 
-                    "To ensure a safe restore, CosmoWhisper must restart.\n\nThe app will close, apply settings, and reopen automatically.", 
-                    "\u26A0\uFE0F", true); // Warning Icon
+                string selectedPath = Path.Combine(destDir, selectedBackup);
                 
-                if (!confirm) return;
+                string password = "";
+                // Check extension
+                if (Path.GetExtension(selectedPath).ToLower() == ".vault")
+                {
+                     // Ask for password
+                     var result = await Window.GetVaultPasswordAsync(true);
+                     if (result.password == null) return; // Cancelled
+                     password = result.password;
+                }
 
-                // 3. Extract to Staging
-                string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedVaultPath, password);
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                // 1. Confirm Restore
+                bool confirm = await Window.ShowDialogAsync("Confirm Restore?", 
+                    "Restoring a backup requires an application restart.\n\nCosmoWhisper will close, apply your settings, and launch automatically.\n\nContinue?", 
+                    "\uE7BA", true);
+                
+                if (!confirm) 
+                {
+                    return;
+                }
 
-                // 4. Create & Run PowerShell Helper Script
-                string scriptPath = Path.Combine(Path.GetTempPath(), "cosmo_restore_restart.ps1");
-                string logPath = Path.Combine(Path.GetTempPath(), "CosmoRestoreLog.txt");
+                // 2. Extract to Staging
+                Window.ShowToast("Decrypting & Verifying...", "\uE785");
+                string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedPath, password);
+                
+                if (string.IsNullOrEmpty(stagingPath) || !Directory.Exists(stagingPath))
+                {
+                    throw new Exception("Failed to prepare staging environment.");
+                }
+
+                string appDataPath = PreferenceManager.Shared.AppDataFolder;
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath ?? "";
+                string sessionGuid = Guid.NewGuid().ToString("N").Substring(0, 8);
+
+                // 3. Create & Run PowerShell Helper Script
+                string scriptPath = Path.Combine(Path.GetTempPath(), $"cosmo_restore_{sessionGuid}.ps1");
+                string logPath = Path.Combine(Path.GetTempPath(), $"CosmoRestore_{sessionGuid}.log");
                 
                 string scriptContent = $@"
-try {{
-    ""[$(Get-Date)] Starting Restore Process..."" | Out-File '{logPath}'
-    ""[$(Get-Date)] Staging: {stagingPath}"" | Out-File '{logPath}' -Append
-    ""[$(Get-Date)] AppData: {appDataPath}"" | Out-File '{logPath}' -Append
+Add-Type -AssemblyName PresentationFramework
+$ErrorActionPreference = 'Stop'
+$log = '{logPath.Replace("\\", "\\\\")}'
 
+function Log-Msg($msg) {{
+    ""[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"" | Out-File $log -Append
+}}
+
+try {{
+    Log-Msg ""Starting Restore Session {sessionGuid}""
+    Log-Msg ""Source: {stagingPath.Replace("\\", "\\\\")}""
+    Log-Msg ""Target: {appDataPath.Replace("\\", "\\\\")}""
+    Log-Msg ""ExePath: {exePath.Replace("\\", "\\\\")}""
+
+    # 1. Wait for process closure
     Start-Sleep -Seconds 2
+    $fullPath = '{exePath.Replace("\\", "\\\\")}'
+    $pname = [System.IO.Path]::GetFileNameWithoutExtension($fullPath)
     
-    if (Test-Path '{stagingPath}') {{
-        ""[$(Get-Date)] Copying files..."" | Out-File '{logPath}' -Append
-        Copy-Item -Path '{stagingPath}\*' -Destination '{appDataPath}' -Recurse -Force -ErrorAction Stop
-        ""[$(Get-Date)] Copy Complete."" | Out-File '{logPath}' -Append
-    }} else {{
-        ""[$(Get-Date)] ERROR: Staging path not found!"" | Out-File '{logPath}' -Append
+    $retry = 0
+    while ($retry -lt 15) {{
+        $proc = Get-Process $pname -ErrorAction SilentlyContinue
+        if (-not $proc) {{ break }}
+        Log-Msg ""Waiting for $pname to exit (Attempt $retry)...""
+        if ($retry -gt 5) {{ $proc | Stop-Process -Force -ErrorAction SilentlyContinue }}
+        Start-Sleep -Seconds 1
+        $retry++
     }}
 
-    ""[$(Get-Date)] Restarting App: {exePath}"" | Out-File '{logPath}' -Append
-    Start-Process '{exePath}'
+    # COOLDOWN
+    Start-Sleep -Seconds 2
+
+    # 2. Copy Files
+    if (Test-Path '{stagingPath.Replace("\\", "\\\\")}') {{
+        Log-Msg ""Applying files...""
+        Get-ChildItem -Path '{stagingPath.Replace("\\", "\\\\")}' -File | ForEach-Object {{
+            $dest = Join-Path '{appDataPath.Replace("\\", "\\\\")}' $_.Name
+            Copy-Item $_.FullName -Destination $dest -Force
+            Log-Msg ""Restored: $($_.Name)""
+        }}
+    }}
+
+    # 3. Cleanup
+    Remove-Item -Path '{stagingPath.Replace("\\", "\\\\")}' -Recurse -Force -ErrorAction SilentlyContinue
+    
+    # 4. Restart
+    Start-Process -FilePath $fullPath -WorkingDirectory ""$(Split-Path -Path $fullPath)""
+    Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 }} catch {{
-    ""[$(Get-Date)] FATAL ERROR: $_"" | Out-File '{logPath}' -Append
-    [System.Windows.Forms.MessageBox]::Show(""Restore Error: $_"", ""CosmoWhisper Restore"")
+    Log-Msg ""FAILURE: $($_.Exception.Message)""
+    [System.Windows.MessageBox]::Show(""Restore Failed: $($_.Exception.Message)"", ""CosmoWhisper"")
 }}
 ";
-                File.WriteAllText(scriptPath, scriptContent);
+                File.WriteAllText(scriptPath, scriptContent, System.Text.Encoding.UTF8);
 
-                // Run visible for now to debug, but non-blocking
                 var psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                    Arguments = $"-ExecutionPolicy Bypass -NoProfile -File \"{scriptPath}\"",
                     UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden, // Keep hidden but log
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
                 };
 
                 Process.Start(psi);
-
-                // 5. Shutdown App
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Restore Error", ex.Message, "\u274C");
+                await Window.ShowDialogAsync("Restore Failure", $"Error: {ex.Message}", "\u274C");
             }
             finally
             {
@@ -546,6 +570,15 @@ try {{
 
 
 
+        public void ToggleSpeechPolish()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.EnableSpeechPolish = !p.EnableSpeechPolish;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleSpeechPolish, p.EnableSpeechPolish);
+            Window.ShowToast(p.EnableSpeechPolish ? "AI Speech Polish Enabled" : "Standard Whisper Active (Legacy)", p.EnableSpeechPolish ? "\uE945" : "\uE713");
+        }
+
         public void ToggleRegionalSpelling()
         {
             var p = PreferenceManager.Shared.Preferences;
@@ -569,8 +602,11 @@ try {{
                     {
                         if (p.LaunchOnStartup)
                         {
-                            string exePath = Process.GetCurrentProcess().MainModule.FileName;
-                            key.SetValue("CosmoWhisper", $"\"{exePath}\"");
+                            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath ?? "";
+                            if (!string.IsNullOrWhiteSpace(exePath))
+                            {
+                                key.SetValue("CosmoWhisper", $"\"{exePath}\"");
+                            }
                         }
                         else
                         {
@@ -597,6 +633,8 @@ try {{
 
         public void SetDateFormat(string format)
         {
+            if (string.IsNullOrEmpty(format)) return;
+
             var p = PreferenceManager.Shared.Preferences;
             if (p.SelectedDateFormat != format)
             {
@@ -607,6 +645,8 @@ try {{
 
         public void SetTimeFormat(string format)
         {
+            if (string.IsNullOrEmpty(format)) return;
+
             var p = PreferenceManager.Shared.Preferences;
             if (p.SelectedTimeFormat != format)
             {
@@ -615,22 +655,108 @@ try {{
             }
         }
 
-        public void ToggleManusAgent()
+        public void ToggleLocalWhisper()
         {
             var p = PreferenceManager.Shared.Preferences;
-            p.EnableManusAgent = !p.EnableManusAgent;
+            p.UseLocalWhisper = !p.UseLocalWhisper;
+            
+            // Sync with LocalOnly to ensure AIService logic is triggered reliably
+            p.UseLocalWhisperOnly = p.UseLocalWhisper;
+            
             PreferenceManager.Shared.Save();
-            UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
+            UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
+            
+            string status = p.UseLocalWhisper ? "Offline Mode (Local) Enabled" : "Cloud Mode (Groq) Enabled";
+            string icon = p.UseLocalWhisper ? "\uE7F4" : "\uE753";
+            Window.ShowToast(status, icon);
         }
 
-        public void ToggleManusNarration()
+        public void ToggleForceCloudProxy()
         {
             var p = PreferenceManager.Shared.Preferences;
-            p.ManusNarrationEnabled = !p.ManusNarrationEnabled;
+            p.ForceCloudProxy = !p.ForceCloudProxy;
+            if (p.ForceCloudProxy)
+            {
+                p.ForceDirectApi = false;
+                if (Window.ToggleForceDirectApi != null) UpdateToggle(Window.ToggleForceDirectApi, false);
+            }
             PreferenceManager.Shared.Save();
-            UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
+            UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
+            Window.ShowToast(p.ForceCloudProxy ? "VPN Mode Enabled" : "VPN Mode Disabled", "\uEA18");
+        }
+
+        public void ToggleForceDirectApi()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.ForceDirectApi = !p.ForceDirectApi;
+            if (p.ForceDirectApi)
+            {
+                p.ForceCloudProxy = false;
+                if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, false);
+            }
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
+            Window.ShowToast(p.ForceDirectApi ? "Direct API Only Enabled" : "Direct API Only Disabled", "\uE945");
+        }
+
+        public void ToggleLocalOnly()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.UseLocalWhisperOnly = !p.UseLocalWhisperOnly;
+            PreferenceManager.Shared.Save();
+            UpdateLocalOnlyUI();
+            Window.ShowToast(p.UseLocalWhisperOnly ? "Survival Mode Enabled" : "Hybrid Mode Enabled", p.UseLocalWhisperOnly ? "\uEA18" : "\uE774");
+        }
+
+        public void UpdateLocalOnlyUI()
+        {
+            if (Window.ToggleLocalOnly == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            bool isOn = p.UseLocalWhisperOnly;
+
+            // Simple UpdateToggle helper
+            UpdateToggle(Window.ToggleLocalOnly, isOn);
+
+            // Update Text & Icons for premium feel
+            if (Window.LocalModeStatusTitle != null) 
+                Window.LocalModeStatusTitle.Text = isOn ? "Survival Mode: Local Only" : "Cloud-Optimized (Hybrid)";
+
+            if (Window.LocalModeStatusDesc != null)
+                Window.LocalModeStatusDesc.Text = isOn ? "Zero data leaves this machine. AI model running locally." : "Uses super-fast Groq API with local fallback.";
+
+            if (Window.LocalOverlayIcon != null)
+                Window.LocalOverlayIcon.Text = isOn ? "\uEA18" : "\uE774";
+        }
+
+        public void ToggleAlwaysOnTop()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.AlwaysOnTop = !p.AlwaysOnTop;
+            PreferenceManager.Shared.Save();
+            UpdateToggle(Window.ToggleAlwaysOnTop, p.AlwaysOnTop);
+            
+            Window.ApplyAlwaysOnTop();
+            Window.ShowToast(p.AlwaysOnTop ? "Always on Top Enabled" : "Always on Top Disabled", "\uE718");
+        }
+
+        public void LocalVoiceEngineChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox cb && cb.SelectedItem is System.Windows.Controls.ComboBoxItem item)
+            {
+                string tag = item.Tag?.ToString() ?? "ParakeetRedux";
+                var p = PreferenceManager.Shared.Preferences;
+                if (p.LocalVoiceEngine != tag)
+                {
+                    p.LocalVoiceEngine = tag;
+                    PreferenceManager.Shared.Save();
+                    string friendlyName = tag == "WhisperTiny" ? "Whisper Tiny (77MB Fallback)" : "Parakeet Redux (High Accuracy)";
+                    Window.ShowToast($"Local Engine: {friendlyName}", "\uE720");
+                }
+            }
         }
     }
 }
+
+
 
 

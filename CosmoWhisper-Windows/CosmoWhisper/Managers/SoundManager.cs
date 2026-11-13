@@ -7,31 +7,25 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.CoreAudioApi;
 
+using CosmoWhisper.Interfaces;
+
 namespace CosmoWhisper.Managers
+
 {
-    public class SoundManager
+    public class SoundManager : ISoundManager
+
     {
-        public static SoundManager Shared { get; } = new SoundManager();
+        public static SoundManager Shared => (SoundManager)ServiceLocator.GetService<ISoundManager>();
         private readonly object _playLock = new object();
 
-        private SoundManager()
+        public SoundManager()
         {
-            try
+            // Adjust session volume once after startup rather than polling in an infinite background loop (<1% idle CPU)
+            _ = Task.Run(async () =>
             {
-                // Ensure Cosmo keeps its volume at 100% across all devices
-                _ = Task.Run(async () =>
-                {
-                    // Wait for system to settle (prevent startup race conditions)
-                    await Task.Delay(10000);
-
-                    while (true)
-                    {
-                        try { ForceProcessVolumeMax(); } catch { }
-                        await Task.Delay(5000);
-                    }
-                });
-            }
-            catch { }
+                await Task.Delay(5000);
+                ForceProcessVolumeMax();
+            });
         }
 
         public void ForceProcessVolumeMax()
@@ -45,28 +39,31 @@ namespace CosmoWhisper.Managers
 
                     foreach (var device in devices)
                     {
-                        try
+                        using (device)
                         {
-                            var sessionManager = device.AudioSessionManager;
-                            if (sessionManager == null) continue;
-
-                            var sessions = sessionManager.Sessions;
-                            for (int i = 0; i < sessions.Count; i++)
+                            try
                             {
-                                using (var session = sessions[i])
+                                var sessionManager = device.AudioSessionManager;
+                                if (sessionManager == null) continue;
+
+                                var sessions = sessionManager.Sessions;
+                                for (int i = 0; i < sessions.Count; i++)
                                 {
-                                    if (session.GetProcessID == myPid || session.DisplayName.Contains("CosmoWhisper", StringComparison.OrdinalIgnoreCase))
+                                    using (var session = sessions[i])
                                     {
-                                        if (session.SimpleAudioVolume.Volume < 1.0f || session.SimpleAudioVolume.Mute)
+                                        if (session.GetProcessID == myPid || session.DisplayName.Contains("CosmoWhisper", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            session.SimpleAudioVolume.Volume = 1.0f;
-                                            session.SimpleAudioVolume.Mute = false;
+                                            if (session.SimpleAudioVolume.Volume < 1.0f || session.SimpleAudioVolume.Mute)
+                                            {
+                                                session.SimpleAudioVolume.Volume = 1.0f;
+                                                session.SimpleAudioVolume.Mute = false;
+                                            }
                                         }
                                     }
                                 }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                 }
             }
@@ -85,48 +82,41 @@ namespace CosmoWhisper.Managers
                     try
                     {
                         if (!PreferenceManager.Shared.Preferences.InteractionSoundsEnabled) return;
+                        ForceProcessVolumeMax();
 
-                        // 1. Try local bundled professional sounds (F9 on/off)
-                        string assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", isStart ? "chime_on.wav" : "chime_off.wav");
-                        string path = assetsPath;
+                        // Premium Asset Path
+                        string fileName = isStart ? "mic_start_new.wav" : "mic_stop_new.wav";
+                        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", fileName);
 
-                        // 2. Fallback to Windows official dictation sounds
-                        if (!File.Exists(path))
+                        if (!File.Exists(filePath))
                         {
-                            path = isStart ? @"C:\Windows\Media\Speech On.wav" : @"C:\Windows\Media\Speech Off.wav";
+                            // Legacy Fallback
+                            fileName = isStart ? "mic_start.wav" : "mic_stop.wav";
+                            filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", fileName);
                         }
 
-                        // 3. Fallback to generic notify sound
-                        if (!File.Exists(path)) path = @"C:\Windows\Media\Windows Notify.wav";
-
-                        if (!File.Exists(path))
+                        if (File.Exists(filePath))
                         {
-                            System.Media.SystemSounds.Exclamation.Play();
-                            return;
-                        }
-
-                        // Use WaveOutEvent with DeviceNumber = -1 (Dynamic Mapping)
-                        using (var reader = new AudioFileReader(path))
-                        using (var output = new WaveOutEvent())
-                        {
-                            output.DeviceNumber = -1;
-                            output.Init(reader);
-                            output.Play();
-
-                            // We play the full duration (usually ~1s) because these are 
-                            // professionally mastered melodic chirps that shouldn't be cut off.
-                            while (output.PlaybackState == PlaybackState.Playing)
+                            using (var audioFile = new AudioFileReader(filePath))
+                            using (var outputDevice = new WaveOutEvent())
                             {
-                                Thread.Sleep(20);
+                                outputDevice.Init(audioFile);
+                                outputDevice.Play();
+                                while (outputDevice.PlaybackState == PlaybackState.Playing)
+                                {
+                                    Thread.Sleep(10);
+                                }
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[SoundManager] Dictation Play Fail: {ex.Message}");
+                        Debug.WriteLine($"[SoundManager] Chime Playback Fail: {ex.Message}");
                     }
                 }
             });
         }
     }
 }
+
+
