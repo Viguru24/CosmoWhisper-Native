@@ -4,20 +4,25 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using CosmoWhisper.Interfaces;
+
 
 namespace CosmoWhisper.Managers
 {
-    public class VocabularyManager
+    public class VocabularyManager : IVocabularyManager
+
     {
-        public static VocabularyManager Shared { get; } = new VocabularyManager();
+        public static VocabularyManager Shared => (VocabularyManager)ServiceLocator.GetService<IVocabularyManager>();
+        private readonly IPreferenceManager _preferenceManager;
 
         public Dictionary<string, string> Replacements { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public string TranscriptionHints { get; set; } = "";
         private readonly string _filePath;
 
-        public VocabularyManager()
+        public VocabularyManager(IPreferenceManager preferenceManager)
         {
-            string folder = PreferenceManager.Shared.AppDataFolder;
+            _preferenceManager = preferenceManager;
+            string folder = _preferenceManager.AppDataFolder;
             Directory.CreateDirectory(folder);
             _filePath = Path.Combine(folder, "vocabulary.json");
             Load();
@@ -158,7 +163,7 @@ namespace CosmoWhisper.Managers
                 _appReplacements.Clear();
                 _appHints = "";
 
-                string folder = Path.Combine(PreferenceManager.Shared.AppDataFolder, "Contexts");
+                string folder = Path.Combine(_preferenceManager.AppDataFolder, "Contexts");
                 Directory.CreateDirectory(folder);
                 string path = Path.Combine(folder, $"{appName}.json");
 
@@ -187,12 +192,14 @@ namespace CosmoWhisper.Managers
             foreach (var kvp in _appReplacements) blendedReplacements[kvp.Key] = kvp.Value;
 
             // STEP 1: Apply smart email/domain corrections FIRST (if enabled)
-            if (PreferenceManager.Shared.Preferences.EnableSmartEmailCorrections)
+            if (_preferenceManager.Preferences.EnableSmartEmailCorrections)
             {
                 // 1. Smart "at" to "@" conversion (Only if it looks like an email)
                 processed = Regex.Replace(processed, @"(\S+)\s+at\s+([a-zA-Z0-9-]+\.[a-zA-Z]{2,})", "$1@$2", RegexOptions.IgnoreCase);
                 processed = Regex.Replace(processed, @"\s*@\s*", "@");
-                processed = Regex.Replace(processed, @"([a-zA-Z0-9@])\s*\.\s*([a-z0-9])", "$1.$2");
+                // Collapse spaces around dots only for known domain TLDs or email addresses (never normal sentence punctuation like "Hello. world")
+                processed = Regex.Replace(processed, @"([a-zA-Z0-9-]+)\s*\.\s*(com|org|net|io|ai|app|dev|edu|gov|co(?:\.uk)?)\b", "$1.$2", RegexOptions.IgnoreCase);
+                processed = Regex.Replace(processed, @"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+)\s*\.\s*([a-zA-Z]{2,})", m => $"{m.Groups[1].Value}.{m.Groups[2].Value}".ToLower(), RegexOptions.IgnoreCase);
                 processed = Regex.Replace(processed, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", m => m.Value.ToLower());
             }
 
@@ -207,7 +214,25 @@ namespace CosmoWhisper.Managers
                 processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
             }
 
-            // STEP 3: Handle Automatic Sign-Off (Signature)
+            // STEP 3: Apply Transcription Hints (Casing, Acronyms & Whole-Word Alignment)
+            string activeHints = GetActiveHints();
+            if (!string.IsNullOrWhiteSpace(activeHints))
+            {
+                var hintsList = activeHints.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(h => h.Trim())
+                                           .Where(h => !string.IsNullOrEmpty(h))
+                                           .OrderByDescending(h => h.Length);
+
+                foreach (var hint in hintsList)
+                {
+                    string pattern = (char.IsLetterOrDigit(hint[0]) ? @"\b" : "") +
+                                     Regex.Escape(hint) +
+                                     (char.IsLetterOrDigit(hint[hint.Length - 1]) ? @"\b" : "");
+                    processed = Regex.Replace(processed, pattern, hint, RegexOptions.IgnoreCase);
+                }
+            }
+
+            // STEP 4: Handle Automatic Sign-Off (Signature)
             var p = PreferenceManager.Shared.Preferences;
             if (p.EnableSignOff && !string.IsNullOrWhiteSpace(p.SignOffSignature))
             {

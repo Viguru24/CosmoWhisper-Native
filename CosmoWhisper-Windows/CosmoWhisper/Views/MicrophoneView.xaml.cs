@@ -15,7 +15,7 @@ namespace CosmoWhisper.Views
             this.SldSensitivity.ValueChanged += (s, e) => GetParentWindow()?.SldSensitivity_ValueChanged(s, e);
         }
 
-        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
+        private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
         private void ToggleInteractionSounds_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleInteractionSounds_Click(sender, e);
         private void BtnCalibrate_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnCalibrate_Click(sender, e);

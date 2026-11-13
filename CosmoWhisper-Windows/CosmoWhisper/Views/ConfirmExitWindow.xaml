@@ -36,8 +36,10 @@
             <!-- Title -->
             <TextBlock Text="CosmoWhisper" 
                        FontSize="22" FontWeight="Bold" 
-                       HorizontalAlignment="Center"
-                       Effect="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}">
+                       HorizontalAlignment="Center">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="#00C6FF" BlurRadius="10" Opacity="0.5" ShadowDepth="0"/>
+                </TextBlock.Effect>
                 <TextBlock.Foreground>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#00C6FF" Offset="0"/>

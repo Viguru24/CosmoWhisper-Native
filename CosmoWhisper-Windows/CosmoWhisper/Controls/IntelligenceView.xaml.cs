@@ -13,6 +13,11 @@ namespace CosmoWhisper.Controls
             this.ComboVerbosityControl.SelectionChanged += (s, e) => GetParentWindow()?.ComboVerbosity_SelectionChanged(s, e);
         }
 
-        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
+        private void BtnSaveApiKeys_Click(object sender, RoutedEventArgs e)
+        {
+            GetParentWindow()?.BtnSaveApiKeys_Click(sender, e);
+        }
+
+        private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
     }
 }

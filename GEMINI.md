@@ -1,37 +1,19 @@
-# CosmoWhisper-Native — Antigravity Rules
+# CosmoWhisper-Native — Antigravity 2.0 Rules
 
-## Master Workspaces (STRICT ADHERENCE REQUIRED)
-- **Native Windows App (MASTER)**: `c:\CosmoWhisper-Dev-Restore\CosmoWhisper-Windows`
-- **Project Documentation & Backups**: `c:\CosmoWhisper-Dev-Restore`
-- **Backend & Frontend (Web)**: `c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-App`
+## Master Workspaces
+- **Native Windows App (MASTER)**: `C:\Users\louis\Documents\GitHub\CosmoWhisper-Native\CosmoWhisper-Windows`
+- **Project Documentation & Backups**: `C:\Users\louis\Documents\GitHub\CosmoWhisper-Native`
+- **Backend & Frontend (Web)**: `C:\Users\louis\Documents\GitHub\CosmoWhisper-App`
 
 ## Project
-This is the CosmoWhisper Windows native application — the active development occurs in the `CosmoWhisper-Dev-Restore` workspace to maintain audio fidelity and premium UI state.
+This is the CosmoWhisper Windows native application — active development occurs in the `CosmoWhisper-Native` workspace.
 
-## Mandatory Workflow: Planning with Files (Manus-style)
-
-For every task that involves more than a single file edit, you MUST follow the planning-with-files skill located at `.gemini/skills/planning-with-files/SKILL.md`.
-
-### The non-negotiable rules:
-1. **Create `task_plan.md` BEFORE writing any code** — no exceptions
-2. **Create `findings.md` and `progress.md`** at the start of every session
-3. **Log every error** to the plan file — never retry silently
-4. **3-Strike protocol** — after 3 failures, stop and ask Louis
-5. **Talk before acting** — state your plan to Louis before executing it
-6. **Never run off and do things** — discuss first, implement after confirmation
-
-### The 3 planning files always live in the repo root:
-- `task_plan.md` — what we're doing and phase progress
-- `findings.md` — research, discoveries, technical decisions
-- `progress.md` — session log, test results, error log
-
-## Key People
-- **Louis** — the developer and owner of this project
-- **Antigravity** — the AI coding assistant (you)
+## Workflow & Execution
+1. **Local-First:** Always work locally (`localhost:5000` backend).
+2. **Native Artifact Planning:** For multi-component or architectural changes, formulate a plan using Antigravity Native Artifacts (`RequestFeedback: true`) or `/plan`. Do NOT dump temporary planning markdown files (`task_plan.md`, `findings.md`, `progress.md`) in the repository.
+3. **Circuit-Breaker:** After 3 consecutive failed test or build attempts, stop and consult Louis with the exact error diagnosis.
+4. **Clean Git Tree:** Keep the repository clean of scratch files and memory dumps.
 
 ## Backend
-- Node.js backend located at: `c:\Users\louis\OneDrive\Documents\GitHub\CosmoWhisper-App\backend`
+- Node.js backend located at: `C:\Users\louis\Documents\GitHub\CosmoWhisper-App\backend`
 - Runs locally on `http://localhost:5000`
-
-## Remember
-You are always working locally. Never deploy to production or push to GitHub unless Louis explicitly asks.

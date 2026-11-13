@@ -1,4 +1,5 @@
 using System;
+using CosmoWhisper.Interfaces;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,9 +12,9 @@ using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
-    public class CommandController
+    public class CommandController : ICommandController
     {
-        public static CommandController Shared { get; } = new CommandController();
+        public static CommandController Shared => (CommandController)ServiceLocator.GetService<ICommandController>();
         public event Action? CommandExecuted;
 
         private readonly Dictionary<string, string> _webShortcuts = new()
@@ -36,6 +37,8 @@ namespace CosmoWhisper.Managers
             {"outlook", "https://outlook.live.com"},
             {"twitch", "https://twitch.tv"},
             {"youtube", "https://youtube.com"},
+            {"microsoft", "https://microsoft.com"},
+            {"microsoft.com", "https://microsoft.com"},
             {"cosmowhisper", "https://cosmowhisper.com"},
             {"library", "https://cosmowhisper.com/features"},
             {"commands", "https://cosmowhisper.com/features"}
@@ -45,10 +48,17 @@ namespace CosmoWhisper.Managers
         {
             {"word", "winword"},
             {"microsoft word", "winword"},
+            {"textmaker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe"},
+            {"text maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe"},
             {"excel", "excel"},
             {"microsoft excel", "excel"},
+            {"planmaker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe"},
+            {"plan maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe"},
             {"powerpoint", "powerpnt"},
             {"microsoft powerpoint", "powerpnt"},
+            {"presentations", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
+            {"present maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
+            {"presentation maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
             {"outlook", "outlook"},
             {"microsoft outlook", "outlook"},
             {"chrome", "chrome"},
@@ -87,6 +97,7 @@ namespace CosmoWhisper.Managers
             if (await MacroManager.Shared.TryExecuteMacro(text)) return true;
 
             string cmd = Regex.Replace(text.ToLower(), @"[^\w\s\.]", "").Trim();
+            cmd = cmd.TrimStart('.', ' ', '\t');
             cmd = cmd.TrimEnd('.', '!', '?'); // Remove trailing punctuation
             cmd = cmd.Trim().ToLower();
             
@@ -123,7 +134,7 @@ namespace CosmoWhisper.Managers
                 
                 // 2. Flexible matching (ignore filler words like "okay", "please")
                 // Only apply for specific smart commands
-                var flexibleTriggers = new[] { "summarize", "summarise", "write summary", "right summary", "type summary", "paste summary", "translate", "fix grammar", "polish" };
+                var flexibleTriggers = new[] { "summarize", "summarise", "write summary", "right summary", "type summary", "paste summary", "translate", "polish" };
                 if (triggers.Any(t => flexibleTriggers.Contains(t)))
                 {
                     // Look for the trigger at the end of a command that might have junk at the start
@@ -142,8 +153,20 @@ namespace CosmoWhisper.Managers
             }
 
             // --- 1. CONFIG / MODES ---
-            if (IsTriggered("typing mode", "use typing mode")) { return true; } // Mocked setting
-            if (IsTriggered("paste mode", "use paste mode")) { return true; }
+            if (IsTriggered("typing mode", "use typing mode"))
+            {
+                PreferenceManager.Shared.Preferences.UsePasteMode = false;
+                PreferenceManager.Shared.Save();
+                CommandExecuted?.Invoke();
+                return true;
+            }
+            if (IsTriggered("paste mode", "use paste mode"))
+            {
+                PreferenceManager.Shared.Preferences.UsePasteMode = true;
+                PreferenceManager.Shared.Save();
+                CommandExecuted?.Invoke();
+                return true;
+            }
 
             if (IsTriggered("press enter on", "enable press enter", "turn on press enter"))
             {
@@ -167,16 +190,23 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("lowercase", "lower case", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
             if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case. Output ONLY the text.", usePersonality: false); return true; }
 
-            if (cmd == "select all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); return true; }
-            if (cmd == "undo" || cmd == "undo that") { InputController.Shared.ExecuteKeystroke("z", ctrl: true); return true; }
-            if (cmd == "redo" || cmd == "redo that") { InputController.Shared.ExecuteKeystroke("y", ctrl: true); return true; }
-            if (cmd == "paste" || cmd == "paste that") { InputController.Shared.ExecuteKeystroke("v", ctrl: true); return true; }
+            if (IsTriggered("select all", "select everything")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("undo", "undo that")) { InputController.Shared.ExecuteKeystroke("z", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("redo", "redo that")) { InputController.Shared.ExecuteKeystroke("y", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("paste", "paste that", "paste all", "past all", "past that")) 
+            { 
+                if (cmd.Contains("all")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
+                InputController.Shared.ExecuteKeystroke("v", ctrl: true); 
+                CommandExecuted?.Invoke();
+                return true; 
+            }
 
-            if (cmd == "delete all" || cmd == "clear all")
+            if (IsTriggered("delete all", "clear all", "delete everything", "clear everything"))
             {
                 InputController.Shared.ExecuteKeystroke("a", ctrl: true);
                 await Task.Delay(100);
                 InputController.Shared.ExecuteKeystroke("backspace");
+                CommandExecuted?.Invoke();
                 return true;
             }
 
@@ -186,12 +216,14 @@ namespace CosmoWhisper.Managers
                 InputController.Shared.ExecuteKeystroke("a", ctrl: true);
                 await Task.Delay(100);
                 InputController.Shared.ExecuteKeystroke("x", ctrl: true);
+                CommandExecuted?.Invoke();
                 return true;
             }
-            if (IsTriggered("copy that", "copy all"))
+            if (IsTriggered("copy that", "copy all", "copy everything"))
             {
-                if (cmd == "copy all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
+                if (cmd.Contains("all") || cmd.Contains("everything")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
                 InputController.Shared.ExecuteKeystroke("c", ctrl: true);
+                CommandExecuted?.Invoke();
                 return true;
             }
 
@@ -231,22 +263,53 @@ namespace CosmoWhisper.Managers
             // --- 5. WEB / SEARCH ---
             if (cmd.StartsWith("visit ") || cmd.StartsWith("go to "))
             {
-                string site = cmd.Replace("visit ", "").Replace("go to ", "").Trim();
+                string site = (cmd.StartsWith("visit ") ? cmd.Substring(6) : cmd.Substring(6)).Trim();
                 bool ok = OpenSite(site);
                 if (ok) CommandExecuted?.Invoke();
                 return ok;
             }
+            // Search Google
             if (cmd.StartsWith("search ") || cmd.StartsWith("google "))
             {
-                string query = cmd.Replace("search ", "").Replace("google ", "").Trim();
+                string query = (cmd.StartsWith("search ") ? cmd.Substring(7) : cmd.Substring(7)).Trim();
+                if (query.StartsWith("for ")) query = query.Substring(4).Trim();
+                if (query.StartsWith("youtube "))
+                {
+                    string ytQuery = query.Substring(8).Trim();
+                    Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(ytQuery)}") { UseShellExecute = true });
+                    CommandExecuted?.Invoke(); return true;
+                }
                 Process.Start(new ProcessStartInfo($"https://www.google.com/search?q={Uri.EscapeDataString(query)}") { UseShellExecute = true });
                 CommandExecuted?.Invoke(); return true;
             }
-            if (cmd.StartsWith("youtube "))
+
+            // Search / Open YouTube with search query (e.g. "open youtube kitty cats", "youtube american politics")
+            if (cmd.StartsWith("open youtube ") || cmd.StartsWith("open utube ") || cmd.StartsWith("open u tube ") ||
+                cmd.StartsWith("youtube ") || cmd.StartsWith("utube ") || cmd.StartsWith("u tube "))
             {
-                string query = cmd.Replace("youtube ", "").Trim();
-                Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(query)}") { UseShellExecute = true });
-                CommandExecuted?.Invoke(); return true;
+                string query = cmd;
+                if (cmd.StartsWith("open youtube ")) query = cmd.Substring(13);
+                else if (cmd.StartsWith("open utube ")) query = cmd.Substring(11);
+                else if (cmd.StartsWith("open u tube ")) query = cmd.Substring(12);
+                else if (cmd.StartsWith("youtube ")) query = cmd.Substring(8);
+                else if (cmd.StartsWith("utube ")) query = cmd.Substring(6);
+                else if (cmd.StartsWith("u tube ")) query = cmd.Substring(7);
+                
+                query = query.Trim();
+                if (query.StartsWith("for ")) query = query.Substring(4).Trim();
+
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(query)}") { UseShellExecute = true });
+                    CommandExecuted?.Invoke();
+                    return true;
+                }
+                else
+                {
+                    Process.Start(new ProcessStartInfo("https://youtube.com") { UseShellExecute = true });
+                    CommandExecuted?.Invoke();
+                    return true;
+                }
             }
 
             // --- 6. DEVELOPER TOOLS ---
@@ -276,13 +339,30 @@ namespace CosmoWhisper.Managers
             // --- 7. APP LAUNCHING ---
             if (cmd.StartsWith("open ") || cmd.StartsWith("launch "))
             {
-                string appQuery = cmd.Replace("open ", "").Replace("launch ", "").Trim();
-                LogToFile($"[CommandController] Attempting to launch app: '{appQuery}'");
+                string appQuery = (cmd.StartsWith("open ") ? cmd.Substring(5) : cmd.Substring(7)).Trim();
+                LogToFile($"[CommandController] Attempting to launch app or site: '{appQuery}'");
                 
-                // 1. Try exact match
+                // 1. Try if it's a known web shortcut or has a TLD suffix (e.g. "microsoft", "google.com")
+                string nameWithoutTld = appQuery.TrimEnd('.');
+                string[] commonTlds = { ".com", ".org", ".net", ".io", ".ai", ".app", ".dev" };
+                bool isWebSite = _webShortcuts.ContainsKey(nameWithoutTld) || 
+                                 nameWithoutTld.Contains(".") ||
+                                 commonTlds.Any(tld => nameWithoutTld.EndsWith(tld));
+                                 
+                if (isWebSite)
+                {
+                    bool okWeb = OpenSite(appQuery);
+                    if (okWeb)
+                    {
+                        CommandExecuted?.Invoke();
+                        return true;
+                    }
+                }
+
+                // 2. Try launching as local app
                 bool ok = await LaunchApp(appQuery);
                 
-                // 2. Try identifying the app name within a longer sentence (e.g. "Launch WhatsApp is not working")
+                // 3. Try identifying the app name within a longer sentence (e.g. "Launch WhatsApp is not working")
                 if (!ok)
                 {
                     var knownApp = _appShortcuts.Keys
@@ -294,6 +374,12 @@ namespace CosmoWhisper.Managers
                         LogToFile($"[CommandController] Found partial match: '{knownApp}' in '{appQuery}'");
                         ok = await LaunchApp(knownApp);
                     }
+                }
+                
+                // 4. Final fallback: try OpenSite if local app launching completely failed and it wasn't already run
+                if (!ok && !isWebSite)
+                {
+                    ok = OpenSite(appQuery);
                 }
                 
                 LogToFile($"[CommandController] Launch result: {ok}");
@@ -327,7 +413,7 @@ namespace CosmoWhisper.Managers
                 CommandExecuted?.Invoke(); 
                 return true; 
             }
-            if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning. Output ONLY the fixed text.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("grammar", "correct grammar", "polish", "correct this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning. Output ONLY the fixed text.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
             if (IsTriggered("translate to spanish", "translate into spanish", "translate spanish", "translate to castilian", "translate into castilian")) { await ProcessAIOnSelection("Translate the following text into Spanish. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
@@ -493,7 +579,7 @@ namespace CosmoWhisper.Managers
             return Regex.Replace(name.ToLower(), @"[^a-z0-9]", "");
         }
 
-        private string FindAppInStartMenu(string appName)
+        private string? FindAppInStartMenu(string appName)
         {
             try
             {
@@ -571,34 +657,69 @@ namespace CosmoWhisper.Managers
                     .FirstOrDefault();
             }
             
+            // Only trust dictionary shortcuts that exist (or shell/protocol commands without directory separators)
+            if (target != null && Path.IsPathRooted(target) && !File.Exists(target))
+            {
+                target = null;
+            }
+
             // 2. Dynamic Search in Start Menu (Background Task)
             if (target == null)
             {
                 target = await Task.Run(() => FindAppInStartMenu(name));
             }
 
-            // 3. Try to launch whatever we found (or the original name as a last resort)
-            string launchPath = target ?? name;
-            
-            try
+            // Fallback chains for common suites (e.g. MS Office -> SoftMaker FreeOffice)
+            var officeFallbacks = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
-                Process.Start(new ProcessStartInfo(launchPath) { UseShellExecute = true });
-                return true;
-            }
-            catch (Exception ex)
+                { "word", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\TextMaker.exe", "textmaker" } },
+                { "winword", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\TextMaker.exe", "textmaker" } },
+                { "excel", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\PlanMaker.exe", "planmaker" } },
+                { "powerpoint", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\Presentations.exe", "presentations" } },
+                { "powerpnt", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\Presentations.exe", "presentations" } },
+                { "textmaker", new[] { "winword" } },
+                { "planmaker", new[] { "excel" } },
+                { "presentations", new[] { "powerpnt" } }
+            };
+
+            if (target != null)
             {
-                LogToFile($"[LaunchApp] Error opening '{launchPath}': {ex.Message}");
-                
-                // Show pop-up if the app absolutely could not be opened
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    System.Windows.MessageBox.Show($"The application '{name}' could not be opened or found.", 
-                        "CosmoWhisper - App Launch Error", 
-                        System.Windows.MessageBoxButton.OK, 
-                        System.Windows.MessageBoxImage.Warning);
-                });
-                
-                return false;
+                try
+                {
+                    Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"[LaunchApp] Error opening '{target}': {ex.Message}. Checking fallback alternatives...");
+                }
             }
+
+            // Try suite fallback only for recognized app aliases
+            string normKey = NormalizeAppName(name);
+            string normTarget = target != null ? NormalizeAppName(target) : string.Empty;
+            foreach (var kvp in officeFallbacks)
+            {
+                if (NormalizeAppName(kvp.Key) == normKey || (!string.IsNullOrEmpty(normTarget) && normTarget == NormalizeAppName(kvp.Key)))
+                {
+                    foreach (var alt in kvp.Value)
+                    {
+                        try
+                        {
+                            if (File.Exists(alt) || !alt.Contains(@"\"))
+                            {
+                                Process.Start(new ProcessStartInfo(alt) { UseShellExecute = true });
+                                LogToFile($"[LaunchApp] Successfully launched fallback alternative: '{alt}' for '{name}'");
+                                return true;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            LogToFile($"[LaunchApp] Application '{name}' not found; skipping ShellExecute fallback.");
+            return false;
         }
 
         private async Task ProcessAI(string context, string prompt)

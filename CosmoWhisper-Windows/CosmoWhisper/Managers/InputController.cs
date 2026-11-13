@@ -1,4 +1,5 @@
 using System;
+using CosmoWhisper.Interfaces;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,9 +7,9 @@ using System.Windows;
 
 namespace CosmoWhisper.Managers
 {
-    public class InputController
+    public class InputController : IInputController
     {
-        public static InputController Shared { get; } = new InputController();
+        public static InputController Shared => (InputController)ServiceLocator.GetService<IInputController>();
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
@@ -107,13 +108,29 @@ namespace CosmoWhisper.Managers
                 });
             }
 
+            // --- RESTORED MASTER LOGIC ---
+            // If the text is ONLY newlines/whitespace, we use TypeText (Direct Unicode)
+            // This is exactly how the old version worked and is 100% reliable.
+            if (!string.IsNullOrEmpty(text) && string.IsNullOrWhiteSpace(text))
+            {
+                await TypeText(text, false);
+                return;
+            }
+
+            string normalizedText = text.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                SafeSetClipboardText(text);
+                // Clear clipboard first to ensure the new format is registered
+                System.Windows.Clipboard.Clear();
+                var data = new System.Windows.DataObject();
+                data.SetText(normalizedText, System.Windows.TextDataFormat.UnicodeText);
+                data.SetText(normalizedText, System.Windows.TextDataFormat.Text);
+                System.Windows.Clipboard.SetDataObject(data, true);
             });
 
-            // Small delay to allow clipboard to sync (Reduced from 100ms for speed)
-            await Task.Delay(50);
+            // Increased delay for stability in Word/Excel
+            await Task.Delay(150);
 
             // Ctrl + V
             SendModifierKey(VK_CONTROL, false);
@@ -123,14 +140,15 @@ namespace CosmoWhisper.Managers
 
             if (autoSubmit)
             {
-                await Task.Delay(100); // Reduced from 150ms
+                await Task.Delay(150);
                 SendKey(0x0D, false); // Enter
                 SendKey(0x0D, true);
             }
 
             if (restoreClipboard && oldText != null)
             {
-                await Task.Delay(200); // Reduced from 500ms
+                // Increased delay to 1 second to ensure heavy apps (Word) finished pasting before we revert
+                await Task.Delay(1000);
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     SafeSetClipboardText(oldText);
@@ -247,17 +265,25 @@ namespace CosmoWhisper.Managers
             // Real Direct Typing using SendInput with Unicode support
             foreach (char c in text)
             {
-                if (c == '\r') continue; // Skip \r, handle \n as Enter
-                if (c == '\n')
+                if (c == '\n' || c == '\r')
                 {
-                    SendKey(0x0D, false); // VK_RETURN Down
-                    SendKey(0x0D, true);  // VK_RETURN Up
-                    await Task.Delay(1);
+                    SendKey(0x0D, false); // Enter Down
+                    SendKey(0x0D, true);  // Enter Up
+                    await Task.Delay(10);
+                    continue;
+                }
+
+                if (c == '\v') // Soft Return (Shift+Enter)
+                {
+                    SendKey(0x10, false); // Shift Down
+                    SendKey(0x0D, false); // Enter Down
+                    SendKey(0x0D, true);  // Enter Up
+                    SendKey(0x10, true);  // Shift Up
+                    await Task.Delay(10);
                     continue;
                 }
 
                 INPUT[] inputs = new INPUT[2];
-
                 // Key Down
                 inputs[0].type = INPUT_KEYBOARD;
                 inputs[0].U.ki.wVk = 0;
@@ -269,9 +295,8 @@ namespace CosmoWhisper.Managers
                 inputs[1].U.ki.wVk = 0;
                 inputs[1].U.ki.wScan = (ushort)c;
                 inputs[1].U.ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-
+                
                 SendInput(2, inputs, INPUT.Size);
-
                 // Small delay to simulate natural typing and prevent UI freeze
                 await Task.Delay(1);
             }

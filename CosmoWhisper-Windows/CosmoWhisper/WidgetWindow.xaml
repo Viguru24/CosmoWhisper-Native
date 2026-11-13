@@ -22,87 +22,6 @@
     </WindowChrome.WindowChrome>
     
     <Window.Resources>
-        <!-- Idle Breathing -->
-        <Storyboard x:Key="IdleBreathingAnimation" RepeatBehavior="Forever" AutoReverse="True">
-            <DoubleAnimation Storyboard.TargetName="VisualizerPanel" Storyboard.TargetProperty="Opacity" From="0.3" To="0.8" Duration="0:0:2">
-                <DoubleAnimation.EasingFunction>
-                    <QuadraticEase EasingMode="EaseInOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-        <!-- Pulse Animation -->
-        <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="OrbGlow" 
-                             Storyboard.TargetProperty="Opacity"
-                             From="0.3" To="0.7" Duration="0:0:1.2" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="OrbScale" 
-                             Storyboard.TargetProperty="ScaleX"
-                             From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="OrbScale" 
-                             Storyboard.TargetProperty="ScaleY"
-                             From="0.8" To="1.2" Duration="0:0:1.2" AutoReverse="True"/>
-        </Storyboard>
-
-        <!-- Thinking Dots Animation (staggered pulse) -->
-        <Storyboard x:Key="ThinkingDotsAnimation" RepeatBehavior="Forever">
-            <!-- Dot 1 -->
-            <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot1Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot1" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.0"/>
-            <!-- Dot 2 -->
-            <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot2Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot2" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.2"/>
-            <!-- Dot 3 -->
-            <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleX" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot3Scale" Storyboard.TargetProperty="ScaleY" From="0.5" To="1.4" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"><DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="Dot3" Storyboard.TargetProperty="Opacity" From="0.25" To="1.0" Duration="0:0:0.6" AutoReverse="True" BeginTime="0:0:0.4"/>
-        </Storyboard>
-
-        <!-- AI Thinking Glow -->
-        <Storyboard x:Key="ThinkingAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="ThinkingAura" Storyboard.TargetProperty="Opacity" From="0.1" To="0.9" Duration="0:0:1" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleX" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="ThinkingAuraScale" Storyboard.TargetProperty="ScaleY" From="0.9" To="1.3" Duration="0:0:1" AutoReverse="True"/>
-            <DoubleAnimation Storyboard.TargetName="ThinkingAuraRotation" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:4"/>
-        </Storyboard>
-
-        <!-- Command Confirmed Ripple -->
-        <Storyboard x:Key="RippleAnimation">
-            <DoubleAnimation Storyboard.TargetName="RippleEffect" Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.8"/>
-            <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleX" From="1" To="4" Duration="0:0:0.8"/>
-            <DoubleAnimation Storyboard.TargetName="RippleScale" Storyboard.TargetProperty="ScaleY" From="1" To="4" Duration="0:0:0.8"/>
-        </Storyboard>
-
-        <!-- Haptic Jiggle (Physical Feel) -->
-        <Storyboard x:Key="JiggleAnimation">
-            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleX">
-                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="1.05"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="0.95"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
-            </DoubleAnimationUsingKeyFrames>
-            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="MainBorderScale" Storyboard.TargetProperty="ScaleY">
-                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="0.95"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="1.05"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1.0"/>
-            </DoubleAnimationUsingKeyFrames>
-        </Storyboard>
-
-        <!-- Iridescent Border Animation -->
-        <Storyboard x:Key="IridescentAnimation" RepeatBehavior="Forever">
-            <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="StartPoint" From="0,0" To="1,1" Duration="0:0:3" AutoReverse="True"/>
-            <PointAnimation Storyboard.TargetName="BorderGradient" Storyboard.TargetProperty="EndPoint" From="1,1" To="0,0" Duration="0:0:3" AutoReverse="True"/>
-        </Storyboard>
-
-        <!-- Moon Satellite Animation -->
-        <Storyboard x:Key="SatelliteAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="SatelliteRotation" 
-                             Storyboard.TargetProperty="Angle" 
-                             From="0" To="360" Duration="0:0:2.5"/>
-            <DoubleAnimation Storyboard.TargetName="SatelliteOrb" 
-                             Storyboard.TargetProperty="Opacity" 
-                             From="1" To="0.4" Duration="0:0:1.25" AutoReverse="True"/>
-        </Storyboard>
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Margin="10">
@@ -145,24 +64,7 @@
                         <Ellipse Width="1" Height="1" Fill="White" Canvas.Left="110" Canvas.Top="35"/>
                     </Canvas>
 
-                    <!-- Real Shooting Star -->
-                    <Path Data="M0,0 L40,0" Stroke="White" StrokeThickness="2" Opacity="0">
-                        <Path.Effect><BlurEffect Radius="4" RenderingBias="Performance"/></Path.Effect>
-                        <Path.RenderTransform>
-                            <TranslateTransform x:Name="StarMove" X="-100" Y="20"/>
-                        </Path.RenderTransform>
-                        <Path.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation Storyboard.TargetName="StarMove" Storyboard.TargetProperty="X" From="-100" To="300" Duration="0:0:3" BeginTime="0:0:2"/>
-                                        <DoubleAnimation Storyboard.TargetName="StarMove" Storyboard.TargetProperty="Y" From="10" To="40" Duration="0:0:3" BeginTime="0:0:2"/>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:1.5" BeginTime="0:0:2" AutoReverse="True"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Path.Triggers>
-                    </Path>
+                    <!-- Shooting star removed: continuous RepeatBehavior="Forever" + BlurEffect violates <1% idle CPU budget -->
                 </Grid>
 
                 <!-- Command Confirmed Ripple Effect (Pulse outwards) -->
@@ -264,10 +166,10 @@
                         </StackPanel>
 
                         <!-- Status/Error Text (NEWly Required by C#) -->
-                        <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="OrangeRed" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" IsHitTestVisible="False" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtStatus" Text="{Binding StatusText}" Foreground="OrangeRed" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" IsHitTestVisible="False" FontWeight="Bold"/>
 
                         <!-- Hotkey Hint (NEW) -->
-                        <TextBlock x:Name="TxtHotkeyHint" Text="Hold F9" Foreground="White" Opacity="0.3" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Visible" IsHitTestVisible="False"/>
+                        <TextBlock x:Name="TxtHotkeyHint" Text="{Binding HotkeyHint}" Foreground="White" Opacity="0.3" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Visible" IsHitTestVisible="False"/>
 
 
                         <!-- Sine Wave Canvas: driven by C# audio level in real-time -->

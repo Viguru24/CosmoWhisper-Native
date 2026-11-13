@@ -10,7 +10,7 @@ namespace CosmoWhisper.Controls
             InitializeComponent();
         }
 
-        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
+        private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
         private void BtnPlaySample_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnPlaySample_Click(sender, e);
     }

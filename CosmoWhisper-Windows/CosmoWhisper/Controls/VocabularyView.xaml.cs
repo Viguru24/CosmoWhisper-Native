@@ -11,10 +11,11 @@ namespace CosmoWhisper.Controls
             InitializeComponent();
         }
 
-        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
+        private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
         private void BtnAddEntry_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnAddVocab_Click(sender, e);
         private void ToggleSignOff_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleSignOff_Click(sender, e);
+        private void BtnResetDefaults_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.LoadExamples_Click(sender, e);
         
         private void DeleteVocabulary_Click(object sender, RoutedEventArgs e) 
         {
@@ -23,6 +24,10 @@ namespace CosmoWhisper.Controls
                 GetParentWindow()?.DeleteVocabulary_Click(el, e);
             }
         }
+
+        private void EditVocabulary_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.EditVocabulary_Click(sender, e);
+        private void SaveVocabulary_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.SaveVocabulary_Click(sender, e);
+        private void CancelVocabulary_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.CancelVocabulary_Click(sender, e);
 
         private void TxtNewInput_TextChanged(object sender, TextChangedEventArgs e)
         {

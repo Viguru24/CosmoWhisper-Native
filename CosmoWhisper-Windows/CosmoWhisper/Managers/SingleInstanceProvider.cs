@@ -9,18 +9,91 @@ namespace CosmoWhisper.Managers
 {
     public class SingleInstanceProvider
     {
-        private const string PipeName = "CosmoWhisper_Personal_Pipe";
+        private static string PipeName => Environment.GetEnvironmentVariable("COSMO_DEV") == "true" ? "CosmoWhisper_Dev_Pipe" : "CosmoWhisper_Personal_Pipe";
         private static CancellationTokenSource? _cts;
+        private static FileSystemWatcher? _tempFileWatcher;
 
         public static void StartListening()
         {
             _cts = new CancellationTokenSource();
             Task.Run(() => ListenLoop(_cts.Token));
+            StartTempFileWatcher();
         }
 
         public static void StopListening()
         {
             _cts?.Cancel();
+            StopTempFileWatcher();
+        }
+
+        private static void StartTempFileWatcher()
+        {
+            try
+            {
+                string tempDir = Path.GetTempPath();
+                string filter = Environment.GetEnvironmentVariable("COSMO_DEV") == "true" ? "cosmowhisper_dev_auth.tmp" : "cosmowhisper_personal_auth.tmp";
+
+                // Check initially if file exists (e.g. from previous run or startup race)
+                ProcessTempFile(Path.Combine(tempDir, filter));
+
+                _tempFileWatcher = new FileSystemWatcher(tempDir, filter)
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true
+                };
+
+                _tempFileWatcher.Created += (s, e) => ProcessTempFile(e.FullPath);
+                _tempFileWatcher.Changed += (s, e) => ProcessTempFile(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                DiagnosticManager.Shared.Log($"Failed to start temp file watcher: {ex.Message}", "ERROR");
+            }
+        }
+
+        private static void StopTempFileWatcher()
+        {
+            try
+            {
+                if (_tempFileWatcher != null)
+                {
+                    _tempFileWatcher.EnableRaisingEvents = false;
+                    _tempFileWatcher.Dispose();
+                    _tempFileWatcher = null;
+                }
+            }
+            catch { }
+        }
+
+        private static void ProcessTempFile(string filePath)
+        {
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    // Add a tiny delay to ensure the other process has finished writing and closed the file
+                    Thread.Sleep(100);
+                    string content = File.ReadAllText(filePath);
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        // Delete the file to consume it
+                        File.Delete(filePath);
+
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            ProtocolHandler.Handle(content);
+                        });
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                // File might still be locked, we'll try again on the next event
+            }
+            catch (Exception ex)
+            {
+                DiagnosticManager.Shared.Log($"Error processing temp file: {ex.Message}", "ERROR");
+            }
         }
 
         private static async Task ListenLoop(CancellationToken token)

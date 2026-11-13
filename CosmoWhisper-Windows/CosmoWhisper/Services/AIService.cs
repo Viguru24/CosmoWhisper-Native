@@ -6,65 +6,53 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 using CosmoWhisper.Managers;
 using CosmoWhisper;
+using CosmoWhisper.Interfaces;
+using System.Linq;
 
 namespace CosmoWhisper.Services
 {
-    public class AIService
+    public class AIService : IAIService
     {
-        public static AIService Shared { get; } = new AIService();
-        private readonly HttpClient _httpClient;
+        public static AIService Shared => (AIService)ServiceLocator.GetService<IAIService>();
+        private readonly IPreferenceManager _preferenceManager;
+
         private const string DirectUrl = "https://api.groq.com/openai/v1/audio/transcriptions";
         private const string DirectChatUrl = "https://api.groq.com/openai/v1/chat/completions";
         private const string FirebaseProxyUrl = "https://CosmoWhisper.com/api";
-        
+
         // Performance Watch
         private System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
         private System.Diagnostics.Stopwatch _raceStopwatch = new System.Diagnostics.Stopwatch();
-        
+
         public string LastTranscriptionSource { get; private set; } = "Unknown";
         public long LastTranscriptionTime { get; private set; } = 0;
         public bool IsAccessBlocked { get; set; } = false;
-        
-        private string ChatUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
-        private string ProxyUrl => $"{PreferenceManager.Shared.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
+
+        private string ChatUrl => $"{_preferenceManager.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
+        private string ProxyUrl => $"{_preferenceManager.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
         private bool _useProxy = false; // "Sticky" proxy mode if direct fails
         private bool _useChatProxy = false;
 
-        public AIService()
+        public AIService(IPreferenceManager preferenceManager)
         {
-            // Configure HttpClientHandler to use system proxy (including VPN)
-            var handler = new HttpClientHandler
-            {
-                UseProxy = true,
-                Proxy = System.Net.WebRequest.GetSystemWebProxy(),
-                PreAuthenticate = true,
-                UseDefaultCredentials = true
-            };
-            
-            _httpClient = new HttpClient(handler);
-            _httpClient.Timeout = TimeSpan.FromSeconds(60); // Increase timeout for VPN scenarios
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
+            _preferenceManager = preferenceManager;
             RefreshConfig();
-
         }
 
         public void Initialize()
         {
-            PreferenceManager.Shared.PreferencesUpdated += () => RefreshConfig();
+            _preferenceManager.PreferencesUpdated += () => RefreshConfig();
         }
 
         private void RefreshConfig()
         {
-            var p = PreferenceManager.Shared.Preferences;
-            string defaultKey = "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";
-            
-            // If unlocked, we can use the custom key. Otherwise, we use the shared default.
             // Configuration is now handled dynamically per request
         }
 
-        private const string GroqDefaultKey = "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"; // Fixed Typo (Double U)
+        private string GroqDefaultKey => Environment.GetEnvironmentVariable("COSMOWHISPER_GROQ_API_KEY") ?? "";
 
         public async Task<string> Transcribe(string filePath)
         {
@@ -75,17 +63,17 @@ namespace CosmoWhisper.Services
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 
-            var p = PreferenceManager.Shared.Preferences;
+            var p = _preferenceManager.Preferences;
             string model = string.IsNullOrWhiteSpace(p.AIModel) ? "whisper-large-v3" : p.AIModel;
 
             // 1. Unified Prompt & Language Calculation
             string langCode = p.InterfaceLanguage.ToLower().Split('-')[0];
             string safeLangCode = (langCode == "auto") ? "en" : langCode;
             
-            string appContext = Managers.AudioRecorder.Shared.GetCurrentFocusedApp();
+            string appContext = AudioRecorder.Shared.GetCurrentFocusedApp();
             if (appContext.Contains("Cosmo", StringComparison.OrdinalIgnoreCase)) appContext = "";
             
-            string hints = Managers.VocabularyManager.Shared.GetActiveHints();
+            string hints = VocabularyManager.Shared.GetActiveHints();
             string hintsText = string.IsNullOrWhiteSpace(hints) ? "" : $" {hints}.";
 
             string basePrompt = $"Transcribe accurately. Ignore non-speech sounds like coughs or background noise. New line, new paragraph. {appContext}{hintsText}".Trim();
@@ -95,108 +83,46 @@ namespace CosmoWhisper.Services
                 basePrompt = $"Transcribe accurately in {variant}. Ignore non-speech sounds like coughs, laughter, or background noise. New line, new paragraph. {appContext}{hintsText}".Trim();
             }
 
-            // Helper to create fresh content for each attempt
-            MultipartFormDataContent CreateContent()
+            // 🛑 LOCAL MODEL MODE (User Priority)
+            // Local Whisper uses a SHORT prompt (vocabulary/spelling hints only).
+            // Whisper's initial_prompt is a style guide, NOT an instruction prompt.
+            // Long instructions cause small models (distil-small) to hallucinate and repeat.
+            if (!p.ForceDirectApi && (p.UseLocalWhisper || p.UseLocalWhisperOnly))
             {
-                var form = new MultipartFormDataContent();
-                // We use shared read to allow multiple tasks to read if necessary
-                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var fileContent = new StreamContent(fileStream);
-                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/wav");
-
-                form.Add(fileContent, "file", Path.GetFileName(filePath));
-                form.Add(new StringContent(model, System.Text.Encoding.UTF8), "model");
-                form.Add(new StringContent("json", System.Text.Encoding.UTF8), "response_format");
-
-                if (langCode != "auto")
-                {
-                    form.Add(new StringContent(langCode, System.Text.Encoding.UTF8), "language");
-                }
-
-                form.Add(new StringContent(basePrompt, System.Text.Encoding.UTF8), "prompt");
-                return form;
-            }
-
-            // 🛑 LOCAL ONLY MODE (Survival Switch)
-            // If the user checked "Local Only", respect it immediately.
-            if (p.UseLocalWhisperOnly)
-            {
-                LogEvent("[transcribe] 🔒 LOCAL ONLY MODE ACTIVE: Skipping cloud...");
-                if (LocalModelManager.Shared.IsReady)
-                {
-                    return await LocalModelManager.Shared.TranscribeAsync(filePath, basePrompt, safeLangCode);
-                }
-                else
-                {
-                    LogEvent("[transcribe] ⚠️ Local model not ready for Local-Only mode.");
-                    return "Error: Local Only Mode enabled but model not ready.";
-                }
-            }
-
-            // 🏎️ RACE MODE: If Local is ready, run it in PARALLEL with Cloud.
-            // The first one to return a valid result wins. 
-            // This guarantees the fastest possible speed (Local ~0.5s vs Cloud ~2s+).
-            bool canRace = p.UseLocalWhisper && LocalModelManager.Shared.IsReady;
-
-            // Define Cloud Logic as a local function to allow parallel execution
-            async Task<string> RunCloudTranscription()
-            {
-                // ⚡ QUICK OFFLINE CHECK
-                bool isOffline = !System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
-                if (isOffline) return "Error: Network unreachable (Offline Check)";
-
-                // 1. Proxy: Render
-                using (var proxyContent = CreateContent())
-                {
-                     LogEvent($"[transcribe] Sending to API Proxy: {ProxyUrl}");
-                     int renderTimeout = canRace ? 2 : 30;
-                     string result = await ExecuteWithFallback(ProxyUrl, proxyContent, false, renderTimeout);
-                     
-                     if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
-                     
-                     string backupProxyUrl = ProxyUrl.Replace("/api/ai/transcribe", "/api/transcribe");
-                     return await ExecuteWithFallback(backupProxyUrl, proxyContent, false, renderTimeout);
-                }
-            }
-
-            // EXECUTE RACE
-            if (canRace)
-            {
-                LogEvent("[transcribe] 🏎️ STARTING RACE: Local vs Cloud...");
-                _raceStopwatch.Restart();
+                string spellingHints = (langCode == "en" && p.InterfaceLanguage == "en-GB")
+                    ? "colour, realise, organise, centre"
+                    : "color, realize, organize, center";
                 
-                var cloudTask = RunCloudTranscription();
-                var localTask = LocalModelManager.Shared.TranscribeAsync(filePath, basePrompt, safeLangCode);
-
-                // Wait for the FIRST task to complete
-                var winner = await Task.WhenAny(cloudTask, localTask);
-                long raceElapsed = _raceStopwatch.ElapsedMilliseconds;
-                string result = await winner;
-
-                // Validate Winner
-                if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("Error:"))
+                string cleanHints = "";
+                if (!string.IsNullOrWhiteSpace(hints))
                 {
-                    LastTranscriptionSource = (winner == localTask ? "Local Model" : "Cloud API");
-                    LastTranscriptionTime = raceElapsed;
-                    LogEvent($"[transcribe] 🏁 WINNER: {(winner == localTask ? "Local Model 🏠" : "Cloud API ☁️")} in {raceElapsed}ms");
-                    return result;
+                    // Normalize spaces around commas
+                    cleanHints = Regex.Replace(hints, @"\s*,\s*", ", ").Trim().TrimEnd(',', '.', ' ');
+                    
+                    // Allow up to 450 characters of vocabulary hints (Whisper models support ~224 tokens)
+                    if (cleanHints.Length > 450)
+                    {
+                        cleanHints = cleanHints.Substring(0, 450);
+                        int lastComma = cleanHints.LastIndexOf(',');
+                        if (lastComma > 0)
+                        {
+                            cleanHints = cleanHints.Substring(0, lastComma);
+                        }
+                    }
                 }
 
-                // If winner failed, await the loser
-                LogEvent($"[transcribe] ⚠️ Winner failed ({result}). Waiting for runner-up...");
-                var loser = (winner == localTask) ? cloudTask : localTask;
-                string loserResult = await loser;
-                LastTranscriptionSource = (loser == localTask ? "Local Model" : "Cloud API");
-                LastTranscriptionTime = _raceStopwatch.ElapsedMilliseconds;
-                LogEvent($"[transcribe] 🏁 RUNNER-UP finished in {_raceStopwatch.ElapsedMilliseconds}ms result: {(string.IsNullOrEmpty(loserResult) ? "EMPTY" : "OK")}");
-                return loserResult;
+                string localPrompt = string.IsNullOrWhiteSpace(cleanHints)
+                    ? $"{spellingHints}."
+                    : $"{spellingHints}, {cleanHints}.".Trim();
+
+                return await HandleLocalTranscription(filePath, localPrompt, safeLangCode);
             }
 
-            // Normal Execution (No Race)
+            // Normal Cloud Execution
             _stopwatch.Restart();
-            string cloudResult = await RunCloudTranscription();
+            string cloudResult = await RunCloudTranscription(filePath, model, basePrompt, langCode);
             _stopwatch.Stop();
-            
+
             if (!cloudResult.StartsWith("Error:"))
             {
                 LastTranscriptionSource = "Cloud API";
@@ -204,26 +130,119 @@ namespace CosmoWhisper.Services
                 return cloudResult;
             }
 
-            // Final Fallback if not racing but cloud failed (and we didn't use local yet)
-            if (p.UseLocalWhisper && LocalModelManager.Shared.IsReady)
+            // 🔄 FALLBACK TO LOCAL MODEL (If Cloud fails or Internet is down)
+            LogEvent("[transcribe] ⚠️ Cloud transcription failed. Checking local model fallback...");
+            if (LocalModelManager.Shared.IsReady)
+            {
+                LogEvent("[transcribe] 🔒 Local model is ready. Falling back to local transcription.");
+                string spellingHints = (langCode == "en" && p.InterfaceLanguage == "en-GB")
+                    ? "colour, realise, organise, centre."
+                    : "color, realize, organize, center.";
+                string localPrompt = string.IsNullOrWhiteSpace(hints)
+                    ? spellingHints
+                    : $"{spellingHints} {hints}.".Trim();
+                return await HandleLocalTranscription(filePath, localPrompt, safeLangCode);
+            }
+
+            return "Error: Could not transcribe audio (Cloud API failed and Local model is not ready).";
+        }
+
+        private async Task<string> HandleLocalTranscription(string filePath, string basePrompt, string safeLangCode)
+        {
+            LogEvent("[transcribe] 🔒 LOCAL MODE ACTIVE: Skipping cloud as per user preference...");
+            if (LocalModelManager.Shared.IsReady)
             {
                 _stopwatch.Restart();
-                LogEvent("[transcribe] 🚨 All cloud services failed. Converting to local inference...");
                 string localResult = await LocalModelManager.Shared.TranscribeAsync(filePath, basePrompt, safeLangCode);
                 _stopwatch.Stop();
-                LastTranscriptionSource = "Local Model";
+
+                LastTranscriptionSource = $"Local ({LocalModelManager.Shared.ActiveEngineName})";
                 LastTranscriptionTime = _stopwatch.ElapsedMilliseconds;
                 return localResult;
             }
+            else
+            {
+                LogEvent("[transcribe] ⚠️ Local model not ready. User requested Local-Only.");
+                return "Error: Local Model is still initializing or not downloaded. Please wait a moment.";
+            }
+        }
 
-            return "Error: Could not transcribe audio (Cloud failed, Local model not ready or disabled).";
+        private async Task<string> RunCloudTranscription(string filePath, string model, string basePrompt, string langCode)
+        {
+            // ⚡ QUICK OFFLINE CHECK
+            bool isOffline = !System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+            if (isOffline) return "Error: Network unreachable (Offline Check)";
+
+            var p = _preferenceManager.Preferences;
+            
+            // 1. Try Direct Groq first if we have a direct API key and are not forced to proxy
+            string groqKey = (!string.IsNullOrEmpty(p.GroqApiKey) ? p.GroqApiKey : GroqDefaultKey).Trim();
+            bool hasDirectKey = !string.IsNullOrWhiteSpace(groqKey);
+            bool hasCustomKey = !string.IsNullOrWhiteSpace(p.GroqApiKey);
+
+            if (p.ForceDirectApi && !p.ForceCloudProxy)
+            {
+                if (!hasDirectKey)
+                {
+                    return "Error: Force Direct API is enabled, but no Groq API Key is configured.";
+                }
+                using (var directContent = CreateContent(filePath, model, basePrompt, langCode))
+                {
+                    return await ExecuteWithFallback(DirectUrl, directContent, true, 30);
+                }
+            }
+
+            if (!_useProxy && !p.ForceCloudProxy && hasDirectKey)
+            {
+                using (var directContent = CreateContent(filePath, model, basePrompt, langCode))
+                {
+                    string result = await ExecuteWithFallback(DirectUrl, directContent, true, 30);
+                    if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                    
+                    LogEvent($"[transcribe] Direct Groq failed ({result}). Switching to Sticky Proxy.");
+                    _useProxy = true; // Stay in proxy mode for the rest of the session
+                }
+            }
+
+            // 2. Fallback to Proxy (Local Backend / Firebase)
+            using (var proxyContent = CreateContent(filePath, model, basePrompt, langCode))
+            {
+                 LogEvent($"[transcribe] Sending to API Proxy: {ProxyUrl}");
+                 string result = await ExecuteWithFallback(ProxyUrl, proxyContent, false, 30);
+
+                 if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+
+                 string backupProxyUrl = ProxyUrl.Replace("/api/ai/transcribe", "/api/transcribe");
+                 return await ExecuteWithFallback(backupProxyUrl, proxyContent, false, 30);
+            }
+        }
+
+        private MultipartFormDataContent CreateContent(string filePath, string model, string basePrompt, string langCode)
+        {
+            var form = new MultipartFormDataContent();
+            // We use shared read to allow multiple tasks to read if necessary
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/wav");
+
+            form.Add(fileContent, "file", Path.GetFileName(filePath));
+            form.Add(new StringContent(model, System.Text.Encoding.UTF8), "model");
+            form.Add(new StringContent("json", System.Text.Encoding.UTF8), "response_format");
+
+            if (langCode != "auto")
+            {
+                form.Add(new StringContent(langCode, System.Text.Encoding.UTF8), "language");
+            }
+
+            form.Add(new StringContent(basePrompt, System.Text.Encoding.UTF8), "prompt");
+            return form;
         }
 
         public void LogEvent(string msg)
         {
             try
             {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
+                string logDir = Path.Combine(_preferenceManager.AppDataFolder, "logs");
                 Directory.CreateDirectory(logDir);
                 string logPath = Path.Combine(logDir, "cosmo_debug.log");
                 System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
@@ -235,7 +254,7 @@ namespace CosmoWhisper.Services
         {
             try
             {
-                var p = PreferenceManager.Shared.Preferences;
+                var p = _preferenceManager.Preferences;
                 using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
                 
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -243,8 +262,8 @@ namespace CosmoWhisper.Services
 
                 if (isDirect)
                 {
-                    bool bypassAllowed = SubscriptionManager.Shared.IsUnlimited;
-                    string groqKey = (!bypassAllowed ? GroqDefaultKey : (string.IsNullOrEmpty(p.GroqApiKey) ? GroqDefaultKey : p.GroqApiKey)).Trim();
+                    string groqKey = (!string.IsNullOrEmpty(p.GroqApiKey) ? p.GroqApiKey : GroqDefaultKey).Trim();
+                    LogEvent($"[ExecuteWithFallback] Sending Direct request to {url} (Key Prefix: '{(groqKey.Length > 8 ? groqKey.Substring(0, 8) : "none")}', Length: {groqKey.Length})");
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", groqKey);
                 }
                 else // Proxy (Local, Render, etc.)
@@ -254,7 +273,7 @@ namespace CosmoWhisper.Services
                 }
 
                 _stopwatch.Restart();
-                var response = await _httpClient.SendAsync(request, cts.Token);
+                var response = await SharedHttpClient.Instance.SendAsync(request, cts.Token);
                 _stopwatch.Stop();
                 long elapsed = _stopwatch.ElapsedMilliseconds;
                 
@@ -275,6 +294,10 @@ namespace CosmoWhisper.Services
                         response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                     {
                         LogEvent($"[ExecuteWithFallback] Access Denied ({response.StatusCode}). Token may be invalid or account paused.");
+                        if (isDirect)
+                        {
+                            return "Error: Invalid or expired Groq API Key. Please verify your custom key in Settings.";
+                        }
                         return "Error: Access Revoked"; // Special string caught by the UI
                     }
 
@@ -298,7 +321,12 @@ namespace CosmoWhisper.Services
                 else // Assume chat response
                 {
                     var res = JsonSerializer.Deserialize<ChatResponse>(responseBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    return res?.choices[0]?.message?.content ?? "";
+                    if (res?.choices == null || res.choices.Length == 0)
+                    {
+                         LogEvent($"[ExecuteWithFallback] ⚠️ Empty choices array from {url}. Response: {responseBody}");
+                         return "Error: The AI returned an empty response.";
+                    }
+                    return res.choices[0]?.message?.content ?? "";
                 }
             }
             catch (OperationCanceledException)
@@ -335,10 +363,6 @@ namespace CosmoWhisper.Services
 
             try
             {
-                using var ttsClient = new HttpClient();
-                ttsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
-                ttsClient.DefaultRequestHeaders.Add("User-Agent", "CosmoWhisper-Native");
-
                 var request = new
                 {
                     model = "tts-1",
@@ -350,7 +374,13 @@ namespace CosmoWhisper.Services
 
                 System.Diagnostics.Debug.WriteLine($"[TTS] Requesting voice: {voice} at speed {speed}");
 
-                var response = await ttsClient.PostAsJsonAsync("https://api.openai.com/v1/audio/speech", request);
+                // Use SharedHttpClient to prevent socket exhaustion
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/audio/speech");
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
+                httpRequest.Headers.Add("User-Agent", "CosmoWhisper-Native");
+                httpRequest.Content = JsonContent.Create(request);
+
+                var response = await SharedHttpClient.Instance.SendAsync(httpRequest);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -382,38 +412,112 @@ namespace CosmoWhisper.Services
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 
-            var p = PreferenceManager.Shared.Preferences;
+            var p = _preferenceManager.Preferences;
             string langHint = useInterfaceLanguage ? GetLanguageHint(p.InterfaceLanguage) : "";
             string personalityHint = usePersonality ? GetPersonalityHint(p.AIPersonality) : "";
             
-            string finalPrompt = $"{prompt}\n\nContext:\n{context}\n{langHint}{personalityHint}";
+            // 🛡️ TOKEN BALANCING: Prevent context window overflow
+            string fullPrompt = $"{prompt}\n\nContext:\n{context}\n{langHint}{personalityHint}";
+            var (balancedPrompt, maxOutput) = BalanceContext(fullPrompt, p.MaxOutputTokens);
 
             string modelName = "llama-3.3-70b-versatile"; 
-            bool isFastTrack = prompt.Length < 100 && context.Length < 500;
-            if (isFastTrack) modelName = "llama-3.1-8b-instant";
 
             var payload = new
             {
                 model = modelName,
                 messages = new[]
                 {
-                    new { role = "system", content = "You are a helpful assistant." },
-                    new { role = "user", content = finalPrompt }
-                }
+                    new { role = "system", content = "You are a helpful assistant. Provide concise, direct, accurate answers." },
+                    new { role = "user", content = balancedPrompt }
+                },
+                max_tokens = maxOutput
             };
 
-            if (!_useChatProxy && !PreferenceManager.Shared.Preferences.ForceCloudProxy)
+            string groqKey = (!string.IsNullOrEmpty(p.GroqApiKey) ? p.GroqApiKey : GroqDefaultKey).Trim();
+            string openAiKey = (!string.IsNullOrEmpty(p.OpenAIApiKey) ? p.OpenAIApiKey : "").Trim();
+
+            // Auto-detect key format swaps (e.g. if user pasted sk-... into Groq field or gsk_ into OpenAI field)
+            if (groqKey.StartsWith("sk-") && !groqKey.StartsWith("gsk_") && string.IsNullOrEmpty(openAiKey))
             {
-                using (var content = JsonContent.Create(payload))
+                openAiKey = groqKey;
+                groqKey = "";
+            }
+            else if (openAiKey.StartsWith("gsk_") && string.IsNullOrEmpty(groqKey))
+            {
+                groqKey = openAiKey;
+                openAiKey = "";
+            }
+
+            bool hasGroqKey = !string.IsNullOrWhiteSpace(groqKey);
+            bool hasOpenAIKey = !string.IsNullOrWhiteSpace(openAiKey);
+
+            // 1. Direct Groq with Candidate Model Cascade
+            if (hasGroqKey)
+            {
+                string[] candidateModels = new[] { "openai/gpt-oss-20b", "groq/compound-mini", "openai/gpt-oss-120b", "qwen/qwen3.6-27b", "llama-3.3-70b-versatile" };
+
+                foreach (var model in candidateModels)
                 {
+                    var modelPayload = new
+                    {
+                        model = model,
+                        messages = payload.messages,
+                        max_tokens = payload.max_tokens
+                    };
+
+                    using var content = JsonContent.Create(modelPayload);
                     string res = await ExecuteWithFallback(DirectChatUrl, content, true, 30);
-                    if (!res.StartsWith("Error:") && !res.Contains("Canceled")) return res;
-                    LogEvent($"[ProcessCommand] Direct Groq Chat failed ({res}). Switching to Sticky Chat Proxy.");
-                    _useChatProxy = true;
+                    if (!res.StartsWith("Error:") && !res.Contains("Canceled"))
+                    {
+                        // Clean reasoning / think tags if emitted by reasoning models
+                        res = Regex.Replace(res, @"<think>.*?</think>", "", RegexOptions.Singleline).Trim();
+                        return res;
+                    }
+
+                    LogEvent($"[ProcessCommand] Groq model '{model}' failed: {res}");
+                    if (!res.Contains("model_not_found") && !res.Contains("does not exist") && !res.Contains("decommissioned"))
+                    {
+                        // If it's an auth error or rate limit, no need to retry other models
+                        break;
+                    }
                 }
             }
 
-            // Fallback: Firebase / Local Proxy
+            // 2. Direct OpenAI (If user supplied OpenAI Key or auto-detected)
+            if (hasOpenAIKey)
+            {
+                var openAiPayload = new
+                {
+                    model = "gpt-4o-mini",
+                    messages = payload.messages,
+                    max_tokens = payload.max_tokens
+                };
+
+                try
+                {
+                    var openAiRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
+                    openAiRequest.Content = JsonContent.Create(openAiPayload);
+                    openAiRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", openAiKey);
+
+                    var openAiRes = await SharedHttpClient.Instance.SendAsync(openAiRequest);
+                    var openAiBody = await openAiRes.Content.ReadAsStringAsync();
+                    if (openAiRes.IsSuccessStatusCode)
+                    {
+                        var res = JsonSerializer.Deserialize<ChatResponse>(openAiBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (res?.choices?.Length > 0)
+                        {
+                            return res.choices[0]?.message?.content ?? "";
+                        }
+                    }
+                    LogEvent($"[ProcessCommand] Direct OpenAI Chat failed: {openAiBody}");
+                }
+                catch (Exception oex)
+                {
+                    LogEvent($"[ProcessCommand] Direct OpenAI Chat exception: {oex.Message}");
+                }
+            }
+
+            // 3. Fallback: Cloud Server Proxy
             using (var proxyContent = JsonContent.Create(payload))
             {
                 string result = await ExecuteWithFallback(ChatUrl, proxyContent, false, 30);
@@ -422,12 +526,50 @@ namespace CosmoWhisper.Services
                 string backupProxyUrl = ChatUrl.Replace("/api/ai/chat", "/api/chat");
                 return await ExecuteWithFallback(backupProxyUrl, proxyContent, false, 30);
             }
+        }
+
+        private (string trimmedPrompt, int maxOutputTokens) BalanceContext(string input, int requestedOutput)
+        {
+            const int MAX_TOKENS = 128000; // Safe limit for most modern models
+            const double TOKENS_PER_CHAR = 4.0;
             
+            int inputTokens = (int)Math.Ceiling(input.Length / TOKENS_PER_CHAR);
+            
+            if (requestedOutput <= 0) requestedOutput = 4096;
+            
+            if (inputTokens + requestedOutput <= MAX_TOKENS)
+                return (input, requestedOutput);
+            
+            // Calculate adjusted output
+            int maxOutput = Math.Max(1000, MAX_TOKENS - inputTokens - 1000); // 1k safety margin
+            
+            // Optionally truncate input if it's too large
+            if (inputTokens > MAX_TOKENS * 0.8)
+            {
+                int maxInputChars = (int)((MAX_TOKENS - maxOutput - 2000) * TOKENS_PER_CHAR);
+                LogEvent($"[BalanceContext] 🛡️ Truncating input from {input.Length} to {maxInputChars} chars to prevent overflow.");
+                return (input.Substring(0, maxInputChars), maxOutput);
+            }
+            
+            return (input, maxOutput);
+        }
+
+        private async Task<string> ExecuteWithRetry(Func<Task<string>> operation, int maxRetries = 3)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try { return await operation(); }
+                catch (Exception ex) when (i < maxRetries - 1)
+                {
+                    LogEvent($"[Retry] 🔄 Attempt {i + 1} failed: {ex.Message}. Retrying...");
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, i))); // Exponential backoff
+                }
+            }
+            return "Error: Max retries exceeded";
         }
 
         private string GetPersonalityHint(string personality)
         {
-            // Reconstructing from memory/Step 500
             string prompt = "";
             switch (personality)
             {
@@ -489,24 +631,24 @@ namespace CosmoWhisper.Services
                     LogEvent("[WarmUp] 🚀 Warming up connection and local model...");
                     
                     // 1. Warm up SSL/TCP connection
-                    var url = PreferenceManager.Shared.Preferences.BackendUrl;
+                    var url = _preferenceManager.Preferences.BackendUrl;
                     if (string.IsNullOrEmpty(url)) url = "https://CosmoWhisper.com";
                     
                     using (var cts = new System.Threading.CancellationTokenSource(3000))
                     {
                         var request = new HttpRequestMessage(HttpMethod.Head, url);
-                        await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                        await SharedHttpClient.Instance.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                     }
 
                     // Background Ping: Test Direct Route (for VPN Firewall logic)
-                    if (!PreferenceManager.Shared.Preferences.ForceCloudProxy)
+                    if (!_preferenceManager.Preferences.ForceCloudProxy)
                     {
                         try
                         {
                             using (var cts = new System.Threading.CancellationTokenSource(2500))
                             {
                                 var pingReq = new HttpRequestMessage(HttpMethod.Head, DirectUrl);
-                                await _httpClient.SendAsync(pingReq, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                                await SharedHttpClient.Instance.SendAsync(pingReq, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                             }
                         }
                         catch (Exception directEx)
@@ -517,7 +659,7 @@ namespace CosmoWhisper.Services
                     }
                     
                     // 2. Warm up local model (trigger load/compile)
-                    if (PreferenceManager.Shared.Preferences.UseLocalWhisper)
+                    if (_preferenceManager.Preferences.UseLocalWhisper)
                     {
                         await LocalModelManager.Shared.WarmUp();
                     }
@@ -532,4 +674,3 @@ namespace CosmoWhisper.Services
         }
     }
 }
-

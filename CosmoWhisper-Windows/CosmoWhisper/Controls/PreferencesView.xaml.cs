@@ -11,7 +11,7 @@ namespace CosmoWhisper.Controls
             InitializeComponent();
         }
 
-        private DashboardWindow GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
+        private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
         // ACTIVATION
         private void Hotkey_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.StartActivationCapture_Click(sender, e);
@@ -21,10 +21,14 @@ namespace CosmoWhisper.Controls
 
         // FLOW & AUTOMATION
         private void ToggleClipboard_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleClipboard_Click(sender, e);
+        private void TogglePasteMode_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.TogglePasteMode_Click(sender, e);
         private void ToggleAutoSubmit_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAutoSubmit_Click(sender, e);
         private void ToggleAutoCopy_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAutoCopy_Click(sender, e);
+        private void ToggleSpeechPolish_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleSpeechPolish_Click(sender, e);
         private void ToggleLocalWhisper_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleLocalWhisper_Click(sender, e);
         private void ForceCloudProxy_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleForceCloudProxy_Click(sender, e);
+        private void ForceDirectApi_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleForceDirectApi_Click(sender, e);
+        private void LocalVoiceEngine_Changed(object sender, SelectionChangedEventArgs e) => GetParentWindow()?.ComboLocalVoiceEngine_SelectionChanged(sender, e);
 
         // DATA & RECOVERY
         private void ChangeBackupPath_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnChangeBackupPath_Click(sender, e);
@@ -49,5 +53,7 @@ namespace CosmoWhisper.Controls
         {
             if (this.IsLoaded) GetParentWindow()?.SldUIScale_ValueChanged(sender, e);
         }
+
+        private void ToggleAlwaysOnTop_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAlwaysOnTop_Click(sender, e);
     }
 }

@@ -22,6 +22,36 @@ namespace CosmoWhisper.Controllers
         public void Initialize()
         {
             UpdatePersonalityUI();
+            LoadApiKeysUI();
+        }
+
+        public void LoadApiKeysUI()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            if (Window.TxtGroqApiKey != null && !string.IsNullOrEmpty(p.GroqApiKey))
+            {
+                Window.TxtGroqApiKey.Password = p.GroqApiKey;
+            }
+            if (Window.TxtOpenAIApiKey != null && !string.IsNullOrEmpty(p.OpenAIApiKey))
+            {
+                Window.TxtOpenAIApiKey.Password = p.OpenAIApiKey;
+            }
+        }
+
+        public void SaveApiKeys()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            if (Window.TxtGroqApiKey != null)
+            {
+                p.GroqApiKey = Window.TxtGroqApiKey.Password.Trim();
+            }
+            if (Window.TxtOpenAIApiKey != null)
+            {
+                p.OpenAIApiKey = Window.TxtOpenAIApiKey.Password.Trim();
+            }
+
+            PreferenceManager.Shared.Save();
+            Window.ShowToast("API Keys Saved & Encrypted 🔒", "🔒");
         }
 
         public void PersonalityChanged(string personality)

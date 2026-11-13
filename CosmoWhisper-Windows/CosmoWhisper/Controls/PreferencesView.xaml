@@ -30,6 +30,18 @@
             <!-- SECTION: AUTOMATION & FLOW -->
             <Border Background="#151728" CornerRadius="20" Padding="0" Margin="0,0,0,30" BorderBrush="#15FFFFFF" BorderThickness="1">
                 <StackPanel>
+                    <!-- Instant Paste Mode -->
+                    <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Instant Paste Mode" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
+                                <TextBlock Text="Uses Ctrl+V for ultra-fast insertion. Disable for character-by-character 'Natural' typing." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                            </StackPanel>
+                            <Border x:Name="TogglePasteModeControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="TogglePasteMode_Click">
+                                <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
+                            </Border>
+                        </Grid>
+                    </Border>
                     <!-- Clipboard -->
                     <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
                         <Grid>
@@ -38,18 +50,6 @@
                                 <TextBlock Text="Automatically put back your old copied text after a voice paste." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
                             </StackPanel>
                             <Border x:Name="ToggleClipboardControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleClipboard_Click">
-                                <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
-                            </Border>
-                        </Grid>
-                    </Border>
-                    <!-- Auto Submit -->
-                    <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
-                        <Grid>
-                            <StackPanel>
-                                <TextBlock Text="Auto-Submit (Press Enter)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
-                                <TextBlock Text="Press Enter after inserting text." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
-                            </StackPanel>
-                            <Border x:Name="ToggleAutoSubmitControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleAutoSubmit_Click">
                                 <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
                             </Border>
                         </Grid>
@@ -66,20 +66,20 @@
                             </Border>
                         </Grid>
                     </Border>
-                    <!-- Local Fallback -->
+                    <!-- Speech Polish (600M Model) -->
                     <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
                         <Grid>
                             <StackPanel>
-                                <TextBlock Text="Enable Local Fallback" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
-                                <TextBlock Text="Use local models if the cloud is unavailable or slow." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                                <TextBlock Text="✨ Enhanced Speech Polish (AI Filler &amp; Disfluency Cleanup)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
+                                <TextBlock Text="Automatically removes 'um/uh', vocal hesitations, stutters, and formats speech fluently in real-time." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
                             </StackPanel>
-                            <Border x:Name="ToggleLocalWhisperControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleLocalWhisper_Click">
+                            <Border x:Name="ToggleSpeechPolishControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleSpeechPolish_Click">
                                 <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
                             </Border>
                         </Grid>
                     </Border>
                     <!-- Cloud Proxy -->
-                    <Border Padding="25">
+                    <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Force Cloud Proxy (VPN Mode)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
@@ -88,6 +88,31 @@
                             <Border x:Name="ToggleForceCloudProxyControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ForceCloudProxy_Click">
                                 <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
                             </Border>
+                        </Grid>
+                    </Border>
+                    <!-- Force Direct API -->
+                    <Border Padding="25" BorderBrush="#0DFFFFFF" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Force Direct API (No Proxy/Fallback)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
+                                <TextBlock Text="Force cloud transcriptions to only use the direct API key, disabling local fallback and backend proxying." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                            </StackPanel>
+                            <Border x:Name="ToggleForceDirectApiControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ForceDirectApi_Click">
+                                <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <!-- Local Voice Engine Selector -->
+                    <Border Padding="25">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Local Speech Engine" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="Bold"/>
+                                <TextBlock Text="Choose between Parakeet Redux (Fast, Accurate) or Whisper Tiny (Lightweight Fallback)." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                            </StackPanel>
+                            <ComboBox x:Name="ComboLocalVoiceEngineControl" HorizontalAlignment="Right" Width="200" Height="34" SelectionChanged="LocalVoiceEngine_Changed" VerticalAlignment="Center">
+                                <ComboBoxItem Content="Parakeet Redux" Tag="ParakeetRedux"/>
+                                <ComboBoxItem Content="Whisper Tiny (77MB)" Tag="WhisperTiny"/>
+                            </ComboBox>
                         </Grid>
                     </Border>
                 </StackPanel>
@@ -110,7 +135,7 @@
                     </StackPanel>
 
                     <!-- Global UI Scale -->
-                    <StackPanel>
+                    <StackPanel Margin="0,0,0,40">
                         <Grid Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="Global UI Scale (DPI Adjustment)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="16" FontWeight="Bold"/>
@@ -120,6 +145,19 @@
                         </Grid>
                         <Slider x:Name="SldUIScaleControl" Minimum="80" Maximum="150" Value="100" ValueChanged="UIScale_Changed"/>
                     </StackPanel>
+
+                    <!-- Always on Top -->
+                    <Border Padding="0,25,0,0" BorderBrush="#0DFFFFFF" BorderThickness="0,1,0,0">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Always on Top" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="16" FontWeight="Bold"/>
+                                <TextBlock Text="Keep the CosmoWhisper window above all other applications." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12"/>
+                            </StackPanel>
+                            <Border x:Name="ToggleAlwaysOnTopControl" HorizontalAlignment="Right" Width="48" Height="26" CornerRadius="13" Background="#30FFFFFF" Cursor="Hand" MouseLeftButtonDown="ToggleAlwaysOnTop_Click">
+                                <Ellipse Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="3"/>
+                            </Border>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -180,7 +218,7 @@
                                 <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
                             </Button.Resources>
                         </Button>
-                        <Button x:Name="BtnBackupNowControl" Content="Back up now" Click="BackupNow_Click" Grid.Column="1" Height="45" Background="#6366F1" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" FontWeight="Bold">
+                        <Button x:Name="BtnBackupNowControl" Content="Back up now" Click="BackupNow_Click" Grid.Column="1" Height="45" Background="{DynamicResource ThemeSecondaryBrush}" Foreground="#151A2C" BorderThickness="0" FontWeight="Bold">
                             <Button.Resources>
                                 <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
                             </Button.Resources>
@@ -196,16 +234,16 @@
                     
                     <TextBlock Text="Date Format" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12" Margin="0,0,0,5"/>
                     <ComboBox x:Name="ComboDateFormatControl" Height="45" Background="#10FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" Margin="0,0,0,20" SelectionChanged="DateFormat_Changed">
-                        <ComboBoxItem Content="31/01/2026 (Short UK)"/>
-                        <ComboBoxItem Content="01/31/2026 (Short US)"/>
-                        <ComboBoxItem Content="31 January 2026 (Long UK)"/>
-                        <ComboBoxItem Content="January 31, 2026 (Long US)"/>
+                        <ComboBoxItem Content="31/01/2026 (Short UK)" Tag="dd/MM/yyyy"/>
+                        <ComboBoxItem Content="01/31/2026 (Short US)" Tag="MM/dd/yyyy"/>
+                        <ComboBoxItem Content="31 January 2026 (Long UK)" Tag="dd MMMM yyyy"/>
+                        <ComboBoxItem Content="January 31, 2026 (Long US)" Tag="MMMM dd, yyyy"/>
                     </ComboBox>
 
                     <TextBlock Text="Time Format" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12" Margin="0,0,0,5"/>
                     <ComboBox x:Name="ComboTimeFormatControl" Height="45" Background="#10FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderThickness="0" SelectionChanged="TimeFormat_Changed">
-                        <ComboBoxItem Content="17:30 (24 Hour Time)"/>
-                        <ComboBoxItem Content="5:30 PM (12 Hour Time)"/>
+                        <ComboBoxItem Content="17:30 (24 Hour Time)" Tag="HH:mm"/>
+                        <ComboBoxItem Content="5:30 PM (12 Hour Time)" Tag="h:mm tt"/>
                     </ComboBox>
                 </StackPanel>
             </Border>
@@ -267,8 +305,6 @@
 
             <!-- HIDDEN FIELDS FOR BACKWARD COMPATIBILITY -->
             <TextBlock x:Name="TxtListeningPromptControl" Visibility="Collapsed"/>
-            <Border x:Name="ToggleManusAgentControl" Visibility="Collapsed"/>
-            <Border x:Name="ToggleManusNarrationControl" Visibility="Collapsed"/>
             <Border x:Name="ToggleLocalOnlyControl" Visibility="Collapsed"/>
             <TextBlock x:Name="LocalModeStatusTitleControl" Visibility="Collapsed"/>
             <TextBlock x:Name="LocalModeStatusDescControl" Visibility="Collapsed"/>

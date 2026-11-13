@@ -18,6 +18,7 @@ namespace CosmoWhisper.Managers
         {
             if (string.IsNullOrWhiteSpace(text)) return;
 
+            string audioFile = "";
             try
             {
                 SpeechStarted?.Invoke();
@@ -26,60 +27,41 @@ namespace CosmoWhisper.Managers
                 string voice = p.SelectedVoice;
                 string apiKey = p.OpenAIApiKey;
                 
-                // Identify if it's a neural voice (OpenAI)
-                string[] neuralVoices = { "Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer", "Ash", "Brook", "Cedar", "Coral", "Sage" };
-                bool isNeural = neuralVoices.Any(nv => string.Equals(nv, voice, StringComparison.OrdinalIgnoreCase));
+                // Force local Windows TTS
+                bool isNeural = false;
                 
-                LogToFile($"Narration Request: Voice='{voice}', isNeural={isNeural}, hasKey={!string.IsNullOrWhiteSpace(apiKey)}");
+                LogToFile($"Narration Request: Voice='{voice}', isNeural={isNeural}");
 
-                string audioFile = "";
-
-                if (isNeural)
+                // Use Local Windows TTS
+                LogToFile($"Generating local speech: {voice}");
+                using var synth = new SpeechSynthesizer();
+                
+                // Match the selected voice with multi-stage fallback for 100% reliability
+                var voices = SpeechSynthesizer.AllVoices;
+                var selectedVoice = voices.FirstOrDefault(v => v.Id == voice)
+                                 ?? voices.FirstOrDefault(v => string.Equals(v.DisplayName, voice, StringComparison.OrdinalIgnoreCase))
+                                 ?? voices.FirstOrDefault(v => v.DisplayName.Contains(voice, StringComparison.OrdinalIgnoreCase));
+                
+                // Explicit Fallback to George (Royal Majesty) if selection is invalid/empty
+                if (selectedVoice == null)
                 {
-                    if (string.IsNullOrWhiteSpace(apiKey))
-                    {
-                        LogToFile("Error: Neural voice selected but OpenAI API Key is missing.");
-                        audioFile = "Error: OpenAI API Key Required for Neural Voices. Please add one in Voice Studio.";
-                    }
-                    else
-                    {
-                        // Use OpenAI Neural Voice
-                        LogToFile($"Generating neural speech via OpenAI: {voice}");
-                        audioFile = await AIService.Shared.GenerateSpeech(text, voice, p.VoiceSpeed, apiKey);
-                    }
+                    selectedVoice = voices.FirstOrDefault(v => v.DisplayName.Contains("George")) 
+                                 ?? voices.FirstOrDefault();
+                    LogToFile($"Selection '{voice}' invalid. Falling back to: {selectedVoice?.DisplayName ?? "System Default"}");
                 }
-                else
+                
+                if (selectedVoice != null) 
                 {
-                    // Use Local Windows TTS
-                    LogToFile($"Generating local speech: {voice}");
-                    using var synth = new SpeechSynthesizer();
-                    
-                    // Match the selected voice with multi-stage fallback for 100% reliability
-                    var voices = SpeechSynthesizer.AllVoices;
-                    var selectedVoice = voices.FirstOrDefault(v => v.Id == voice)
-                                     ?? voices.FirstOrDefault(v => string.Equals(v.DisplayName, voice, StringComparison.OrdinalIgnoreCase))
-                                     ?? voices.FirstOrDefault(v => v.DisplayName.Contains(voice, StringComparison.OrdinalIgnoreCase));
-                    
-                    // Explicit Fallback to George (Royal Majesty) if selection is invalid/empty
-                    if (selectedVoice == null)
-                    {
-                        selectedVoice = voices.FirstOrDefault(v => v.DisplayName.Contains("George")) 
-                                     ?? voices.FirstOrDefault();
-                        LogToFile($"Selection '{voice}' invalid. Falling back to: {selectedVoice?.DisplayName ?? "System Default"}");
-                    }
-                    
-                    if (selectedVoice != null) 
-                    {
-                        synth.Voice = selectedVoice;
-                        LogToFile($"Successfully loaded local voice: {selectedVoice.DisplayName}");
-                    }
-                    
-                    synth.Options.AudioVolume = 1.0; // AudioRecorder handles volume playback
-                    synth.Options.SpeakingRate = p.VoiceSpeed;
-                    
-                    var stream = await synth.SynthesizeTextToStreamAsync(text);
+                    synth.Voice = selectedVoice;
+                    LogToFile($"Successfully loaded local voice: {selectedVoice.DisplayName}");
+                }
+                
+                synth.Options.AudioVolume = 1.0; // AudioRecorder handles volume playback
+                synth.Options.SpeakingRate = p.VoiceSpeed;
+                
+                using (var stream = await synth.SynthesizeTextToStreamAsync(text))
+                {
                     audioFile = Path.Combine(Path.GetTempPath(), $"narration_{Guid.NewGuid()}.wav");
-                    
                     using (var dr = new Windows.Storage.Streams.DataReader(stream.GetInputStreamAt(0)))
                     {
                         await dr.LoadAsync((uint)stream.Size);
@@ -104,6 +86,14 @@ namespace CosmoWhisper.Managers
             }
             finally
             {
+                try
+                {
+                    if (!string.IsNullOrEmpty(audioFile) && File.Exists(audioFile))
+                    {
+                        File.Delete(audioFile);
+                    }
+                }
+                catch { }
                 SpeechEnded?.Invoke();
             }
         }

@@ -21,6 +21,11 @@ namespace CosmoWhisper.Controllers
 {
     public class DashboardController : BaseViewController
     {
+        private Action? _statsUpdatedHandler;
+        private Action? _accessBlockedHandler;
+        private Action? _sessionExpiredHandler;
+        private Action? _preferencesUpdatedHandler;
+
         public DashboardController(DashboardWindow window) : base(window)
         {
         }
@@ -28,27 +33,35 @@ namespace CosmoWhisper.Controllers
         public void Initialize()
         {
             UpdateDashboardStats();
-            
-            // Subscribe to Domain Events
-            AccountService.Shared.StatsUpdated += () => UpdateDashboardStats();
-            AccountService.Shared.AccessBlocked += () => {
-                Window.Dispatcher.Invoke(() => {
+
+            _statsUpdatedHandler = () => UpdateDashboardStats();
+            _accessBlockedHandler = () => {
+                Window.Dispatcher.BeginInvoke(() => {
                     _ = CosmoMessage.Show("Access Paused", "Your access has been paused by an administrator. It will resume automatically when restored.", "🔒");
                 });
             };
-            AccountService.Shared.SessionExpired += () => {
+            _sessionExpiredHandler = () => {
                 SignOut();
-                _ = Task.Delay(500).ContinueWith(_ => Window.Dispatcher.Invoke(() => 
+                _ = Task.Delay(500).ContinueWith(_ => Window.Dispatcher.BeginInvoke(() =>
                 {
                     _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "🔒");
                 }));
             };
+            _preferencesUpdatedHandler = () => UpdateDashboardStats();
 
-            PreferenceManager.Shared.PreferencesUpdated += () => UpdateDashboardStats();
+            // Subscribe to Domain Events
+            AccountService.Shared.StatsUpdated += _statsUpdatedHandler;
+            AccountService.Shared.AccessBlocked += _accessBlockedHandler;
+            AccountService.Shared.SessionExpired += _sessionExpiredHandler;
+            PreferenceManager.Shared.PreferencesUpdated += _preferencesUpdatedHandler;
         }
 
         public void Cleanup()
         {
+            if (_statsUpdatedHandler != null) AccountService.Shared.StatsUpdated -= _statsUpdatedHandler;
+            if (_accessBlockedHandler != null) AccountService.Shared.AccessBlocked -= _accessBlockedHandler;
+            if (_sessionExpiredHandler != null) AccountService.Shared.SessionExpired -= _sessionExpiredHandler;
+            if (_preferencesUpdatedHandler != null) PreferenceManager.Shared.PreferencesUpdated -= _preferencesUpdatedHandler;
         }
 
         public async Task CheckAuthStatus()
@@ -199,13 +212,57 @@ namespace CosmoWhisper.Controllers
             }
         }
 
-        public async Task PerformMagicLogin(string code)
+        public async Task PerformMagicLogin(string code = "")
         {
-             // This is a placeholder for the master version's logic
-             // It seems the master version had this method but it was lost in sync.
-             // We'll implement a basic version that triggers the auth flow.
-             await Task.Yield();
-             _ = CosmoMessage.Show("Magic Link", "Magic Link flow triggered. Please check your email.", "✨");
+            try
+            {
+                // Step 1: Prompt user for email address
+                string? email = await Window.ShowInputDialogAsync("Sign in with Magic Code", "Enter your account email address to receive your sign-in code:", "", "📧");
+                if (string.IsNullOrWhiteSpace(email)) return;
+
+                email = email.Trim();
+
+                // Step 2: Request 6-digit OTP code from backend
+                DiagnosticManager.Shared.Log($"Requesting Magic Code for: {email}", "AUTH");
+                var (reqSuccess, reqMessage) = await BackendService.Shared.RequestMagicCode(email);
+
+                if (!reqSuccess)
+                {
+                    _ = CosmoMessage.Show("Request Failed", reqMessage, "❌");
+                    return;
+                }
+
+                // Step 3: Prompt for the 6-digit verification code
+                string? inputCode = await Window.ShowInputDialogAsync("Enter Verification Code", $"A 6-digit code was sent to {email}.\nEnter the code below:", "", "🔑");
+                if (string.IsNullOrWhiteSpace(inputCode)) return;
+
+                inputCode = inputCode.Trim();
+
+                // Step 4: Verify the code with backend
+                DiagnosticManager.Shared.Log($"Verifying Magic Code for: {email}", "AUTH");
+                var (verifySuccess, verifyMessage) = await BackendService.Shared.VerifyMagicCode(email, inputCode);
+
+                if (verifySuccess)
+                {
+                    AppState.Shared.IsAccessBlocked = false;
+                    AccountService.Shared.StartHeartbeat();
+
+                    // Navigate to Dashboard
+                    Window._navigation?.ShowDashboard();
+
+                    _ = CosmoMessage.Show("Welcome", $"Signed in successfully as {email}!", "🎉");
+                    await CheckAuthStatus();
+                }
+                else
+                {
+                    _ = CosmoMessage.Show("Verification Failed", verifyMessage, "❌");
+                }
+            }
+            catch (Exception ex)
+            {
+                DiagnosticManager.Shared.Log($"PerformMagicLogin Exception: {ex.Message}", "ERROR");
+                _ = CosmoMessage.Show("Error", "An unexpected error occurred during sign-in. Please try again.", "❌");
+            }
         }
 
         public void SignOut()

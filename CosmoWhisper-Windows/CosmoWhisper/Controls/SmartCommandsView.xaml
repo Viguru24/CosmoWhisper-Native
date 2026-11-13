@@ -109,8 +109,9 @@
 
             <!-- Portal Gun (App Launcher) -->
             <TextBlock Text="&#x1F680; Portal Gun" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
-            <TextBlock Text="Say &quot;Open [App]&quot; to teleport instantly." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
+            <TextBlock Text="Say &quot;Open [App]&quot; or web commands to teleport instantly." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
             <WrapPanel Margin="0,0,0,30">
+                <!-- The Writer -->
                 <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -124,7 +125,51 @@
                         <TextBlock Text="Summon the blank page. Let the words flow." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
-                <!-- Add other items here if needed, or keeping it short for brevity -->
+
+                <!-- The Navigator -->
+                <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF0D9488" Offset="0"/>
+                            <GradientStop Color="#FF0F766E" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="15" VerticalAlignment="Center">
+                        <TextBlock Text="The Navigator" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Open Microsoft'" Foreground="#67E8F9" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Teleport directly to Microsoft.com or other sites." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Searcher -->
+                <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF4F46E5" Offset="0"/>
+                            <GradientStop Color="#FF4338CA" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="15" VerticalAlignment="Center">
+                        <TextBlock Text="The Searcher" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'Search [Query]'" Foreground="#818CF8" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Launch Google search for any topic instantly." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- The Streamer -->
+                <Border Width="220" Height="130" CornerRadius="15" Margin="0,0,10,10" BorderBrush="#20FFFFFF" BorderThickness="1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFE11D48" Offset="0"/>
+                            <GradientStop Color="#FFBE123C" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="15" VerticalAlignment="Center">
+                        <TextBlock Text="The Streamer" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="Trigger: 'YouTube [Query]'" Foreground="#FDA4AF" FontSize="13" Margin="0,4,0,0" FontWeight="SemiBold"/>
+                        <TextBlock Text="Find videos on YouTube or Utube immediately." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.8" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
             </WrapPanel>
         </StackPanel>
     </ScrollViewer>

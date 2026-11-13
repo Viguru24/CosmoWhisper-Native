@@ -35,6 +35,47 @@
                 </StackPanel>
             </Border>
 
+            <!-- CUSTOM API KEYS (BYOK) -->
+            <Border Background="#10FFFFFF" CornerRadius="20" Padding="30" Margin="0,0,0,30" BorderBrush="#15FFFFFF" BorderThickness="1">
+                <StackPanel>
+                    <Grid Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="Custom API Keys (BYOK)" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="18" FontWeight="Bold"/>
+                            <TextBlock Text="Bring your own API key for unlimited AI speed and &quot;Ask Cosmo&quot; reasoning." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.5" FontSize="12" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Border Background="#2034C759" CornerRadius="10" Padding="10,4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="🔒 DPAPI Encrypted" Foreground="#34C759" FontSize="11" FontWeight="Bold"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Groq API Key -->
+                    <TextBlock Text="GROQ API KEY (Recommended for Ultra-Fast Speech &amp; Llama 3)" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.6" FontSize="11" FontWeight="Bold" Margin="0,10,0,6"/>
+                    <Grid Margin="0,0,0,15">
+                        <PasswordBox x:Name="TxtGroqApiKeyControl" Height="46" Background="#15FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderBrush="#30FFFFFF" BorderThickness="1" Padding="12,0" VerticalContentAlignment="Center">
+                            <PasswordBox.Resources>
+                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
+                            </PasswordBox.Resources>
+                        </PasswordBox>
+                    </Grid>
+
+                    <!-- OpenAI API Key -->
+                    <TextBlock Text="OPENAI API KEY (Optional fallback / GPT-4o)" Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.6" FontSize="11" FontWeight="Bold" Margin="0,5,0,6"/>
+                    <Grid Margin="0,0,0,20">
+                        <PasswordBox x:Name="TxtOpenAIApiKeyControl" Height="46" Background="#15FFFFFF" Foreground="{DynamicResource ThemeForegroundBrush}" BorderBrush="#30FFFFFF" BorderThickness="1" Padding="12,0" VerticalContentAlignment="Center">
+                            <PasswordBox.Resources>
+                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="10"/></Style>
+                            </PasswordBox.Resources>
+                        </PasswordBox>
+                    </Grid>
+
+                    <Button x:Name="BtnSaveApiKeysControl" Content="Save API Keys" Click="BtnSaveApiKeys_Click" HorizontalAlignment="Right" Padding="24,10" Background="#007AFF" Foreground="White" FontWeight="Bold" BorderThickness="0">
+                        <Button.Resources>
+                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="12"/></Style>
+                        </Button.Resources>
+                    </Button>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

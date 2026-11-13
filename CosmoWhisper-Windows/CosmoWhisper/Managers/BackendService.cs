@@ -1,10 +1,13 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.Json;
 using CosmoWhisper.Services;
+using CosmoWhisper.Interfaces;
+
 
 namespace CosmoWhisper.Managers
 {
@@ -19,23 +22,25 @@ namespace CosmoWhisper.Managers
     {
         public bool Is_Active { get; set; }
         public string Email { get; set; }
+        public string Tier { get; set; }
     }
 
-    public class BackendService
+    public class BackendService : IBackendService
+
     {
-        public static BackendService Shared { get; } = new BackendService();
-        private HttpClient _client;
+        public static BackendService Shared => (BackendService)ServiceLocator.GetService<IBackendService>();
+        private readonly IPreferenceManager _preferenceManager;
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private volatile Uri _baseUri = new Uri("https://api.cosmowhisper.com/");
 
         public void LogEvent(string msg)
         {
             try { AIService.Shared.LogEvent("[BackendService] " + msg); } catch { }
         }
 
-        public BackendService()
+        public BackendService(IPreferenceManager preferenceManager)
         {
-            _client = new HttpClient();
-            _client.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
+            _preferenceManager = preferenceManager;
             UpdateBaseAddress();
         }
 
@@ -43,7 +48,7 @@ namespace CosmoWhisper.Managers
 
         public void UpdateBaseAddress()
         {
-            var p = PreferenceManager.Shared.Preferences;
+            var p = _preferenceManager.Preferences;
             string url = p.BackendUrl;
 
             // Simple safety check
@@ -52,34 +57,39 @@ namespace CosmoWhisper.Managers
 
             try
             {
-                _client.BaseAddress = new Uri(url);
-                _client.DefaultRequestHeaders.Authorization = null;
+                _baseUri = new Uri(url);
                 LogEvent($"[Init] Base address set to: {url}");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[BackendService] Error updating base address to {url}: {ex.Message}");
+            }
         }
 
         private HttpRequestMessage CreateRequest(HttpMethod method, string path)
         {
-            var request = new HttpRequestMessage(method, path);
-            var p = PreferenceManager.Shared.Preferences;
+            var requestUri = new Uri(_baseUri, path.TrimStart('/'));
+            var request = new HttpRequestMessage(method, requestUri);
+            var p = _preferenceManager.Preferences;
             string token = string.IsNullOrEmpty(p.AuthToken) ? p.LicenseToken : p.AuthToken;
-            
-            if (!string.IsNullOrEmpty(token))
+
+            // Basic validation to prevent malformed or empty headers
+            if (!string.IsNullOrWhiteSpace(token) && token.Length > 10) 
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim());
             }
             return request;
         }
+
+        private HttpClient GetClient() => SharedHttpClient.Instance;
 
         public async Task<(bool success, string message)> Login()
         {
             try
             {
-                // Simple empty post to trigger the mock login
-                var content = new StringContent("{}", Encoding.UTF8, "application/json");
-
-                var response = await _client.PostAsync("api/auth/login", content);
+                using var request = CreateRequest(HttpMethod.Post, "api/auth/login");
+                request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+                using var response = await GetClient().SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -88,7 +98,7 @@ namespace CosmoWhisper.Managers
 
                     if (result != null)
                     {
-                        var p = PreferenceManager.Shared.Preferences;
+                        var p = _preferenceManager.Preferences;
                         p.AuthToken = result.token;
                         p.UserTier = result.user.tier;
                         p.IsAIUnlocked = result.user.tier != "free";
@@ -125,9 +135,10 @@ namespace CosmoWhisper.Managers
             {
                 var payload = new { email };
                 var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var request = CreateRequest(HttpMethod.Post, "api/auth/request-otp");
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _client.PostAsync("api/auth/request-otp", content);
+                using var response = await GetClient().SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -159,9 +170,10 @@ namespace CosmoWhisper.Managers
             {
                 var payload = new { email, code };
                 var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var request = CreateRequest(HttpMethod.Post, "api/auth/verify-otp");
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _client.PostAsync("api/auth/verify-otp", content);
+                using var response = await GetClient().SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -170,7 +182,7 @@ namespace CosmoWhisper.Managers
 
                     if (result != null)
                     {
-                        var p = PreferenceManager.Shared.Preferences;
+                        var p = _preferenceManager.Preferences;
                         p.AuthToken = result.token;
                         p.UserTier = result.user.tier;
                         p.IsAIUnlocked = result.user.tier != "free";
@@ -202,15 +214,23 @@ namespace CosmoWhisper.Managers
 
         public async Task<SyncResult> SyncStatus()
         {
-            var p = PreferenceManager.Shared.Preferences;
-            if (p.AuthToken == "dev-bypass-active" || p.LicenseToken == "dev-bypass-active")
+            var p = _preferenceManager.Preferences;
+            // FORCE BYPASS: Only allow explicit dev bypass token or unauthenticated local dev when IsDevMode is active
+            bool isExplicitBypass = PreferenceManager.Shared.IsDevMode && (p.AuthToken == "dev-bypass-active" || p.LicenseToken == "dev-bypass-active");
+            bool isDevModeUnauthenticated = PreferenceManager.Shared.IsDevMode && string.IsNullOrEmpty(p.AuthToken);
+
+            if (isExplicitBypass || isDevModeUnauthenticated)
             {
-                p.UserTier = "unlimited";
-                p.UserEmail = "dev@cosmowhisper.local";
-                p.IsAIUnlocked = true;
-                p.UsageMinutes = 0;
-                p.UsageLimitMinutes = 999999;
-                PreferenceManager.Shared.Save();
+                // Only overwrite if we aren't already logged in with a real account (or if explicit)
+                if (isExplicitBypass || string.IsNullOrEmpty(p.UserEmail) || p.UserEmail == "dev@cosmowhisper.local")
+                {
+                    p.UserTier = "unlimited";
+                    p.UserEmail = "dev@cosmowhisper.local";
+                    p.IsAIUnlocked = true;
+                    p.UsageMinutes = 0;
+                    p.UsageLimitMinutes = 999999;
+                    PreferenceManager.Shared.Save();
+                }
                 return SyncResult.Success;
             }
 
@@ -218,8 +238,8 @@ namespace CosmoWhisper.Managers
             {
                 using var request = CreateRequest(HttpMethod.Get, "api/license/status");
                 using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
-                LogEvent($"[SyncStatus] Pinging {(_client.BaseAddress?.ToString() ?? "N/A")}api/license/status ...");
-                var response = await _client.SendAsync(request, cts.Token);
+                LogEvent($"[SyncStatus] Pinging {_baseUri}api/license/status ...");
+                using var response = await GetClient().SendAsync(request, cts.Token);
                 LogEvent($"[SyncStatus] Received status: {response.StatusCode}");
 
                 // Explicit auth failure — server actively rejected the token
@@ -269,7 +289,7 @@ namespace CosmoWhisper.Managers
                 var json = JsonSerializer.Serialize(payload);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _client.SendAsync(request);
+                using var response = await GetClient().SendAsync(request);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -284,7 +304,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 using var request = CreateRequest(HttpMethod.Get, "api/tickets/all");
-                var response = await _client.SendAsync(request);
+                using var response = await GetClient().SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
@@ -313,22 +333,65 @@ namespace CosmoWhisper.Managers
             return null;
         }
 
-        public async Task<System.IO.Stream?> GetStatusStream()
+        public async Task<System.IO.Stream?> GetStatusStream(CancellationToken cancellationToken = default)
         {
+            HttpResponseMessage? response = null;
             try
             {
-                var request = CreateRequest(HttpMethod.Get, "api/license/status-stream");
-                var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                using var request = CreateRequest(HttpMethod.Get, "api/license/status-stream");
+                response = await SharedHttpClient.StreamInstance.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadAsStreamAsync();
+                    var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    return new HttpResponseStream(response, stream);
                 }
+                response.Dispose();
+            }
+            catch (OperationCanceledException)
+            {
+                response?.Dispose();
+                throw;
             }
             catch (Exception ex)
             {
+                response?.Dispose();
                 System.Diagnostics.Debug.WriteLine($"Status Stream Error: {ex.Message}");
             }
             return null;
+        }
+
+        private sealed class HttpResponseStream : System.IO.Stream
+        {
+            private readonly HttpResponseMessage _response;
+            private readonly System.IO.Stream _inner;
+
+            public HttpResponseStream(HttpResponseMessage response, System.IO.Stream inner)
+            {
+                _response = response;
+                _inner = inner;
+            }
+
+            public override bool CanRead => _inner.CanRead;
+            public override bool CanSeek => _inner.CanSeek;
+            public override bool CanWrite => _inner.CanWrite;
+            public override long Length => _inner.Length;
+            public override long Position { get => _inner.Position; set => _inner.Position = value; }
+            public override void Flush() => _inner.Flush();
+            public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
+            public override System.Threading.Tasks.ValueTask<int> ReadAsync(System.Memory<byte> buffer, CancellationToken cancellationToken = default) => _inner.ReadAsync(buffer, cancellationToken);
+            public override long Seek(long offset, System.IO.SeekOrigin origin) => _inner.Seek(offset, origin);
+            public override void SetLength(long value) => _inner.SetLength(value);
+            public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    _inner.Dispose();
+                    _response.Dispose();
+                }
+                base.Dispose(disposing);
+            }
         }
 
         public async Task<bool> SignOut()
@@ -336,7 +399,7 @@ namespace CosmoWhisper.Managers
             try
             {
                 using var request = CreateRequest(HttpMethod.Post, "api/auth/logout");
-                var response = await _client.SendAsync(request);
+                using var response = await GetClient().SendAsync(request);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)

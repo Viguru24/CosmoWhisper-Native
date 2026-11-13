@@ -15,7 +15,10 @@ namespace CosmoWhisper.Managers
 {
     public class ProtocolHandler
     {
-        private const string ProtocolName = "cosmowhisper";
+        public static string ProtocolName => PreferenceManager.Shared.IsDevMode ? "cosmowhisper-dev" : "cosmowhisper";
+        private static readonly object _dedupeLock = new object();
+        private static string _lastHandledUrl = "";
+        private static DateTime _lastHandledTime = DateTime.MinValue;
 
         private static void LogEvent(string msg)
         {
@@ -31,6 +34,9 @@ namespace CosmoWhisper.Managers
 
         public static void Register()
         {
+            // Skip manual registry registration for Store/Packaged versions (it's in the manifest)
+            if (PreferenceManager.Shared.Preferences.IsStoreVersion) return;
+
             try
             {
                 string exePath = Process.GetCurrentProcess().MainModule.FileName;
@@ -76,6 +82,16 @@ namespace CosmoWhisper.Managers
         public static void Handle(string url)
         {
             if (string.IsNullOrEmpty(url) || !url.StartsWith(ProtocolName + ":", StringComparison.OrdinalIgnoreCase)) return;
+
+            lock (_dedupeLock)
+            {
+                if (string.Equals(url, _lastHandledUrl, StringComparison.Ordinal) && (DateTime.UtcNow - _lastHandledTime).TotalSeconds < 2.0)
+                {
+                    return;
+                }
+                _lastHandledUrl = url;
+                _lastHandledTime = DateTime.UtcNow;
+            }
 
             try
             {
@@ -168,14 +184,18 @@ namespace CosmoWhisper.Managers
                     }
                     else if (action.Equals("unlock", StringComparison.OrdinalIgnoreCase))
                     {
+#if DEV_BUILD
                         var key = GetQueryParam(query, "key");
-                        if (key == "COSMO_PREMIUM_2024")
+                        if (PreferenceManager.Shared.IsDevMode && key == "COSMO_PREMIUM_2024")
                         {
                             PreferenceManager.Shared.Preferences.IsAIUnlocked = true;
                             PreferenceManager.Shared.Save();
-                            _ = UIEvents.Shared.ShowMessageAsync("Protocol Activation", "Welcome to the Inner Circle. Cosmo Intelligence Unlocked!", "👤");
-                            LogEvent("AI Unlocked via protocol.");
+                            _ = UIEvents.Shared.ShowMessageAsync("Protocol Activation", "Dev build intelligence unlocked.", "👤");
+                            LogEvent("AI Unlocked via dev protocol.");
                         }
+#else
+                        LogEvent("Protocol unlock skipped in production build.");
+#endif
                     }
                 }
                 else
@@ -189,7 +209,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        private static string GetQueryParam(string query, string name)
+        private static string? GetQueryParam(string query, string name)
         {
             var parts = query.Split('&');
             foreach (var part in parts)

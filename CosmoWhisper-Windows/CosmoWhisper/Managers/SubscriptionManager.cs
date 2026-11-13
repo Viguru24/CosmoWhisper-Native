@@ -19,10 +19,6 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                var email = PreferenceManager.Shared.Preferences?.UserEmail?.ToLower();
-                if (email == "bruce.wayne@wayneenterprises.com")
-                    return UserTier.Ultimate;
-                    
                 var tier = PreferenceManager.Shared.Preferences?.UserTier?.ToLower() ?? "free";
                 
                 if (tier == "ultimate" || tier == "admin" || tier == "unlimited") return UserTier.Ultimate;
@@ -39,7 +35,9 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (PreferenceManager.Shared.Preferences.IsStoreVersion) return "Store Edition (Lite)";
+                if (PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier == UserTier.Free)
+                    return "Store Edition (Lite)";
+
                 return CurrentTier switch
                 {
                     UserTier.Ultimate => "Ultimate Plan",
@@ -51,7 +49,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public string TierIcon => PreferenceManager.Shared.Preferences.IsStoreVersion ? "🛒" : CurrentTier switch
+        public string TierIcon => (PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier == UserTier.Free) ? "🛒" : CurrentTier switch
         {
             UserTier.Ultimate => "🚀",
             UserTier.Professional => "🚀",
@@ -60,7 +58,7 @@ namespace CosmoWhisper.Managers
             _ => "🌱"
         };
 
-        public bool IsUnlimited => PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com" || (!PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free);
+        public bool IsUnlimited => PreferenceManager.Shared.IsDevMode || CurrentTier != UserTier.Free;
 
         // Feature Gating
         public bool HasUltraAccuracy => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
@@ -71,13 +69,14 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (PreferenceManager.Shared.Preferences?.UserEmail?.ToLower() == "bruce.wayne@wayneenterprises.com") return 999999;
-                
-                return (PreferenceManager.Shared.Preferences?.IsStoreVersion == true) ? 60 : CurrentTier switch
+                if (PreferenceManager.Shared.IsDevMode) return 999999;
+
+                if (CurrentTier == UserTier.Free)
                 {
-                    UserTier.Free => 60,
-                    _ => 999999 // All paid plans are unlimited
-                };
+                    int configured = PreferenceManager.Shared.Preferences?.UsageLimitMinutes ?? 60;
+                    return Math.Max(60, configured);
+                }
+                return 999999; // All paid plans are unlimited
             }
         }
     }

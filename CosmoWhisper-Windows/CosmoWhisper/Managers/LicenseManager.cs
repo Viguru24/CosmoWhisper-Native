@@ -19,20 +19,13 @@ namespace CosmoWhisper.Managers
     public class LicenseManager
     {
         public static LicenseManager Shared { get; } = new LicenseManager();
-        private readonly HttpClient _httpClient;
-
-        public LicenseManager()
-        {
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(10);
-        }
 
         public async Task<bool> SyncStatusAsync()
         {
             var prefs = PreferenceManager.Shared.Preferences;
             if (string.IsNullOrEmpty(prefs.LicenseToken)) return false;
 
-            if (prefs.LicenseToken == "dev-bypass-active")
+            if (PreferenceManager.Shared.IsDevMode && prefs.LicenseToken == "dev-bypass-active")
             {
                 prefs.UserTier = "unlimited";
                 prefs.UserEmail = "dev@cosmowhisper.local";
@@ -45,10 +38,11 @@ namespace CosmoWhisper.Managers
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken);
                 string url = $"{prefs.BackendUrl.TrimEnd('/')}/api/license/status";
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken.Trim());
 
-                var response = await _httpClient.GetAsync(url);
+                using var response = await SharedHttpClient.Instance.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
@@ -100,16 +94,16 @@ namespace CosmoWhisper.Managers
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken);
                 string url = $"{prefs.BackendUrl.TrimEnd('/')}/api/license/report-usage";
-
-                var content = new StringContent(
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", prefs.LicenseToken.Trim());
+                request.Content = new StringContent(
                     JsonSerializer.Serialize(new { durationMs = durationSeconds * 1000 }),
                     System.Text.Encoding.UTF8,
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync(url, content);
+                using var response = await SharedHttpClient.Instance.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
                     // Refresh status after reporting

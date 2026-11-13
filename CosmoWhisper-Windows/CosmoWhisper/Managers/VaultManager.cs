@@ -147,7 +147,7 @@ namespace CosmoWhisper.Managers
             catch (Exception ex)
             {
                 if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, true);
-                throw ex; // Re-throw to controller
+                throw; // Re-throw to controller
             }
             finally
             {

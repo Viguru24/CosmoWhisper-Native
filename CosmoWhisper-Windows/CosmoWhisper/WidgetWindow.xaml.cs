@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,6 +29,19 @@ namespace CosmoWhisper
         private readonly MouseButtonManager _mouseButtonManager = new();
         public static DashboardWindow? _dashboard;
         private readonly SolidColorBrush _cachedWhiteBrush;
+        private readonly SolidColorBrush _cachedGreenBrush;
+        private readonly SolidColorBrush _orbMainBrush = new(Color.FromRgb(0, 122, 255));
+        private readonly SolidColorBrush _orbGlowBrush = new(Color.FromRgb(0, 122, 255));
+        private readonly SolidColorBrush _satelliteBrush = new(Color.FromRgb(0, 122, 255));
+
+        private Action? _hotKeyPressedHandler;
+        private Action? _hotKeyReleasedHandler;
+        private Action? _mousePressedHandler;
+        private Action? _mouseReleasedHandler;
+        private Action? _preferencesUpdatedHandler;
+        private CancellationTokenSource? _hintRestoreCts;
+        private CancellationTokenSource? _savePositionCts;
+        private string _baseHotkeyHint = "Double-click to dictate";
         
         private readonly ILogger _logger;
         private readonly IColorProvider _colorProvider;
@@ -53,11 +68,21 @@ namespace CosmoWhisper
             
             DataContext = _viewModel;
 
+            _cachedWhiteBrush = new SolidColorBrush(Colors.White) { Opacity = 0.8 };
+            if (_cachedWhiteBrush.CanFreeze) _cachedWhiteBrush.Freeze();
+
+            _cachedGreenBrush = new SolidColorBrush(Color.FromRgb(50, 215, 75));
+            if (_cachedGreenBrush.CanFreeze) _cachedGreenBrush.Freeze();
+
+            OrbMain.Fill = _orbMainBrush;
+            OrbGlow.Fill = _orbGlowBrush;
+            SatelliteOrb.Fill = _satelliteBrush;
+
             this.SourceInitialized += (s, e) =>
             {
                 // Set gear color based on build type/mode
                 if (PreferenceManager.Shared.IsDevMode) GearIcon.Fill = Brushes.Orange;
-                else if (!PreferenceManager.Shared.Preferences.IsStoreVersion) GearIcon.Fill = new SolidColorBrush(Color.FromRgb(50, 215, 75)); 
+                else if (!PreferenceManager.Shared.Preferences.IsStoreVersion) GearIcon.Fill = _cachedGreenBrush;
                 else GearIcon.Fill = Brushes.Gray;
 
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
@@ -69,7 +94,8 @@ namespace CosmoWhisper
             this.Loaded += (s, e) => 
             {
                 LoadPosition();
-                this.LocationChanged += (s, e) => SavePosition();
+                _baseHotkeyHint = TxtHotkeyHint.Text;
+                this.LocationChanged += (s2, e2) => ScheduleSavePosition();
                 _animationService.StartIdleAnimations(this);
             };
 
@@ -79,9 +105,6 @@ namespace CosmoWhisper
             {
                 if (child is System.Windows.Shapes.Rectangle rect) _bars.Add(rect);
             }
-
-            _cachedWhiteBrush = new SolidColorBrush(Colors.White) { Opacity = 0.8 };
-            if (_cachedWhiteBrush.CanFreeze) _cachedWhiteBrush.Freeze();
 
             WireEvents();
         }
@@ -95,12 +118,17 @@ namespace CosmoWhisper
             AudioRecorder.Shared.ErrorOccurred += OnErrorOccurred;
             CommandController.Shared.CommandExecuted += OnCommandExecuted;
 
-            _hotKeyManager.KeyPressed += () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
-            _hotKeyManager.KeyReleased += () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
-            _mouseButtonManager.ButtonPressed += () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
-            _mouseButtonManager.ButtonReleased += () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _hotKeyPressedHandler = () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _hotKeyReleasedHandler = () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _mousePressedHandler = () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _mouseReleasedHandler = () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
 
-            PreferenceManager.Shared.PreferencesUpdated += () =>
+            _hotKeyManager.KeyPressed += _hotKeyPressedHandler;
+            _hotKeyManager.KeyReleased += _hotKeyReleasedHandler;
+            _mouseButtonManager.ButtonPressed += _mousePressedHandler;
+            _mouseButtonManager.ButtonReleased += _mouseReleasedHandler;
+
+            _preferencesUpdatedHandler = () =>
             {
                 if (!this.IsLoaded) return;
                 Dispatcher.BeginInvoke(() => {
@@ -110,9 +138,28 @@ namespace CosmoWhisper
                     ApplyWidgetTransparency();
                 });
             };
+            PreferenceManager.Shared.PreferencesUpdated += _preferencesUpdatedHandler;
 
             this.Closed += (s, e) => {
+                _savePositionCts?.Cancel();
+                _savePositionCts?.Dispose();
+                _hintRestoreCts?.Cancel();
+                _hintRestoreCts?.Dispose();
                 SavePosition();
+
+                AudioRecorder.Shared.IsRecordingChanged -= OnIsRecordingChanged;
+                AudioRecorder.Shared.AudioLevelChanged -= OnAudioLevelChanged;
+                AudioRecorder.Shared.TranscriptionReceived -= OnTranscriptionReceived;
+                AudioRecorder.Shared.TranscriptionSourceReceived -= OnTranscriptionSourceReceived;
+                AudioRecorder.Shared.ErrorOccurred -= OnErrorOccurred;
+                CommandController.Shared.CommandExecuted -= OnCommandExecuted;
+
+                if (_hotKeyPressedHandler != null) _hotKeyManager.KeyPressed -= _hotKeyPressedHandler;
+                if (_hotKeyReleasedHandler != null) _hotKeyManager.KeyReleased -= _hotKeyReleasedHandler;
+                if (_mousePressedHandler != null) _mouseButtonManager.ButtonPressed -= _mousePressedHandler;
+                if (_mouseReleasedHandler != null) _mouseButtonManager.ButtonReleased -= _mouseReleasedHandler;
+                if (_preferencesUpdatedHandler != null) PreferenceManager.Shared.PreferencesUpdated -= _preferencesUpdatedHandler;
+
                 _hotKeyManager.Dispose();
                 _mouseButtonManager.Dispose();
                 _sineAnimTimer?.Dispose();
@@ -136,7 +183,7 @@ namespace CosmoWhisper
                     {
                         _sinePhase += 0.18;
                         Dispatcher.BeginInvoke(() => _animationService.DrawSineWave(SineWaveCanvas, SineWavePath, SineWaveGlow, _sinePhase, _currentAmplitude));
-                    }, null, 0, 16);
+                    }, null, 0, 33);
 
                     _animationService.StartRecordingAnimations(this);
                     SetTheme(Colors.White, "");
@@ -229,8 +276,12 @@ namespace CosmoWhisper
         {
             Dispatcher.BeginInvoke(new Action(async () =>
             {
+                _hintRestoreCts?.Cancel();
+                _hintRestoreCts?.Dispose();
+                _hintRestoreCts = new CancellationTokenSource();
+                var token = _hintRestoreCts.Token;
+
                 string icon = source.Contains("Local") ? "🏠" : "☁️";
-                string originalHint = TxtHotkeyHint.Text;
                 TxtHotkeyHint.Text = $"{icon} {source}: {timeMs}ms";
                 TxtHotkeyHint.Opacity = 1.0;
                 TxtHotkeyHint.Foreground = source.Contains("Local") ? Brushes.Cyan : Brushes.White;
@@ -238,10 +289,19 @@ namespace CosmoWhisper
                 if (source.Contains("Local"))
                 {
                     var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(300)) { AutoReverse = true };
-                    OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                    _orbMainBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
                 }
-                await Task.Delay(3000);
-                TxtHotkeyHint.Text = originalHint;
+
+                try
+                {
+                    await Task.Delay(3000, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                TxtHotkeyHint.Text = _baseHotkeyHint;
                 TxtHotkeyHint.Opacity = 0.3;
                 TxtHotkeyHint.Foreground = Brushes.White;
             }));
@@ -253,7 +313,7 @@ namespace CosmoWhisper
             {
                 _animationService.BeginRipple(this);
                 var colorAnim = new ColorAnimation(Colors.Gold, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
-                OrbGlow.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                _orbGlowBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
             }));
         }
 
@@ -261,13 +321,7 @@ namespace CosmoWhisper
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                OrbMain.Fill = new SolidColorBrush(Colors.OrangeRed);
-                OrbGlow.Fill = new SolidColorBrush(Colors.OrangeRed);
-                if (TxtStatus != null)
-                {
-                    TxtStatus.Text = "Error: " + error;
-                    TxtStatus.Visibility = Visibility.Visible;
-                }
+                SetTheme(Colors.OrangeRed, "Error: " + error);
                 Task.Delay(3000).ContinueWith(_ => Dispatcher.BeginInvoke(new Action(() => ResetOrbToIdle())));
             }));
         }
@@ -284,10 +338,18 @@ namespace CosmoWhisper
 
         private void SetTheme(Color color, string statusText)
         {
-            var brush = new SolidColorBrush(color);
-            OrbMain.Fill = brush;
-            OrbGlow.Fill = brush;
-            SatelliteOrb.Fill = brush;
+            _orbMainBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            _orbGlowBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            _satelliteBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+
+            _orbMainBrush.Color = color;
+            _orbGlowBrush.Color = color;
+            _satelliteBrush.Color = color;
+
+            OrbMain.Fill = _orbMainBrush;
+            OrbGlow.Fill = _orbGlowBrush;
+            SatelliteOrb.Fill = _satelliteBrush;
+
             // Only show status text if it's an error or important notification (not normal states like Thinking/Ready)
             if (!string.IsNullOrEmpty(statusText) && TxtStatus != null)
             {
@@ -336,6 +398,21 @@ namespace CosmoWhisper
                     _logger.LogWarning($"Failed to update topmost state: {ex.Message}");
                 }
             }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private async void ScheduleSavePosition()
+        {
+            _savePositionCts?.Cancel();
+            _savePositionCts?.Dispose();
+            _savePositionCts = new CancellationTokenSource();
+            var token = _savePositionCts.Token;
+
+            try
+            {
+                await Task.Delay(400, token);
+                SavePosition();
+            }
+            catch (OperationCanceledException) { }
         }
 
         private void SavePosition()

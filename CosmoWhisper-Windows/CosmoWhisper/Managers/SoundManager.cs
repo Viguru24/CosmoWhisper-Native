@@ -7,31 +7,25 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.CoreAudioApi;
 
+using CosmoWhisper.Interfaces;
+
 namespace CosmoWhisper.Managers
+
 {
-    public class SoundManager
+    public class SoundManager : ISoundManager
+
     {
-        public static SoundManager Shared { get; } = new SoundManager();
+        public static SoundManager Shared => (SoundManager)ServiceLocator.GetService<ISoundManager>();
         private readonly object _playLock = new object();
 
-        private SoundManager()
+        public SoundManager()
         {
-            try
+            // Adjust session volume once after startup rather than polling in an infinite background loop (<1% idle CPU)
+            _ = Task.Run(async () =>
             {
-                // Ensure Cosmo keeps its volume at 100% across all devices
-                _ = Task.Run(async () =>
-                {
-                    // Wait for system to settle (prevent startup race conditions)
-                    await Task.Delay(10000);
-
-                    while (true)
-                    {
-                        try { ForceProcessVolumeMax(); } catch { }
-                        await Task.Delay(5000);
-                    }
-                });
-            }
-            catch { }
+                await Task.Delay(5000);
+                ForceProcessVolumeMax();
+            });
         }
 
         public void ForceProcessVolumeMax()
@@ -45,28 +39,31 @@ namespace CosmoWhisper.Managers
 
                     foreach (var device in devices)
                     {
-                        try
+                        using (device)
                         {
-                            var sessionManager = device.AudioSessionManager;
-                            if (sessionManager == null) continue;
-
-                            var sessions = sessionManager.Sessions;
-                            for (int i = 0; i < sessions.Count; i++)
+                            try
                             {
-                                using (var session = sessions[i])
+                                var sessionManager = device.AudioSessionManager;
+                                if (sessionManager == null) continue;
+
+                                var sessions = sessionManager.Sessions;
+                                for (int i = 0; i < sessions.Count; i++)
                                 {
-                                    if (session.GetProcessID == myPid || session.DisplayName.Contains("CosmoWhisper", StringComparison.OrdinalIgnoreCase))
+                                    using (var session = sessions[i])
                                     {
-                                        if (session.SimpleAudioVolume.Volume < 1.0f || session.SimpleAudioVolume.Mute)
+                                        if (session.GetProcessID == myPid || session.DisplayName.Contains("CosmoWhisper", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            session.SimpleAudioVolume.Volume = 1.0f;
-                                            session.SimpleAudioVolume.Mute = false;
+                                            if (session.SimpleAudioVolume.Volume < 1.0f || session.SimpleAudioVolume.Mute)
+                                            {
+                                                session.SimpleAudioVolume.Volume = 1.0f;
+                                                session.SimpleAudioVolume.Mute = false;
+                                            }
                                         }
                                     }
                                 }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                 }
             }
@@ -85,6 +82,7 @@ namespace CosmoWhisper.Managers
                     try
                     {
                         if (!PreferenceManager.Shared.Preferences.InteractionSoundsEnabled) return;
+                        ForceProcessVolumeMax();
 
                         // Premium Asset Path
                         string fileName = isStart ? "mic_start_new.wav" : "mic_stop_new.wav";

@@ -19,6 +19,7 @@ namespace CosmoWhisper.Controllers
         {
             AudioRecorder.Shared.StopMonitoring(); // Save resources on main dashboard
             SwitchToView(Window.DashboardHeader, Window.DashboardView, Window.BtnDashboard);
+            _ = Task.Run(() => CosmoWhisper.Services.AccountService.Shared.TriggerSync());
         }
 
         private List<UIElement?>? _allViews;
@@ -30,16 +31,28 @@ namespace CosmoWhisper.Controllers
             SwitchToView(Window.SmartCommandsHeader, Window.SmartCommandsView, Window.BtnSmartCommands);
         }
 
+        private void SetActiveTab(Button activeTab)
+        {
+            if (Window.TabPrefGeneral != null) Window.TabPrefGeneral.Tag = null;
+            if (Window.TabPrefMicrophone != null) Window.TabPrefMicrophone.Tag = null;
+            if (Window.TabPrefVocabulary != null) Window.TabPrefVocabulary.Tag = null;
+            if (Window.TabPrefNarration != null) Window.TabPrefNarration.Tag = null;
+            if (Window.TabPrefIntelligence != null) Window.TabPrefIntelligence.Tag = null;
+            if (activeTab != null) activeTab.Tag = "Active";
+        }
+
         public void ShowMicrophone()
         {
             AudioRecorder.Shared.StartMonitoring();
-            SwitchToView(Window.MicrophoneHeader, Window.MicrophoneView, Window.BtnMicrophone);
+            SetActiveTab(Window.TabPrefMicrophone);
+            SwitchToView(Window.PreferencesHeader, Window.MicrophoneView, Window.BtnPreferences);
         }
 
         public void ShowNarration()
         {
             AudioRecorder.Shared.StopMonitoring();
-            SwitchToView(Window.NarrationHeader, Window.NarrationView, Window.BtnNarration);
+            SetActiveTab(Window.TabPrefNarration);
+            SwitchToView(Window.PreferencesHeader, Window.NarrationView, Window.BtnPreferences);
         }
 
         public void ShowLibrary()
@@ -63,6 +76,7 @@ namespace CosmoWhisper.Controllers
                 return;
             }
             SwitchToView(Window.AccountHeader, Window.AccountView, Window.BtnAccount);
+            _ = Task.Run(() => CosmoWhisper.Services.AccountService.Shared.TriggerSync());
         }
 
         public void ShowLogin()
@@ -74,18 +88,21 @@ namespace CosmoWhisper.Controllers
         public void ShowIntelligence()
         {
             AudioRecorder.Shared.StopMonitoring();
-            SwitchToView(Window.IntelligenceHeader, Window.IntelligenceView, Window.BtnIntelligence);
+            SetActiveTab(Window.TabPrefIntelligence);
+            SwitchToView(Window.PreferencesHeader, Window.IntelligenceView, Window.BtnPreferences);
         }
 
         public void ShowVocabulary()
         {
             AudioRecorder.Shared.StopMonitoring();
-            SwitchToView(Window.VocabularyHeader, Window.VocabularyView, Window.BtnVocabulary);
+            SetActiveTab(Window.TabPrefVocabulary);
+            SwitchToView(Window.PreferencesHeader, Window.VocabularyView, Window.BtnPreferences);
         }
 
         public void ShowPreferences()
         {
             AudioRecorder.Shared.StopMonitoring();
+            SetActiveTab(Window.TabPrefGeneral);
             SwitchToView(Window.PreferencesHeader, Window.PreferencesView, Window.BtnPreferences);
         }
 
@@ -147,8 +164,7 @@ namespace CosmoWhisper.Controllers
 
                 // Inactivate all buttons (Comprehensive)
                 var allButtons = new List<Button?> {
-                    Window.BtnDashboard, Window.BtnSmartCommands, Window.BtnMicrophone, 
-                    Window.BtnVocabulary, Window.BtnNarration, Window.BtnIntelligence, 
+                    Window.BtnDashboard, Window.BtnSmartCommands, 
                     Window.BtnPreferences, Window.BtnAccount, Window.BtnLibrary
                 };
 

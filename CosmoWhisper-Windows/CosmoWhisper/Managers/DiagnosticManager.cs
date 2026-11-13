@@ -4,35 +4,42 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Collections.Generic;
+using CosmoWhisper.Interfaces;
 
 namespace CosmoWhisper.Managers
 {
-    public class DiagnosticManager
+    public interface IDiagnosticManager
     {
-        public static DiagnosticManager Shared { get; } = new DiagnosticManager();
+        void Log(string message, string category = "INFO");
+        void TakeSnapshot(string error, Dictionary<string, object> state);
+    }
 
-        private readonly string _logPath;
-        private readonly string _snapshotPath;
+    public class DiagnosticManager : IDiagnosticManager
+    {
+        public static DiagnosticManager Shared => (DiagnosticManager)ServiceLocator.GetService<IDiagnosticManager>();
+
+        private string _logPath;
+        private string _snapshotPath;
         private readonly object _lock = new object();
+        private readonly IPreferenceManager _preferenceManager;
 
-        public DiagnosticManager()
+        public DiagnosticManager(IPreferenceManager preferenceManager)
         {
-            string appData = PreferenceManager.Shared.AppDataFolder;
-            string diagDir = Path.Combine(appData, "diagnostics");
-            Directory.CreateDirectory(diagDir);
+            _preferenceManager = preferenceManager;
+            Initialize();
+        }
 
-            _logPath = Path.Combine(diagDir, "live_flight_recorder.log");
-            _snapshotPath = Path.Combine(diagDir, "last_error_snapshot.json");
-
-            // Direct project root link for the AI to "tail"
-            // Using a relative path to the repo root if possible, or just a known location
-            try 
+        private void Initialize()
+        {
+            try
             {
-                // Set up a TraceListener to catch all Debug/Trace.WriteLine calls
-                Trace.Listeners.Clear();
-                Trace.Listeners.Add(new TextWriterTraceListener(File.Create(_logPath)));
-                Trace.AutoFlush = true;
-                
+                string appData = _preferenceManager.AppDataFolder;
+                string diagDir = Path.Combine(appData, "diagnostics");
+                Directory.CreateDirectory(diagDir);
+
+                _logPath = Path.Combine(diagDir, "live_flight_recorder.log");
+                _snapshotPath = Path.Combine(diagDir, "last_error_snapshot.json");
+
                 Log("Diagnostic Flight Recorder Initialized.");
             }
             catch (Exception ex)
@@ -45,8 +52,13 @@ namespace CosmoWhisper.Managers
         {
             lock (_lock)
             {
-                string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
-                Debug.WriteLine(entry);
+                try
+                {
+                    if (string.IsNullOrEmpty(_logPath)) return;
+                    string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
+                    File.AppendAllText(_logPath, entry + Environment.NewLine);
+                }
+                catch { }
             }
         }
 
@@ -72,9 +84,11 @@ namespace CosmoWhisper.Managers
                 sb.AppendLine("  }");
                 sb.AppendLine("}");
 
-                File.WriteAllText(_snapshotPath, sb.ToString());
-                
-                Log($"SNAPSHOT TAKEN: Check {_snapshotPath}", "CRITICAL");
+                if (!string.IsNullOrEmpty(_snapshotPath))
+                {
+                    File.WriteAllText(_snapshotPath, sb.ToString());
+                    Log($"SNAPSHOT TAKEN: Check {_snapshotPath}", "CRITICAL");
+                }
             }
             catch (Exception ex)
             {
@@ -83,5 +97,3 @@ namespace CosmoWhisper.Managers
         }
     }
 }
-
-

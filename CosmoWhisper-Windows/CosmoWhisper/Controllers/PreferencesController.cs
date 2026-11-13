@@ -50,9 +50,6 @@ namespace CosmoWhisper.Controllers
             if (Window.TxtBackupPath != null) Window.TxtBackupPath.Text = p.BackupDirectory;
             if (Window.TxtHotkey != null) UpdateActivationUI();
 
-            // Intelligence View Manus Agent (grouped here for simple preference sync)
-            if (Window.ToggleManusAgent != null) UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
-            if (Window.ToggleManusNarration != null) UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
             if (Window.ToggleLocalWhisper != null) UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
             if (Window.ToggleForceCloudProxy != null) UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
             if (Window.ToggleForceDirectApi != null) UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
@@ -655,22 +652,6 @@ try {{
                 p.SelectedTimeFormat = format;
                 PreferenceManager.Shared.Save();
             }
-        }
-
-        public void ToggleManusAgent()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.EnableManusAgent = !p.EnableManusAgent;
-            PreferenceManager.Shared.Save();
-            UpdateToggle(Window.ToggleManusAgent, p.EnableManusAgent);
-        }
-
-        public void ToggleManusNarration()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.ManusNarrationEnabled = !p.ManusNarrationEnabled;
-            PreferenceManager.Shared.Save();
-            UpdateToggle(Window.ToggleManusNarration, p.ManusNarrationEnabled);
         }
 
         public void ToggleLocalWhisper()

@@ -1,14 +1,90 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Security.Cryptography;
+using CosmoWhisper.Interfaces;
 
 namespace CosmoWhisper.Managers
 {
+    public sealed class DpapiStringConverter : JsonConverter<string>
+    {
+        private const string Prefix = "dpapi:";
+
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            string? raw = reader.GetString();
+            if (string.IsNullOrEmpty(raw)) return string.Empty;
+
+            if (raw.StartsWith(Prefix, StringComparison.Ordinal))
+            {
+                try
+                {
+                    byte[] encryptedBytes = Convert.FromBase64String(raw.Substring(Prefix.Length));
+                    byte[] plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
+                    return System.Text.Encoding.UTF8.GetString(plainBytes);
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            }
+
+            // Backward compatibility: handle legacy unprefixed DPAPI base64 or plaintext strings
+            try
+            {
+                byte[] encryptedBytes = Convert.FromBase64String(raw);
+                byte[] plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
+                return System.Text.Encoding.UTF8.GetString(plainBytes);
+            }
+            catch
+            {
+                return raw;
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                writer.WriteStringValue(string.Empty);
+                return;
+            }
+
+            byte[] plainBytes = System.Text.Encoding.UTF8.GetBytes(value);
+            byte[] encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+            writer.WriteStringValue(Prefix + Convert.ToBase64String(encryptedBytes));
+        }
+    }
 
     public class UserPreferences : System.ComponentModel.INotifyPropertyChanged
     {
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+
+        private static string EncryptString(string plainText)
+        {
+            if (string.IsNullOrEmpty(plainText)) return plainText;
+            byte[] plainBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            byte[] encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+            return Convert.ToBase64String(encryptedBytes);
+        }
+
+        private static string DecryptString(string encryptedText)
+        {
+            if (string.IsNullOrEmpty(encryptedText)) return encryptedText;
+            try
+            {
+                byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
+                byte[] plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
+                return System.Text.Encoding.UTF8.GetString(plainBytes);
+            }
+            catch
+            {
+                // If decryption fails (e.g., old unencrypted data), return as-is for migration
+                return encryptedText;
+            }
+        }
 
         private string _activationKey = "F9";
         public string ActivationKey { get => _activationKey; set { _activationKey = value; OnPropertyChanged(nameof(ActivationKey)); } }
@@ -28,14 +104,27 @@ namespace CosmoWhisper.Managers
         public string SelectedVoice { get; set; } = ""; // Empty means use default (George)
 
         // Intelligence: API Keys & AI Models
-        public string GroqApiKey { get; set; } = "";
-        public string OpenAIApiKey { get; set; } = "";
-        public string AnthropicApiKey { get; set; } = "";
-        public string XAiApiKey { get; set; } = "";
+        private string _groqApiKey = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string GroqApiKey { get => DecryptString(_groqApiKey); set { _groqApiKey = EncryptString(value); OnPropertyChanged(nameof(GroqApiKey)); } }
+        private string _openAIApiKey = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string OpenAIApiKey { get => DecryptString(_openAIApiKey); set { _openAIApiKey = EncryptString(value); OnPropertyChanged(nameof(OpenAIApiKey)); } }
+        private string _anthropicApiKey = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string AnthropicApiKey { get => DecryptString(_anthropicApiKey); set { _anthropicApiKey = EncryptString(value); OnPropertyChanged(nameof(AnthropicApiKey)); } }
+        private string _xAiApiKey = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string XAiApiKey { get => DecryptString(_xAiApiKey); set { _xAiApiKey = EncryptString(value); OnPropertyChanged(nameof(XAiApiKey)); } }
         public string AIModel { get; set; } = "whisper-large-v3";
+        public bool EnableSpeechPolish { get; set; } = true; // AI Speech Polish (Removes "um/uh", stutters, false starts)
         public bool UseLocalWhisper { get; set; } = false; // Enable local Whisper fallback (Disabled by default)
         public bool UseLocalWhisperOnly { get; set; } = false; // Force local usage only
+        public string LocalVoiceEngine { get; set; } = "ParakeetRedux"; // "ParakeetRedux" or "WhisperTiny"
         public bool ForceCloudProxy { get; set; } = false; // Force Cloud Proxy (VPN Mode)
+        private bool _forceDirectApi = false;
+        public bool ForceDirectApi { get => _forceDirectApi; set { _forceDirectApi = value; OnPropertyChanged(nameof(ForceDirectApi)); } }
+        public int MaxOutputTokens { get; set; } = 4096; // Max tokens for AI response
 
         // Setup: Mic ID & Calibration
         public string MicDeviceName { get; set; } = "Default";
@@ -47,10 +136,6 @@ namespace CosmoWhisper.Managers
         public int OutputDeviceIndex { get; set; } = -1; // -1 = default
 
         // Agent Settings
-        private bool _enableManusAgent = true;
-        public bool EnableManusAgent { get => _enableManusAgent; set { _enableManusAgent = value; OnPropertyChanged(nameof(EnableManusAgent)); } }
-        private bool _manusNarrationEnabled = true;
-        public bool ManusNarrationEnabled { get => _manusNarrationEnabled; set { _manusNarrationEnabled = value; OnPropertyChanged(nameof(ManusNarrationEnabled)); } }
         public string AIPersonality { get; set; } = "None";
         public string AIVerbosity { get; set; } = "Balanced";
 
@@ -74,8 +159,12 @@ namespace CosmoWhisper.Managers
         public bool AutoCopy { get => _autoCopy; set { _autoCopy = value; OnPropertyChanged(nameof(AutoCopy)); } }
 
         // License & Web Control
-        public string LicenseToken { get; set; } = "";
-        public string AuthToken { get; set; } = "";
+        private string _licenseToken = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string LicenseToken { get => DecryptString(_licenseToken); set { _licenseToken = EncryptString(value); OnPropertyChanged(nameof(LicenseToken)); } }
+        private string _authToken = "";
+        [JsonConverter(typeof(DpapiStringConverter))]
+        public string AuthToken { get => DecryptString(_authToken); set { _authToken = EncryptString(value); OnPropertyChanged(nameof(AuthToken)); } }
         public string BackendUrl { get; set; } = "https://api.cosmowhisper.com"; // Production Only
         public string UserEmail { get; set; } = "";
         public string UserTier { get; set; } = "free";
@@ -88,8 +177,6 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (UserEmail?.ToLower() == "louisdesouza@gmail.com") return false;
-
                 if (_isStoreVersion.HasValue) return _isStoreVersion.Value;
                 try
                 {
@@ -123,16 +210,22 @@ namespace CosmoWhisper.Managers
         public bool HasCompletedOnboarding { get => _hasCompletedOnboarding; set { _hasCompletedOnboarding = value; OnPropertyChanged(nameof(HasCompletedOnboarding)); } }
 
         // Sign-Off / Signature Settings
-        public string SignOffSignature { get; set; } = "Regards,\nBruce Wayne";
+        public string SignOffSignature { get; set; } = "";
         public bool EnableSignOff { get; set; } = false;
+
+        private bool _usePasteMode = true;
+        public bool UsePasteMode { get => _usePasteMode; set { _usePasteMode = value; OnPropertyChanged(nameof(UsePasteMode)); } }
+
+        private bool _alwaysOnTop = true;
+        public bool AlwaysOnTop { get => _alwaysOnTop; set { _alwaysOnTop = value; OnPropertyChanged(nameof(AlwaysOnTop)); } }
     }
 
-    public class PreferenceManager : System.ComponentModel.INotifyPropertyChanged
+    public class PreferenceManager : IPreferenceManager, System.ComponentModel.INotifyPropertyChanged
     {
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
 
-        public static PreferenceManager Shared { get; } = new PreferenceManager();
+        public static PreferenceManager Shared => (PreferenceManager)ServiceLocator.GetService<IPreferenceManager>();
         
         public bool IsDevMode { get; private set; }
         private UserPreferences _preferences;
@@ -209,19 +302,23 @@ namespace CosmoWhisper.Managers
                         Preferences.BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CosmoWhisper", "Backups");
                     }
                     
-                    // Default Backend URLs - FORCE Production for non-dev builds
-                    // This prevents MSIX builds from accidentally using stale dev IPs found in AppData
-                    if (!IsDevMode)
-                    {
-                        if (string.IsNullOrEmpty(Preferences.BackendUrl) || !Preferences.BackendUrl.Contains("api.cosmowhisper.com"))
-                        {
-                            Preferences.BackendUrl = "https://api.cosmowhisper.com";
-                            Save();
-                        }
-                    }
-                    else if (string.IsNullOrEmpty(Preferences.BackendUrl) || Preferences.BackendUrl.Contains("localhost"))
+                    // Default Backend URLs
+                    // If stuck on localhost in a non-dev scenario, reset to prod; keep localhost when IsDevMode is active
+                    if (string.IsNullOrEmpty(Preferences.BackendUrl) || (!IsDevMode && Preferences.BackendUrl.Contains("localhost")))
                     {
                         Preferences.BackendUrl = "https://api.cosmowhisper.com";
+                        Save();
+                    }
+
+                    // Upgrade legacy plaintext secrets on disk to DPAPI-protected values
+                    bool hasSecrets = !string.IsNullOrEmpty(Preferences.AuthToken) ||
+                                      !string.IsNullOrEmpty(Preferences.LicenseToken) ||
+                                      !string.IsNullOrEmpty(Preferences.GroqApiKey) ||
+                                      !string.IsNullOrEmpty(Preferences.OpenAIApiKey) ||
+                                      !string.IsNullOrEmpty(Preferences.AnthropicApiKey) ||
+                                      !string.IsNullOrEmpty(Preferences.XAiApiKey);
+                    if (hasSecrets && !json.Contains("\"dpapi:", StringComparison.Ordinal))
+                    {
                         Save();
                     }
 
@@ -243,6 +340,20 @@ namespace CosmoWhisper.Managers
             }
         }
 
+        public async Task SaveAsync()
+        {
+            try
+            {
+                string json = JsonSerializer.Serialize(Preferences, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(_settingsPath, json);
+                PreferencesUpdated?.Invoke();
+            }
+            catch { } // logging?
+        }
+
+        /// <summary>
+        /// Synchronously saves the current preferences to disk.
+        /// </summary>
         public void Save()
         {
             try
@@ -251,7 +362,7 @@ namespace CosmoWhisper.Managers
                 File.WriteAllText(_settingsPath, json);
                 PreferencesUpdated?.Invoke();
             }
-            catch { } // logging?
+            catch { }
         }
 
         public void Restore(string backupFolderPath)

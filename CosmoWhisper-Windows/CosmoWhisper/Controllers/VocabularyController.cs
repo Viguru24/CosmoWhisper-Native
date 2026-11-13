@@ -61,6 +61,9 @@ namespace CosmoWhisper.Controllers
             {
                 Window.TxtSignature.Text = PreferenceManager.Shared.Preferences.SignOffSignature;
                 UpdateSignature();
+
+                Window.TxtSignature.TextChanged -= TxtSignature_TextChanged;
+                Window.TxtSignature.TextChanged += TxtSignature_TextChanged;
             }
             UpdateSignOffUI();
         }
@@ -73,6 +76,11 @@ namespace CosmoWhisper.Controllers
                 VocabularyManager.Shared.Save();
                 UpdateHintsPlaceholder(tb);
             }
+        }
+
+        private void TxtSignature_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateSignature();
         }
 
         public void UpdateSignature()

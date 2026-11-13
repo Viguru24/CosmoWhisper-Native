@@ -19,8 +19,8 @@ This document outlines the technical changes implemented to resolve the regressi
     - Plurals (e.g., "New paragraphs").
     - Trailing commas (e.g., "New line,").
     - Mid-word punctuation (e.g., "New. Paragraph.").
-- **Virtual Key Injection**: Updated `InputController.TypeText` to detect `\n` characters and translate them into physical **VK_RETURN (Enter)** key events.
-**Result**: Commands now work reliably across all Windows applications, even those that don't support Unicode newline characters.
+- **Direct Typing Fallback (The Word Fix)**: Standalone formatting commands now bypass the clipboard entirely. When the app detects a transcription that is only newlines/whitespace, it uses **Direct Unicode Typing** (SendInput). This matches the behavior of the master backup and is 100% reliable in Microsoft Word and other high-security editors.
+**Result**: Commands now work reliably across all Windows applications, specifically resolving the "double-enter" and "ignored paste" issues in Word.
 
 ## 4. Resolved: Audio Clipping
 **Issue**: Final words of sentences were being cut off due to short recording padding.

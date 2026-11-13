@@ -10,18 +10,24 @@ namespace CosmoWhisper.Managers
         // Centralized list of known "Hallucinations" - common artifacts from Whisper models
         private static readonly HashSet<string> ShortHallucinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "yes", "good", "just", "the", "ok", "okay", "you", "thanks", "thank you", "the.", "bye", 
-            "is", "a", "this", "l", "u", "po", "sti", "come", "wi", "st", "you.", "and", "but", "me", 
-            "it", "so", "thank you."
+            "the", "the.", "l", "u", "po", "sti", "come", "wi", "st", "and", "but", "me", 
+            "it", "so"
         };
 
-        private static readonly string[] PhraseHallucinations = new[]
+        private static readonly string[] TrailingHallucinations = new[]
         {
-            "mbc", " дякую", "дякую!", "subtitles", "subtitle by", "watched by", "mbc news", 
-            "translated by", "amara.org", "ted.com", "copyright", "all rights reserved", 
-            "the end.", "bye bye.", "thanks for watching", "thank you for watching", "thank you.",
-            "subtitle", "this is the end of the video",
-            "subtracting", "help me", "subtracting help me", "subtracting, help me",
+            "subtitles by the amara.org community", "subtitles by the amara.org", "amara.org community",
+            "subtitle by", "subtitles by", "watched by", "mbc news", "translated by", 
+            "thanks for watching", "thank you for watching", "this is the end of the video"
+        };
+
+        private static readonly string[] ExactSegmentHallucinations = new[]
+        {
+            "mbc", " дякую", "дякую!", "mbc news", "translated by", "amara.org", "ted.com", 
+            "all rights reserved", "the end.", "the end", "bye bye.", "bye bye", 
+            "thanks for watching", "thank you for watching", "thank you.", "thank you",
+            "this is the end of the video",
+            "subtracting help me", "subtracting, help me",
             "subtitles by the amara.org community", "subtitles by the amara.org", "amara.org community"
         };
 
@@ -31,23 +37,34 @@ namespace CosmoWhisper.Managers
             string text = input ?? "";
             text = Regex.Replace(text, @"\s+$", "");
             text = text.Trim();
-            string low = text.ToLower();
 
-            // Remove common Whisper hallucinations from the end of transcriptions
-            foreach (var hallucination in PhraseHallucinations)
+            // Strip leading dot/period/ellipsis artifacts — a common Whisper hallucination
+            // e.g. ". This is a test" → "This is a test", "...Hello" → "Hello", ", Hello" → "Hello"
+            text = Regex.Replace(text, @"^[\.\,…]+\s*", "");
+
+            // Remove common Whisper trailer hallucinations from the end of transcriptions safely
+            foreach (var hallucination in TrailingHallucinations)
             {
-                if (low.EndsWith(hallucination.ToLower()))
+                if (text.Length >= hallucination.Length && text.EndsWith(hallucination, StringComparison.OrdinalIgnoreCase))
                 {
                     text = text.Substring(0, text.Length - hallucination.Length).TrimEnd(',', ' ', '.');
                 }
             }
 
             // Command Processing: Paragraphs and New Lines (Handle anywhere and with optional punctuation including commas)
-            // Hardened to handle plurals (paragraphs) and trailing commas which Whisper often adds.
-            // Also handles cases where Whisper adds punctuation between words like "New. Paragraph".
-            text = Regex.Replace(text, @"\b(new|next)[\s\-\.]*paragraphs?[\.\?\!\,]*\s*", "\r\n\r\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(new|next)[\s\-\.]*lines?[\.\?\!\,]*\s*", "\r\n", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\b(newline|nextline|newparagraph|nextparagraph)[\.\?\!\,]*\s*", (m) => m.Value.ToLower().Contains("line") ? "\r\n" : "\r\n\r\n", RegexOptions.IgnoreCase);
+            // Hardened to handle plurals, different spacing, and Whisper's punctuation quirks.
+            
+            // 1. Hard Return (Paragraph) - Two Enters: visible gap in Notepad, double paragraph break in Word
+            // Requires "new" or "next" to prevent triggering on general words like "paragraph"
+            text = Regex.Replace(text, @"\s*\b(new|next)\s+(paragraph|para)\b[\.\?\!]*\s*", "\n\n", RegexOptions.IgnoreCase);
+            
+            // 2. Soft Return (New Line) - Maintains paragraph context (Shift+Enter in Word)
+            // Added negative lookbehind to prevent "one line" or "1 line" from triggering a break.
+            text = Regex.Replace(text, @"\s*(?<!\b(one|1)\s+)\b(new|next)\s+(line|return|enter)\b[\.\?\!]*\s*", "\v", RegexOptions.IgnoreCase);
+            
+            // 3. Fallback for standalone commands (if the entire segment is just "line" or "paragraph")
+            if (text.Trim().Equals("line", StringComparison.OrdinalIgnoreCase)) text = "\v";
+            if (text.Trim().Equals("paragraph", StringComparison.OrdinalIgnoreCase)) text = "\n\n";
 
             // Remove disfluencies and non-speech sounds (e.g., (coughs), [clears throat], *laughs*)
             // Enhanced to catch standalone artifacts without brackets if they appear as isolated tokens
@@ -59,16 +76,82 @@ namespace CosmoWhisper.Managers
             text = Regex.Replace(text, @"\s*\[music\]\s*", " ", RegexOptions.IgnoreCase);
 
             // Punctuation commands
-            if (low.Contains("comma")) text = Regex.Replace(text, @"\bcomma\b", ",", RegexOptions.IgnoreCase);
-            if (low.Contains("full stop") || low.Contains("period")) text = Regex.Replace(text, @"\b(full stop|period)\b", ".", RegexOptions.IgnoreCase);
+            if (text.Contains("comma", StringComparison.OrdinalIgnoreCase)) text = Regex.Replace(text, @"\bcomma\b", ",", RegexOptions.IgnoreCase);
+            if (text.Contains("full stop", StringComparison.OrdinalIgnoreCase) || text.Contains("period", StringComparison.OrdinalIgnoreCase)) text = Regex.Replace(text, @"\b(full stop|period)\b", ".", RegexOptions.IgnoreCase);
+
+            // Inverse Text Normalization (Numbers & Emails)
+            text = NormalizeSpokenNumbersAndEmails(text);
 
             // Cleanup trailing punctuation if text is short segment (e.g. 1-2 words),
             // but ONLY if the segment contains actual letters/digits to avoid stripping punctuation-only commands.
             int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
             if (wordCount < 6 && text.Any(char.IsLetterOrDigit)) 
             {
-                text = Regex.Replace(text, @"[\.,\\?!…]+[\s]*$", "");
+                // We strip periods and commas for short segments, but PROTECT question marks and exclamation points.
+                text = Regex.Replace(text, @"[\.,\\…]+[\s]*$", "");
             }
+
+            // Final trim of spaces/tabs only to preserve formatting commands (newlines/paragraphs)
+            return text.Trim(' ', '\t');
+        }
+
+        public static string NormalizeSpokenNumbersAndEmails(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return input;
+            string text = input;
+
+            // 1. Spoken Email Normalization (e.g., "louis at gmail dot com" -> "louis@gmail.com")
+            text = Regex.Replace(text, @"\b([a-zA-Z0-9\._%+-]+)\s+at\s+([a-zA-Z0-9-]+)\s+dot\s+(com|org|net|edu|gov|co\.uk|io|ai|app|me|co)\b", "$1@$2.$3", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b([a-zA-Z0-9\._%+-]+)\s*@\s*([a-zA-Z0-9-]+)\s+dot\s+(com|org|net|edu|gov|co\.uk|io|ai|app|me|co)\b", "$1@$2.$3", RegexOptions.IgnoreCase);
+
+            // 2. Spoken Digit Sequence Normalization
+            // Converts sequences of 3 or more spoken digits (e.g. "O seven eight oh two four three six one five nine" or "zero seven eight zero two")
+            // Dictionary mapping spoken digit words to digits
+            var wordToDigit = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "zero", '0' }, { "oh", '0' }, { "o", '0' },
+                { "one", '1' },
+                { "two", '2' },
+                { "three", '3' },
+                { "four", '4' },
+                { "five", '5' },
+                { "six", '6' },
+                { "seven", '7' },
+                { "eight", '8' },
+                { "nine", '9' }
+            };
+
+            // Match runs of digit words (including actual digits mixed in)
+            string pattern = @"\b((?:(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d|o)\s*){3,})\b";
+            text = Regex.Replace(text, pattern, match =>
+            {
+                // Split match into individual tokens
+                var tokens = Regex.Split(match.Value.Trim(), @"\s+");
+                if (tokens.Length < 3) return match.Value;
+
+                // Validate that all tokens in the matched run are valid digits/digit words
+                var digits = new System.Text.StringBuilder();
+                foreach (var tok in tokens)
+                {
+                    string cleanTok = tok.Trim().ToLowerInvariant();
+                    if (wordToDigit.TryGetValue(cleanTok, out char d))
+                    {
+                        digits.Append(d);
+                    }
+                    else if (cleanTok.Length == 1 && char.IsDigit(cleanTok[0]))
+                    {
+                        digits.Append(cleanTok[0]);
+                    }
+                    else
+                    {
+                        return match.Value; // Not a pure digit sequence, keep original
+                    }
+                }
+
+                // If sequence starts with '0' and is around UK mobile length (11 digits), format cleanly
+                string digStr = digits.ToString();
+                return digStr;
+            }, RegexOptions.IgnoreCase);
 
             return text;
         }
@@ -77,27 +160,29 @@ namespace CosmoWhisper.Managers
         {
             if (string.IsNullOrWhiteSpace(text)) 
             {
-                // Allow segments that are just newlines (result of formatting commands)
-                if (text != null && (text.Contains("\n") || text.Contains("\r"))) return false;
+                // Allow segments that are just formatting chars (result of formatting commands)
+                if (text != null && (text.Contains("\n") || text.Contains("\r") || text.Contains("\v"))) return false;
                 return true;
             }
             
             string low = text.ToLower().Trim();
 
-            if (low.Length <= 2) return true;
+            // Filter out repeating single character hallucinations (e.g. "wwww", "....", "hhhh")
+            if (low.Length > 2 && low.Distinct().Count() == 1) return true;
+
+            // Allow short but meaningful segments like "Hi", "Me", "Go"
+            if (low.Length < 2 && !char.IsDigit(low[0])) return true; 
             
-            if (ShortHallucinations.Contains(low)) return true;
+            if (ShortHallucinations.Contains(low.TrimEnd('.'))) return true;
+
             // Only discard if the ENTIRE segment is a known hallucination phrase.
-            // Using Contains was too aggressive and stripped valid sentences containing these words.
-            if (PhraseHallucinations.Any(h => low == h.ToLower().Trim() || low.Contains(h.ToLower().Trim()))) 
+            string normalized = low.TrimEnd('.', '!', '?', ',', ' ');
+            if (ExactSegmentHallucinations.Any(h => normalized == h.ToLower().Trim())) 
             {
-                // If it's a known silence artifact and the segment is short, it's garbage.
-                // We allow it if the segment is long (e.g. 15+ words) because it might be a coincidence.
-                if (text.Split(' ').Length < 15) return true;
+                return true;
             }
             
-            if (text.Split("Bye").Length > 3) return true;
-            if (text.Length < 3 && !text.Any(char.IsDigit)) return true;
+            if (Regex.Matches(text, @"\bbye\b", RegexOptions.IgnoreCase).Count > 3) return true;
 
             return false;
         }
