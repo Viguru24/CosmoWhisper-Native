@@ -1,10 +1,9 @@
 using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using CosmoWhisper.Interfaces;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
@@ -18,14 +17,15 @@ namespace CosmoWhisper.Managers
     {
         public static DiagnosticManager Shared => (DiagnosticManager)ServiceLocator.GetService<IDiagnosticManager>();
 
-        private string _logPath;
-        private string _snapshotPath;
-        private readonly object _lock = new object();
+        private string? _logPath;
+        private string? _snapshotPath;
         private readonly IPreferenceManager _preferenceManager;
+        private readonly ILogger? _logger;
 
-        public DiagnosticManager(IPreferenceManager preferenceManager)
+        public DiagnosticManager(IPreferenceManager preferenceManager, ILogger? logger = null)
         {
             _preferenceManager = preferenceManager;
+            _logger = logger;
             Initialize();
         }
 
@@ -50,15 +50,31 @@ namespace CosmoWhisper.Managers
 
         public void Log(string message, string category = "INFO")
         {
-            lock (_lock)
+            if (string.IsNullOrEmpty(_logPath)) return;
+
+            string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
+            FileLogger.WriteBoundedLine(_logPath, entry);
+
+            string formatted = $"[{category}] {message}";
+            if (_logger != null)
             {
-                try
+                if (category.Equals("ERROR", StringComparison.OrdinalIgnoreCase) ||
+                    category.Equals("CRITICAL", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(_logPath)) return;
-                    string entry = $"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}";
-                    File.AppendAllText(_logPath, entry + Environment.NewLine);
+                    _logger.LogError(formatted);
                 }
-                catch { }
+                else if (category.Equals("WARN", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(formatted);
+                }
+                else
+                {
+                    _logger.LogInformation(formatted);
+                }
+            }
+            else
+            {
+                FileLogger.WriteShared(category, message);
             }
         }
 
@@ -66,27 +82,24 @@ namespace CosmoWhisper.Managers
         {
             try
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("{");
-                sb.AppendLine($"  \"timestamp\": \"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}\",");
-                sb.AppendLine($"  \"error\": \"{error.Replace("\"", "\\\"")}\",");
-                sb.AppendLine("  \"state\": {");
-                
-                int count = 0;
+                var safeState = new Dictionary<string, string>();
                 foreach (var kvp in state)
                 {
-                    string val = kvp.Value?.ToString()?.Replace("\"", "\\\"")?.Replace("\n", "\\n")?.Replace("\r", "\\r") ?? "null";
-                    sb.Append($"    \"{kvp.Key}\": \"{val}\"");
-                    if (++count < state.Count) sb.AppendLine(",");
-                    else sb.AppendLine("");
+                    safeState[kvp.Key] = kvp.Value?.ToString() ?? "null";
                 }
-                
-                sb.AppendLine("  }");
-                sb.AppendLine("}");
+
+                var payload = new
+                {
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                    error,
+                    state = safeState
+                };
+
+                string json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
 
                 if (!string.IsNullOrEmpty(_snapshotPath))
                 {
-                    File.WriteAllText(_snapshotPath, sb.ToString());
+                    File.WriteAllText(_snapshotPath, json);
                     Log($"SNAPSHOT TAKEN: Check {_snapshotPath}", "CRITICAL");
                 }
             }

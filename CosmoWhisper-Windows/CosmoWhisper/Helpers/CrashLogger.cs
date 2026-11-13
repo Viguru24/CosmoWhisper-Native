@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using CosmoWhisper.Managers;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper
 {
@@ -10,10 +10,9 @@ namespace CosmoWhisper
         {
             try
             {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "crash.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}\n");
+                string logPath = Path.Combine(FileLogger.ResolveDefaultAppDataFolder(), "logs", "crash.log");
+                FileLogger.WriteBoundedLine(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}");
+                FileLogger.WriteShared("ERROR", $"[Crash] {message}");
             }
             catch { }
         }

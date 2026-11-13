@@ -157,6 +157,15 @@ namespace CosmoWhisper
         public DashboardWindow()
         {
             Instance = this;
+            _navigation = new NavigationController(this);
+            _vocabulary = new VocabularyController(this);
+            _prefs = new PreferencesController(this);
+            _intelligence = new IntelligenceController(this);
+            _narration = new NarrationController(this);
+            _mic = new MicrophoneController(this);
+            _theme = new ThemeController(this);
+            _dashboard = new DashboardController(this);
+
             try
             {
                 InitializeComponent();
@@ -184,14 +193,6 @@ namespace CosmoWhisper
                 if (BtnPreferences != null) BtnPreferences.Visibility = Visibility.Visible;
 
                 DataContext = PreferenceManager.Shared.Preferences;
-                _navigation = new NavigationController(this);
-                _vocabulary = new VocabularyController(this);
-                _prefs = new PreferencesController(this);
-                _intelligence = new IntelligenceController(this);
-                _narration = new NarrationController(this);
-                _mic = new MicrophoneController(this);
-                _theme = new ThemeController(this);
-                _dashboard = new DashboardController(this);
 
                 // Setup Global Exception Handlers for Crash Debugging
                 AppDomain.CurrentDomain.UnhandledException += (s, e) =>
@@ -297,7 +298,7 @@ namespace CosmoWhisper
                 }
             }
 
-            if (!onScreen)
+            if (!onScreen && System.Windows.Forms.Screen.PrimaryScreen != null)
             {
                 // Move to primary screen center
                 var primary = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea;
@@ -880,12 +881,14 @@ namespace CosmoWhisper
 
         public void ComboDateFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ComboDateFormat?.SelectedItem is ComboBoxItem item) _prefs?.SetDateFormat(item.Tag?.ToString());
+            if (ComboDateFormat?.SelectedItem is ComboBoxItem item && item.Tag?.ToString() is string df)
+                _prefs?.SetDateFormat(df);
         }
 
         public void ComboTimeFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ComboTimeFormat?.SelectedItem is ComboBoxItem item) _prefs?.SetTimeFormat(item.Tag?.ToString());
+            if (ComboTimeFormat?.SelectedItem is ComboBoxItem item && item.Tag?.ToString() is string tf)
+                _prefs?.SetTimeFormat(tf);
         }
 
         public void ToggleClipboard_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleClipboard();
@@ -1083,12 +1086,12 @@ namespace CosmoWhisper
                 }
                 else if (VocabularyView.Visibility == Visibility.Visible)
                 {
-                    if (TxtNewKey.IsFocused)
+                    if (TxtNewKey?.IsFocused == true)
                     {
                         AddVocabulary_Click(null!, null!);
                         e.Handled = true;
                     }
-                    else if (TxtNewValue.IsFocused)
+                    else if (TxtNewValue?.IsFocused == true)
                     {
                         // Allow Enter for new lines in replacement
                         // Only submit on Enter if user didn't request multi-line or is holding Ctrl?

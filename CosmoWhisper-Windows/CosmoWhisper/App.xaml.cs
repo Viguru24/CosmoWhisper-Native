@@ -215,22 +215,16 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-            // If we are in dev mode or personal mode, the folder might differ, but let's use a safe fallback
-            try { appData = PreferenceManager.Shared.AppDataFolder; } catch { }
-            
-            string logDir = Path.Combine(appData, "logs");
-            Directory.CreateDirectory(logDir);
-            string logPath = Path.Combine(logDir, "fatal_crash.log");
-            
+            string logPath = Path.Combine(FileLogger.ResolveDefaultAppDataFolder(), "logs", "fatal_crash.log");
             string errorInfo = $"\n--- FATAL ERROR [{DateTime.Now}] ---\nSource: {source}\nMessage: {ex?.Message}\nStack: {ex?.StackTrace}\n";
             if (ex?.InnerException != null)
             {
                 errorInfo += $"Inner Exception: {ex.InnerException.Message}\nInner Stack: {ex.InnerException.StackTrace}\n";
             }
             errorInfo += "----------------------------------------\n";
-            
-            File.AppendAllText(logPath, errorInfo);
+
+            FileLogger.WriteBoundedLine(logPath, errorInfo);
+            FileLogger.WriteShared("FATAL", $"{source}: {ex?.Message}");
         }
         catch { /* Last resort - nowhere to log */ }
     }

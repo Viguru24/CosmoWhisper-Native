@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using CosmoWhisper.Interfaces;
 using CosmoWhisper.Managers.Engines;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
@@ -12,17 +13,19 @@ namespace CosmoWhisper.Managers
 
         private readonly WhisperSpeechEngine _whisperEngine;
         private readonly ParakeetSpeechEngine _parakeetEngine;
+        private readonly ILogger? _logger;
         private ISpeechEngine _activeEngine;
         private Task? _initTask;
 
         public bool IsReady => ResolveActiveEngine().IsReady || _whisperEngine.IsReady;
         public string ActiveEngineName => ResolveActiveEngine().EngineName;
 
-        public LocalModelManager()
+        public LocalModelManager(ILogger? logger = null)
         {
+            _logger = logger;
             string appData = PreferenceManager.Shared.AppDataFolder;
-            _whisperEngine = new WhisperSpeechEngine(appData);
-            _parakeetEngine = new ParakeetSpeechEngine(appData);
+            _whisperEngine = new WhisperSpeechEngine(appData, logger);
+            _parakeetEngine = new ParakeetSpeechEngine(appData, logger);
 
             _activeEngine = ResolveActiveEngine();
             LogEvent($"[LocalModel] Initialized router. Preferred Engine: {PreferenceManager.Shared.Preferences.LocalVoiceEngine}, Active Engine: {_activeEngine.EngineName}");
@@ -158,14 +161,8 @@ namespace CosmoWhisper.Managers
 
         private void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            if (_logger != null) _logger.LogInformation(msg);
+            else FileLogger.WriteShared("INFO", msg);
         }
     }
 }

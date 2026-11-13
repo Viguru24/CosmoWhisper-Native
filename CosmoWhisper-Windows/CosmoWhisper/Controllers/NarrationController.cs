@@ -135,7 +135,7 @@ namespace CosmoWhisper.Controllers
 
         public void OutputDeviceChanged()
         {
-            if (Window.ComboOutput.SelectedItem is ComboBoxItem item && item.Tag is int index)
+            if (Window.ComboOutput?.SelectedItem is ComboBoxItem item && item.Tag is int index)
             {
                 var p = PreferenceManager.Shared.Preferences;
                 p.OutputDeviceIndex = index;
@@ -152,13 +152,13 @@ namespace CosmoWhisper.Controllers
 
             try
             {
-                string text = !string.IsNullOrWhiteSpace(Window.TxtPlayground.Text)
+                string text = !string.IsNullOrWhiteSpace(Window.TxtPlayground?.Text)
                     ? Window.TxtPlayground.Text
                     : "Hello, I am CosmoWhisper, your advanced AI assistant.";
 
                 string voice = "George";
 
-                if (Window.ComboVoice.SelectedItem is ComboBoxItem item)
+                if (Window.ComboVoice?.SelectedItem is ComboBoxItem item)
                 {
                     voice = (item.Tag?.ToString() ?? "George").Trim();
                     string content = item.Content?.ToString() ?? "";
@@ -225,8 +225,8 @@ namespace CosmoWhisper.Controllers
             {
                 var state = new Dictionary<string, object>
                 {
-                    { "Voice", Window.ComboVoice.SelectedItem?.ToString() ?? "null" },
-                    { "Text", Window.TxtPlayground.Text },
+                    { "Voice", Window.ComboVoice?.SelectedItem?.ToString() ?? "null" },
+                    { "Text", Window.TxtPlayground?.Text ?? "" },
                     { "Pitch", PreferenceManager.Shared.Preferences.VoicePitch },
                     { "Speed", PreferenceManager.Shared.Preferences.VoiceSpeed },
                     { "Volume", PreferenceManager.Shared.Preferences.VoiceVolume }

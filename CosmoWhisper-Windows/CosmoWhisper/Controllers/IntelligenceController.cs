@@ -83,7 +83,7 @@ namespace CosmoWhisper.Controllers
             {
                 foreach (ComboBoxItem item in Window.ComboPersonality.Items)
                 {
-                    if (item.Tag?.ToString() == p.AIPersonality)
+                    if (string.Equals(item.Tag?.ToString(), p.AIPersonality, StringComparison.OrdinalIgnoreCase))
                     {
                         Window.ComboPersonality.SelectedItem = item;
                         break;
@@ -95,7 +95,7 @@ namespace CosmoWhisper.Controllers
             {
                 foreach (ComboBoxItem item in Window.ComboVerbosity.Items)
                 {
-                    if (item.Tag?.ToString() == p.AIVerbosity)
+                    if (string.Equals(item.Tag?.ToString(), p.AIVerbosity, StringComparison.OrdinalIgnoreCase))
                     {
                         Window.ComboVerbosity.SelectedItem = item;
                         break;

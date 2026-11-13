@@ -126,7 +126,7 @@ namespace CosmoWhisper.Controllers
         }
 
 
-        public void UpdateToggle(Border toggle, bool isOn)
+        public void UpdateToggle(Border? toggle, bool isOn)
         {
             if (toggle == null) return;
 
@@ -280,7 +280,7 @@ namespace CosmoWhisper.Controllers
                 Directory.CreateDirectory(destDir);
 
                 // Pass password to manager
-                string backupPath = await VaultManager.Shared.CreateBackupAsync(name, password, destDir);
+                string backupPath = await VaultManager.Shared.CreateBackupAsync(name, password ?? "", destDir);
                 
                 await System.Threading.Tasks.Task.Delay(500);
 
@@ -373,7 +373,7 @@ namespace CosmoWhisper.Controllers
                 }
 
                 string appDataPath = PreferenceManager.Shared.AppDataFolder;
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath ?? "";
                 string sessionGuid = Guid.NewGuid().ToString("N").Substring(0, 8);
 
                 // 3. Create & Run PowerShell Helper Script
@@ -604,8 +604,11 @@ try {{
                     {
                         if (p.LaunchOnStartup)
                         {
-                            string exePath = Process.GetCurrentProcess().MainModule.FileName;
-                            key.SetValue("CosmoWhisper", $"\"{exePath}\"");
+                            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath ?? "";
+                            if (!string.IsNullOrWhiteSpace(exePath))
+                            {
+                                key.SetValue("CosmoWhisper", $"\"{exePath}\"");
+                            }
                         }
                         else
                         {

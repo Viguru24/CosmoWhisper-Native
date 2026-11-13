@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Whisper.net;
 using Whisper.net.Logger;
 using CosmoWhisper.Interfaces;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers.Engines
 {
@@ -18,11 +19,13 @@ namespace CosmoWhisper.Managers.Engines
         private WhisperFactory? _factory;
         private bool _isDownloading = false;
         private static IDisposable? _whisperLogger = null;
+        private readonly ILogger? _logger;
 
         public bool IsReady => File.Exists(_modelPath) && _factory != null;
 
-        public WhisperSpeechEngine(string appDataFolder)
+        public WhisperSpeechEngine(string appDataFolder, ILogger? logger = null)
         {
+            _logger = logger;
             string modelDir = Path.Combine(appDataFolder, "models");
             Directory.CreateDirectory(modelDir);
 
@@ -66,7 +69,7 @@ namespace CosmoWhisper.Managers.Engines
                 try
                 {
                     _whisperLogger = LogProvider.AddLogger((level, message) => {
-                        string msg = message.Trim();
+                        string msg = (message ?? "").Trim();
                         if (msg.StartsWith("whisper_init_state") ||
                             msg.StartsWith("whisper_backend_init_gpu") ||
                             msg.StartsWith("whisper_model_load") ||
@@ -210,14 +213,8 @@ namespace CosmoWhisper.Managers.Engines
 
         private void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            if (_logger != null) _logger.LogInformation(msg);
+            else FileLogger.WriteShared("INFO", msg);
         }
     }
 }

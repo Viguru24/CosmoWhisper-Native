@@ -6,7 +6,7 @@ namespace CosmoWhisper.Models
 {
     public class VocabularyItem : INotifyPropertyChanged
     {
-        private string _key;
+        private string _key = "";
         public string Key
         {
             get => _key;
@@ -16,7 +16,7 @@ namespace CosmoWhisper.Models
             }
         }
 
-        private string _value;
+        private string _value = "";
         public string Value
         {
             get => _value;
@@ -26,7 +26,7 @@ namespace CosmoWhisper.Models
             }
         }
 
-        public string OriginalKey { get; set; }
+        public string OriginalKey { get; set; } = "";
 
         // --- Editing Support ---
         private bool _isEditing;
@@ -46,8 +46,8 @@ namespace CosmoWhisper.Models
         }
 
         // Temp storage to support Cancel
-        public string TempKey { get; set; }
-        public string TempValue { get; set; }
+        public string TempKey { get; set; } = "";
+        public string TempValue { get; set; } = "";
 
         public Visibility ReadModeVisibility => IsEditing ? Visibility.Collapsed : Visibility.Visible;
         public Visibility EditModeVisibility => IsEditing ? Visibility.Visible : Visibility.Collapsed;

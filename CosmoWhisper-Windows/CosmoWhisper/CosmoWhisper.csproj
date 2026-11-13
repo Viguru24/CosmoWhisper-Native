@@ -18,10 +18,15 @@
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <AppxPackageDir>AppPackages</AppxPackageDir>
 
-    <NoWarn>CS8618;CS8600;CS8601;CS8602;CS8604;CS0168;CS0219;CS0414</NoWarn>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>CosmoWhisper.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <!-- Hard Wall Separation: PERSONAL BUILD -->
   <PropertyGroup Condition="'$(Configuration)' == 'Personal' Or '$(Configuration)' == 'Release'">

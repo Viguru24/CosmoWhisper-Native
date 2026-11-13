@@ -80,8 +80,8 @@ namespace CosmoWhisper.Controllers
             if (item != null)
             {
                 var p = PreferenceManager.Shared.Preferences;
-                p.MicDeviceName = item.Content.ToString();
-                p.MicDeviceId = item.Tag.ToString();
+                p.MicDeviceName = item.Content?.ToString() ?? "";
+                p.MicDeviceId = item.Tag?.ToString() ?? "";
                 PreferenceManager.Shared.Save();
 
                 AudioRecorder.Shared.SelectedDeviceId = p.MicDeviceId;

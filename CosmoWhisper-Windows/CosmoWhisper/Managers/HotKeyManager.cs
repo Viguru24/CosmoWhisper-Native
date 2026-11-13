@@ -116,14 +116,7 @@ namespace CosmoWhisper.Managers
 
         private void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            CosmoWhisper.Services.FileLogger.WriteShared("INFO", msg);
         }
 
         public void Dispose()

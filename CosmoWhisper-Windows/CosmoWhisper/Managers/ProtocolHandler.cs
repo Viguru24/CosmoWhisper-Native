@@ -22,14 +22,7 @@ namespace CosmoWhisper.Managers
 
         private static void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - [Protocol] {msg}\n");
-            }
-            catch { }
+            FileLogger.WriteShared("INFO", $"[Protocol] {msg}");
         }
 
         public static void Register()
@@ -39,7 +32,8 @@ namespace CosmoWhisper.Managers
 
             try
             {
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string? exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath;
+                if (string.IsNullOrWhiteSpace(exePath)) return;
 
                 // Use CurrentUser instead of ClassesRoot to avoid requiring Administrator privileges
                 using (var classes = Registry.CurrentUser.CreateSubKey(@"Software\Classes"))
@@ -65,13 +59,16 @@ namespace CosmoWhisper.Managers
                 // Fallback to HKCR if HKCU fails for some reason (rare)
                 try
                 {
+                    string? fallbackExePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath;
+                    if (string.IsNullOrWhiteSpace(fallbackExePath)) return;
+
                     using (var key = Registry.ClassesRoot.CreateSubKey(ProtocolName))
                     {
                         key.SetValue("", "URL:CosmoWhisper Protocol");
                         key.SetValue("URL Protocol", "");
                         using (var command = key.CreateSubKey(@"shell\open\command"))
                         {
-                            command.SetValue("", $"\"{Process.GetCurrentProcess().MainModule.FileName}\" \"%1\"");
+                            command.SetValue("", $"\"{fallbackExePath}\" \"%1\"");
                         }
                     }
                 }
@@ -110,9 +107,9 @@ namespace CosmoWhisper.Managers
 
                     if (action.Equals("auth", StringComparison.OrdinalIgnoreCase))
                     {
-                        string token = GetQueryParam(query, "token");
-                        string email = GetQueryParam(query, "email");
-                        string tier = GetQueryParam(query, "tier");
+                        string token = GetQueryParam(query, "token") ?? "";
+                        string email = GetQueryParam(query, "email") ?? "";
+                        string tier = GetQueryParam(query, "tier") ?? "";
 
                         if (!string.IsNullOrEmpty(token))
                         {
@@ -158,7 +155,7 @@ namespace CosmoWhisper.Managers
                     }
                     else if (action.Equals("license", StringComparison.OrdinalIgnoreCase))
                     {
-                        string token = GetQueryParam(query, "token");
+                        string token = GetQueryParam(query, "token") ?? "";
                         LogEvent($"License action received. Token: {!string.IsNullOrEmpty(token)}");
                         if (!string.IsNullOrEmpty(token))
                         {

@@ -21,8 +21,8 @@ namespace CosmoWhisper.Managers
     public class StatusChangeEvent
     {
         public bool Is_Active { get; set; }
-        public string Email { get; set; }
-        public string Tier { get; set; }
+        public string Email { get; set; } = "";
+        public string Tier { get; set; } = "";
     }
 
     public class BackendService : IBackendService
@@ -30,17 +30,21 @@ namespace CosmoWhisper.Managers
     {
         public static BackendService Shared => (BackendService)ServiceLocator.GetService<IBackendService>();
         private readonly IPreferenceManager _preferenceManager;
+        private readonly ILogger? _logger;
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         private volatile Uri _baseUri = new Uri("https://api.cosmowhisper.com/");
 
         public void LogEvent(string msg)
         {
-            try { AIService.Shared.LogEvent("[BackendService] " + msg); } catch { }
+            string entry = "[BackendService] " + msg;
+            if (_logger != null) _logger.LogInformation(entry);
+            else FileLogger.WriteShared("INFO", entry);
         }
 
-        public BackendService(IPreferenceManager preferenceManager)
+        public BackendService(IPreferenceManager preferenceManager, ILogger? logger = null)
         {
             _preferenceManager = preferenceManager;
+            _logger = logger;
             UpdateBaseAddress();
         }
 
@@ -313,7 +317,6 @@ namespace CosmoWhisper.Managers
                     if (tickets != null && tickets.Length > 0)
                     {
                         int openCount = 0;
-                        string latestId = "";
                         foreach(var t in tickets) {
                            if(t.Status == "open") openCount++;
                         }
@@ -413,33 +416,33 @@ namespace CosmoWhisper.Managers
     public class SupportTicket
     {
         public int Id { get; set; }
-        public string Status { get; set; }
-        public string Message { get; set; }
+        public string Status { get; set; } = "";
+        public string Message { get; set; } = "";
     }
 
     public class SupportActivityResponse
     {
         public int OpenCount { get; set; }
-        public string LatestTicketId { get; set; }
-        public string LatestTicketMessage { get; set; }
+        public string LatestTicketId { get; set; } = "";
+        public string LatestTicketMessage { get; set; } = "";
     }
 
     public class LoginResponse
     {
-        public string token { get; set; }
-        public UserObj user { get; set; }
+        public string token { get; set; } = "";
+        public UserObj user { get; set; } = new();
     }
 
     public class UserObj
     {
-        public string email { get; set; }
-        public string tier { get; set; }
+        public string email { get; set; } = "";
+        public string tier { get; set; } = "";
     }
 
     public class StatusResponse
     {
-        public string tier { get; set; }
-        public string email { get; set; }
+        public string tier { get; set; } = "";
+        public string email { get; set; } = "";
         public double usageMinutes { get; set; }
         public int limitMinutes { get; set; }
         public bool isOverLimit { get; set; }
@@ -447,7 +450,7 @@ namespace CosmoWhisper.Managers
 
     public class ErrorResponse
     {
-        public string error { get; set; }
+        public string error { get; set; } = "";
     }
 }
 

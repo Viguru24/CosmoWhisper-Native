@@ -43,11 +43,13 @@ namespace CosmoWhisper.Managers
             text = Regex.Replace(text, @"^[\.\,…]+\s*", "");
 
             // Remove common Whisper trailer hallucinations from the end of transcriptions safely
+            string candidate = text.TrimEnd('.', '!', ' ');
             foreach (var hallucination in TrailingHallucinations)
             {
-                if (text.Length >= hallucination.Length && text.EndsWith(hallucination, StringComparison.OrdinalIgnoreCase))
+                if (candidate.Length >= hallucination.Length && candidate.EndsWith(hallucination, StringComparison.OrdinalIgnoreCase))
                 {
-                    text = text.Substring(0, text.Length - hallucination.Length).TrimEnd(',', ' ', '.');
+                    text = candidate.Substring(0, candidate.Length - hallucination.Length).TrimEnd(',', ' ', '.');
+                    break;
                 }
             }
 

@@ -426,7 +426,7 @@ namespace CosmoWhisper.Managers
             if (IsTriggered("translate to russian", "translate into russian", "translate russian")) { await ProcessAIOnSelection("Translate the following text into Russian. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
 
             // --- EXTRACT LANGUAGE FROM COMMAND ---
-            string language = null;
+            string? language = null;
             // Only trigger translation if the word "translate" or "translation" is explicitly used
             var translationMatch = Regex.Match(cmd, @"(?:^|\s)(?:translate|translation)(?:\s+(?:it|this|that|the|text|message))?\s+(?:to|into|in)?\s+(\w+)(?:\s+translation)?");
             if (translationMatch.Success) 
@@ -540,7 +540,7 @@ namespace CosmoWhisper.Managers
             name = name.TrimEnd('.');
 
             // 1. Check exact dictionary match
-            if (_webShortcuts.TryGetValue(name, out string url))
+            if (_webShortcuts.TryGetValue(name, out string? url))
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 return true;
@@ -553,7 +553,7 @@ namespace CosmoWhisper.Managers
                 if (name.EndsWith(tld))
                 {
                     string root = name.Substring(0, name.Length - tld.Length);
-                    if (_webShortcuts.TryGetValue(root, out string shortcutUrl))
+                    if (_webShortcuts.TryGetValue(root, out string? shortcutUrl))
                     {
                         Process.Start(new ProcessStartInfo(shortcutUrl) { UseShellExecute = true });
                         return true;
@@ -639,10 +639,10 @@ namespace CosmoWhisper.Managers
 
         private async Task<bool> LaunchApp(string name)
         {
-            string target = null;
+            string? target = null;
             
             // 1. Check hardcoded dictionary (Exact)
-            if (_appShortcuts.TryGetValue(name.ToLower(), out string shortcut))
+            if (_appShortcuts.TryGetValue(name.ToLower(), out string? shortcut))
             {
                 target = shortcut;
             }
@@ -781,13 +781,7 @@ namespace CosmoWhisper.Managers
 
         private void LogToFile(string msg)
         {
-            try
-            {
-                string logPath = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logPath);
-                File.AppendAllText(Path.Combine(logPath, "command_debug.txt"), $"{DateTime.Now}: {msg}\n");
-            }
-            catch { }
+            FileLogger.WriteShared("INFO", msg);
         }
     }
 }

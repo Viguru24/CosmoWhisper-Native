@@ -5,9 +5,9 @@ This document serves as the comprehensive technical reference for the CosmoWhisp
 ---
 
 ## 1. Core Architecture
-- **Environment:** Hetzner VPS (Ubuntu/Linux).
-- **Runtime:** Node.js (TypeScript) managed by **PM2**.
-- **Reverse Proxy:** **Nginx** (Handles SSL termination and surgical buffering).
+- **Production Infrastructure:** **Ra Server** (`ssh viguru@192.168.1.28`, Port 22 / Tailscale `100.74.188.94`, Services Directory `/opt`). *(Note: Older historical deployment notes from May–June 2026 referenced a legacy Hetzner VPS.)*
+- **Runtime:** Node.js (TypeScript) managed by **PM2** (local backend port `5000` for dev; `/opt` on Ra Server for production).
+- **Reverse Proxy:** System **Nginx** (`/etc/nginx/sites-available` and `/etc/nginx/sites-enabled`; handles SSL termination and surgical SSE buffering).
 - **Process Manager:** PM2 (Service Name: `cosmowhisper-api`).
 
 ---
@@ -145,10 +145,10 @@ This variable is then used in both the `<a href>` link and the `window.location.
 - Dev logs show no `[Protocol] Protocol Action: auth` entry.
 - The dev app falls back to `dev@cosmowhisper.local` bypass.
 
-**How to verify the fix is live:**
+**How to verify the fix is live on Ra Server:**
 ```bash
-# SSH into VPS and check the compiled output
-ssh -p 8522 root@49.12.79.244 "grep 'windows-dev' /var/www/cosmowhisper/backend/dist/routes/auth.js"
+# SSH into Ra Server and check the deployed backend route
+ssh viguru@192.168.1.28 "grep 'windows-dev' /opt/cosmowhisper/backend/dist/routes/auth.js || grep 'windows-dev' /var/www/cosmowhisper/backend/dist/routes/auth.js"
 ```
 If this returns a match containing `cosmowhisper-dev`, the fix is live. If it returns nothing, the backend needs to be recompiled.
 
@@ -188,16 +188,16 @@ To transcribe directly through Groq (bypassing the server proxy and local execut
 3. To test transcription without any cloud auth token, ensure the app shows the user logged in as `dev@cosmowhisper.local` with "Unlimited Access".
 
 ### F. Log Files
-Always watch the debug logs for runtime information:
-- **Dev Log Path:** `%APPDATA%\CosmoWhisper_Dev\logs\cosmo_debug.log`
-- **Protocol Log Path:** `%APPDATA%\CosmoWhisper\logs\cosmo_debug.log` (ProtocolHandler logs here due to hardcoded path)
+Always watch the unified rolling debug logs for runtime information (Dev and Personal are strictly isolated into their respective AppData directories, capped at 5 MB × 3 rotated backups):
+- **Dev Log Path:** `%APPDATA%\CosmoWhisper_Dev\logs\cosmo_debug.log` (all subsystems, including `ProtocolHandler`, `HotKeyManager`, and `NarrationManager`, now route through unified `FileLogger`)
+- **Personal Log Path:** `%APPDATA%\CosmoWhisper_Personal\logs\cosmo_debug.log`
 - **Tail Logs Command:**
   ```powershell
   Get-Content -Path "$env:APPDATA\CosmoWhisper_Dev\logs\cosmo_debug.log" -Wait -Tail 50
   ```
 - **Search for auth events:**
   ```powershell
-  Select-String -Path "$env:APPDATA\CosmoWhisper\logs\cosmo_debug.log" -Pattern "Protocol"
+  Select-String -Path "$env:APPDATA\CosmoWhisper_Dev\logs\cosmo_debug.log" -Pattern "Protocol"
   ```
 
 ---
@@ -209,5 +209,7 @@ Always watch the debug logs for runtime information:
 | 2026-06-17 | Dev app login via Google doesn't register; user appears offline in back office | Backend `auth.ts` callback had hardcoded `cosmowhisper://` scheme, sending dev tokens to the production app | Made scheme dynamic: `const scheme = platform === 'windows-dev' ? 'cosmowhisper-dev' : 'cosmowhisper';` in VPS `src/routes/auth.ts` |
 | 2026-06-17 | Named pipe timeout causing token loss during secondary instance handoff | Pipe client timeout was 1000ms (too short); no fallback if pipe failed | Increased timeout to 5000ms; added `FileSystemWatcher` temp file fallback in `SingleInstanceProvider.cs` |
 
+| 2026-11-13 | Unified logging & Dev log isolation; Ra Server docs sync | Scattered raw `File.AppendAllText` writers; `ProtocolHandler`/`HotKeyManager`/`NarrationManager` hardcoded `%APPDATA%\CosmoWhisper\logs` | Consolidated logging via thread-safe rolling `FileLogger` (5 MB × 3) + updated master docs for Ra Server (`192.168.1.28`) |
+
 ---
-*Last Updated: June 17, 2026*
+*Last Updated: November 13, 2026*

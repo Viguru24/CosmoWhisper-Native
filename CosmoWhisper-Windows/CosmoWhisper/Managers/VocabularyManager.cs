@@ -44,7 +44,11 @@ namespace CosmoWhisper.Managers
                 // Fallback for dev environment path
                 if (!File.Exists(defaultsPath))
                 {
-                    defaultsPath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName, "Managers", "VocabularyDefaults.json");
+                    var devRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)?.Parent?.Parent;
+                    if (devRoot != null)
+                    {
+                        defaultsPath = Path.Combine(devRoot.FullName, "Managers", "VocabularyDefaults.json");
+                    }
                 }
 
                 if (File.Exists(defaultsPath))
@@ -233,7 +237,7 @@ namespace CosmoWhisper.Managers
             }
 
             // STEP 4: Handle Automatic Sign-Off (Signature)
-            var p = PreferenceManager.Shared.Preferences;
+            var p = _preferenceManager.Preferences;
             if (p.EnableSignOff && !string.IsNullOrWhiteSpace(p.SignOffSignature))
             {
                 // Triggers: "sign off", "regards" (if not already part of a replacement)

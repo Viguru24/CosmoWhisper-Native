@@ -228,7 +228,7 @@ namespace CosmoWhisper.Managers
         public static PreferenceManager Shared => (PreferenceManager)ServiceLocator.GetService<IPreferenceManager>();
         
         public bool IsDevMode { get; private set; }
-        private UserPreferences _preferences;
+        private UserPreferences _preferences = new UserPreferences();
         public UserPreferences Preferences 
         { 
             get => _preferences; 
@@ -238,9 +238,9 @@ namespace CosmoWhisper.Managers
                 OnPropertyChanged(nameof(Preferences));
             }
         }
-        private readonly string _settingsPath;
+        private readonly string _settingsPath = "";
         public string AppDataFolder => _appDataFolder;
-        private readonly string _appDataFolder;
+        private readonly string _appDataFolder = "";
 
         public event Action? PreferencesUpdated;
 

@@ -1,4 +1,6 @@
 # 🛠️ CosmoWhisper VPS Restoration & Hardening Report
+> **Historical Notice:** This report documents the May 2026 recovery on the legacy Hetzner VPS (`49.12.79.244`). Production infrastructure has since migrated to **Ra Server** (`ssh viguru@192.168.1.28`, Port 22 / Tailscale `100.74.188.94`, `/opt` with System Nginx).
+
 **Date:** May 6, 2026  
 **Subject:** Permanent Fix for Infrastructure Stability & Authentication
 

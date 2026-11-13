@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using SherpaOnnx;
 using NAudio.Wave;
 using CosmoWhisper.Interfaces;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers.Engines
 {
@@ -13,6 +14,7 @@ namespace CosmoWhisper.Managers.Engines
         public string EngineName => "Parakeet Redux (High Accuracy)";
 
         private readonly string _modelDir;
+        private readonly ILogger? _logger;
         private OfflineRecognizer? _recognizer;
         private readonly object _lock = new();
 
@@ -27,8 +29,9 @@ namespace CosmoWhisper.Managers.Engines
             }
         }
 
-        public ParakeetSpeechEngine(string appDataFolder)
+        public ParakeetSpeechEngine(string appDataFolder, ILogger? logger = null)
         {
+            _logger = logger;
             _modelDir = Path.Combine(appDataFolder, "models", "parakeet-redux");
             Directory.CreateDirectory(_modelDir);
         }
@@ -147,14 +150,8 @@ namespace CosmoWhisper.Managers.Engines
 
         private void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(PreferenceManager.Shared.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            if (_logger != null) _logger.LogInformation(msg);
+            else FileLogger.WriteShared("INFO", msg);
         }
     }
 }

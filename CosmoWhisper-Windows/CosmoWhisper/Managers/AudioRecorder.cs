@@ -711,12 +711,6 @@ namespace CosmoWhisper.Managers
         private void LogDebug(string msg)
         {
             DiagnosticManager.Shared.Log(msg, "AUDIO");
-            try {
-                // Point to the correct AppData/Logs folder standardized for the build
-                string p = Path.Combine(_preferenceManager.AppDataFolder, "logs");
-                Directory.CreateDirectory(p);
-                File.AppendAllText(Path.Combine(p, "audio_debug.txt"), $"{DateTime.Now}: {msg}\n");
-            } catch { }
         }
 
         [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);

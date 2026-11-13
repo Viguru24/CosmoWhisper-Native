@@ -10,7 +10,7 @@ namespace CosmoWhisper.Managers
     public class LicenseStatus
     {
         public string tier { get; set; } = "free";
-        public string email { get; set; }
+        public string email { get; set; } = "";
         public double usageMinutes { get; set; }
         public int limitMinutes { get; set; }
         public bool isOverLimit { get; set; }

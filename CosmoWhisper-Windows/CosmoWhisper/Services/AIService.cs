@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using CosmoWhisper.Managers;
 using CosmoWhisper;
 using CosmoWhisper.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 
 namespace CosmoWhisper.Services
@@ -18,6 +19,11 @@ namespace CosmoWhisper.Services
     {
         public static AIService Shared => (AIService)ServiceLocator.GetService<IAIService>();
         private readonly IPreferenceManager _preferenceManager;
+        private readonly ILogger? _logger;
+        private readonly IVocabularyManager? _vocabularyManager;
+        private readonly ILocalModelManager? _localModelManager;
+        private readonly HttpMessageInvoker _httpClient;
+        private readonly Func<string>? _focusedAppProvider;
 
         private const string DirectUrl = "https://api.groq.com/openai/v1/audio/transcriptions";
         private const string DirectChatUrl = "https://api.groq.com/openai/v1/chat/completions";
@@ -34,13 +40,46 @@ namespace CosmoWhisper.Services
         private string ChatUrl => $"{_preferenceManager.Preferences.BackendUrl.TrimEnd('/')}/api/ai/chat";
         private string ProxyUrl => $"{_preferenceManager.Preferences.BackendUrl.TrimEnd('/')}/api/ai/transcribe";
         private bool _useProxy = false; // "Sticky" proxy mode if direct fails
-        private bool _useChatProxy = false;
 
-        public AIService(IPreferenceManager preferenceManager)
+        [ActivatorUtilitiesConstructor]
+        public AIService(
+            IPreferenceManager preferenceManager,
+            ILogger? logger = null,
+            IVocabularyManager? vocabularyManager = null,
+            ILocalModelManager? localModelManager = null)
+            : this(preferenceManager, logger, vocabularyManager, localModelManager, null, null)
+        {
+        }
+
+        internal AIService(
+            IPreferenceManager preferenceManager,
+            ILogger? logger,
+            IVocabularyManager? vocabularyManager,
+            ILocalModelManager? localModelManager,
+            HttpMessageInvoker? httpClient,
+            Func<string>? focusedAppProvider)
         {
             _preferenceManager = preferenceManager;
+            _logger = logger;
+            _vocabularyManager = vocabularyManager;
+            _localModelManager = localModelManager;
+            _httpClient = httpClient ?? SharedHttpClient.Instance;
+            _focusedAppProvider = focusedAppProvider;
             RefreshConfig();
         }
+
+        private bool IsAccountBlocked() => IsAccessBlocked || (ServiceLocator.Provider != null && AppState.Shared.IsAccessBlocked);
+
+        private void TriggerAuthCheck()
+        {
+            if (ServiceLocator.Provider != null)
+            {
+                _ = Task.Run(() => AccountService.Shared.CheckAuthStatusAsync());
+            }
+        }
+
+        private ILocalModelManager? ResolveLocalModelManager() =>
+            _localModelManager ?? (ServiceLocator.Provider != null ? LocalModelManager.Shared : null);
 
         public void Initialize()
         {
@@ -56,10 +95,10 @@ namespace CosmoWhisper.Services
 
         public async Task<string> Transcribe(string filePath)
         {
-            if (AppState.Shared.IsAccessBlocked)
+            if (IsAccountBlocked())
             {
                 LogEvent("[transcribe] 🛑 ACCESS BLOCKED: Account is flagged in dashboard. Triggering re-sync...");
-                _ = Task.Run(() => AccountService.Shared.CheckAuthStatusAsync());
+                TriggerAuthCheck();
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 
@@ -70,10 +109,12 @@ namespace CosmoWhisper.Services
             string langCode = p.InterfaceLanguage.ToLower().Split('-')[0];
             string safeLangCode = (langCode == "auto") ? "en" : langCode;
             
-            string appContext = AudioRecorder.Shared.GetCurrentFocusedApp();
+            string appContext = _focusedAppProvider?.Invoke()
+                ?? (ServiceLocator.Provider != null ? AudioRecorder.Shared.GetCurrentFocusedApp() : "");
             if (appContext.Contains("Cosmo", StringComparison.OrdinalIgnoreCase)) appContext = "";
             
-            string hints = VocabularyManager.Shared.GetActiveHints();
+            string hints = _vocabularyManager?.GetActiveHints()
+                ?? (ServiceLocator.Provider != null ? VocabularyManager.Shared.GetActiveHints() : "");
             string hintsText = string.IsNullOrWhiteSpace(hints) ? "" : $" {hints}.";
 
             string basePrompt = $"Transcribe accurately. Ignore non-speech sounds like coughs or background noise. New line, new paragraph. {appContext}{hintsText}".Trim();
@@ -132,7 +173,8 @@ namespace CosmoWhisper.Services
 
             // 🔄 FALLBACK TO LOCAL MODEL (If Cloud fails or Internet is down)
             LogEvent("[transcribe] ⚠️ Cloud transcription failed. Checking local model fallback...");
-            if (LocalModelManager.Shared.IsReady)
+            var localModel = ResolveLocalModelManager();
+            if (localModel != null && localModel.IsReady)
             {
                 LogEvent("[transcribe] 🔒 Local model is ready. Falling back to local transcription.");
                 string spellingHints = (langCode == "en" && p.InterfaceLanguage == "en-GB")
@@ -150,13 +192,14 @@ namespace CosmoWhisper.Services
         private async Task<string> HandleLocalTranscription(string filePath, string basePrompt, string safeLangCode)
         {
             LogEvent("[transcribe] 🔒 LOCAL MODE ACTIVE: Skipping cloud as per user preference...");
-            if (LocalModelManager.Shared.IsReady)
+            var localModel = ResolveLocalModelManager();
+            if (localModel != null && localModel.IsReady)
             {
                 _stopwatch.Restart();
-                string localResult = await LocalModelManager.Shared.TranscribeAsync(filePath, basePrompt, safeLangCode);
+                string localResult = await localModel.TranscribeAsync(filePath, basePrompt, safeLangCode);
                 _stopwatch.Stop();
 
-                LastTranscriptionSource = $"Local ({LocalModelManager.Shared.ActiveEngineName})";
+                LastTranscriptionSource = $"Local ({localModel.ActiveEngineName})";
                 LastTranscriptionTime = _stopwatch.ElapsedMilliseconds;
                 return localResult;
             }
@@ -240,14 +283,8 @@ namespace CosmoWhisper.Services
 
         public void LogEvent(string msg)
         {
-            try
-            {
-                string logDir = Path.Combine(_preferenceManager.AppDataFolder, "logs");
-                Directory.CreateDirectory(logDir);
-                string logPath = Path.Combine(logDir, "cosmo_debug.log");
-                System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msg}\n");
-            }
-            catch { }
+            if (_logger != null) _logger.LogInformation(msg);
+            else FileLogger.WriteShared("INFO", msg);
         }
 
         private async Task<string> ExecuteWithFallback(string url, HttpContent content, bool isDirect, int timeoutSeconds = 60)
@@ -273,7 +310,7 @@ namespace CosmoWhisper.Services
                 }
 
                 _stopwatch.Restart();
-                var response = await SharedHttpClient.Instance.SendAsync(request, cts.Token);
+                var response = await _httpClient.SendAsync(request, cts.Token);
                 _stopwatch.Stop();
                 long elapsed = _stopwatch.ElapsedMilliseconds;
                 
@@ -302,13 +339,9 @@ namespace CosmoWhisper.Services
                     }
 
                     var errorMsg = $"API Error ({response.StatusCode}): {responseBody}";
-                    // Log to file for transcription errors
                     if (url.Contains("transcribe") || url.Contains("transcriptions"))
                     {
-                        var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                        Directory.CreateDirectory(logDir);
-                        var logPath = Path.Combine(logDir, "groq_errors.log");
-                        try { File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {url} - {errorMsg} - Limit: {response.Headers.RetryAfter?.ToString() ?? "N/A"}\n"); } catch { }
+                        LogEvent($"[ExecuteWithFallback] {url} - {errorMsg} - Limit: {response.Headers.RetryAfter?.ToString() ?? "N/A"}");
                     }
                     return $"Error: {response.StatusCode} - {responseBody}";
                 }
@@ -380,7 +413,7 @@ namespace CosmoWhisper.Services
                 httpRequest.Headers.Add("User-Agent", "CosmoWhisper-Native");
                 httpRequest.Content = JsonContent.Create(request);
 
-                var response = await SharedHttpClient.Instance.SendAsync(httpRequest);
+                var response = await _httpClient.SendAsync(httpRequest, System.Threading.CancellationToken.None);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -405,19 +438,17 @@ namespace CosmoWhisper.Services
 
         public async Task<string> ProcessCommand(string prompt, string context, bool usePersonality = true, bool useInterfaceLanguage = true)
         {
-            if (AppState.Shared.IsAccessBlocked)
+            if (IsAccountBlocked())
             {
                 LogEvent("[command] 🛑 ACCESS BLOCKED: Account is flagged in dashboard. Triggering re-sync...");
-                _ = Task.Run(() => AccountService.Shared.CheckAuthStatusAsync());
+                TriggerAuthCheck();
                 return "Error: Your account has been blocked. Please contact support or check your dashboard.";
             }
 
             var p = _preferenceManager.Preferences;
-            string langHint = useInterfaceLanguage ? GetLanguageHint(p.InterfaceLanguage) : "";
-            string personalityHint = usePersonality ? GetPersonalityHint(p.AIPersonality) : "";
-            
+
             // 🛡️ TOKEN BALANCING: Prevent context window overflow
-            string fullPrompt = $"{prompt}\n\nContext:\n{context}\n{langHint}{personalityHint}";
+            string fullPrompt = BuildFullPrompt(prompt, context, usePersonality, useInterfaceLanguage);
             var (balancedPrompt, maxOutput) = BalanceContext(fullPrompt, p.MaxOutputTokens);
 
             string modelName = "llama-3.3-70b-versatile"; 
@@ -469,9 +500,7 @@ namespace CosmoWhisper.Services
                     string res = await ExecuteWithFallback(DirectChatUrl, content, true, 30);
                     if (!res.StartsWith("Error:") && !res.Contains("Canceled"))
                     {
-                        // Clean reasoning / think tags if emitted by reasoning models
-                        res = Regex.Replace(res, @"<think>.*?</think>", "", RegexOptions.Singleline).Trim();
-                        return res;
+                        return StripThinkTags(res);
                     }
 
                     LogEvent($"[ProcessCommand] Groq model '{model}' failed: {res}");
@@ -499,14 +528,14 @@ namespace CosmoWhisper.Services
                     openAiRequest.Content = JsonContent.Create(openAiPayload);
                     openAiRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", openAiKey);
 
-                    var openAiRes = await SharedHttpClient.Instance.SendAsync(openAiRequest);
+                    var openAiRes = await _httpClient.SendAsync(openAiRequest, System.Threading.CancellationToken.None);
                     var openAiBody = await openAiRes.Content.ReadAsStringAsync();
                     if (openAiRes.IsSuccessStatusCode)
                     {
                         var res = JsonSerializer.Deserialize<ChatResponse>(openAiBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (res?.choices?.Length > 0)
                         {
-                            return res.choices[0]?.message?.content ?? "";
+                            return StripThinkTags(res.choices[0]?.message?.content);
                         }
                     }
                     LogEvent($"[ProcessCommand] Direct OpenAI Chat failed: {openAiBody}");
@@ -521,14 +550,32 @@ namespace CosmoWhisper.Services
             using (var proxyContent = JsonContent.Create(payload))
             {
                 string result = await ExecuteWithFallback(ChatUrl, proxyContent, false, 30);
-                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return result;
+                if (!result.StartsWith("Error:") && !result.Contains("Canceled")) return StripThinkTags(result);
                 
                 string backupProxyUrl = ChatUrl.Replace("/api/ai/chat", "/api/chat");
-                return await ExecuteWithFallback(backupProxyUrl, proxyContent, false, 30);
+                string backupResult = await ExecuteWithFallback(backupProxyUrl, proxyContent, false, 30);
+                return !backupResult.StartsWith("Error:") && !backupResult.Contains("Canceled")
+                    ? StripThinkTags(backupResult)
+                    : backupResult;
             }
         }
 
-        private (string trimmedPrompt, int maxOutputTokens) BalanceContext(string input, int requestedOutput)
+        internal static string StripThinkTags(string? response)
+        {
+            if (string.IsNullOrEmpty(response)) return "";
+            return Regex.Replace(response, @"<think>.*?</think>", "", RegexOptions.Singleline | RegexOptions.IgnoreCase).Trim();
+        }
+
+        internal string BuildFullPrompt(string prompt, string context, bool usePersonality = true, bool useInterfaceLanguage = true)
+        {
+            var p = _preferenceManager.Preferences;
+            string langHint = useInterfaceLanguage ? GetLanguageHint(p.InterfaceLanguage) : "";
+            string personalityHint = usePersonality ? GetPersonalityHint(p.AIPersonality) : "";
+            string verbosityHint = usePersonality ? GetVerbosityHint(p.AIVerbosity) : "";
+            return $"{prompt}\n\nContext:\n{context}\n{langHint}{personalityHint}{verbosityHint}";
+        }
+
+        internal (string trimmedPrompt, int maxOutputTokens) BalanceContext(string input, int requestedOutput)
         {
             const int MAX_TOKENS = 128000; // Safe limit for most modern models
             const double TOKENS_PER_CHAR = 4.0;
@@ -568,19 +615,35 @@ namespace CosmoWhisper.Services
             return "Error: Max retries exceeded";
         }
 
-        private string GetPersonalityHint(string personality)
+        internal static string GetPersonalityHint(string? personality)
         {
-            string prompt = "";
-            switch (personality)
+            if (string.IsNullOrWhiteSpace(personality)) return "";
+
+            return personality.Trim().ToLowerInvariant() switch
             {
-                case "Professional": prompt += " [SYSTEM: Tone: Professional, concise, efficient.]"; break;
-                case "Friendly": prompt += " [SYSTEM: Tone: Friendly, casual, warm.]"; break;
-                case "Sarcastic": prompt += " [SYSTEM: Tone: Sarcastic, witty, dry humor.]"; break;
-                case "Pirate": prompt += " [SYSTEM: Tone: Talk like a pirate! Arrr!]"; break;
-                case "Detailed": prompt += " [SYSTEM: Length: Comprehensive, in-depth, cover nuances.]"; break;
-                case "Balanced": prompt += " [SYSTEM: Length: Balanced, moderate detail.]"; break;
-            }
-            return prompt;
+                "professional" => " [SYSTEM: Tone: Professional, concise, efficient.]",
+                "friendly" => " [SYSTEM: Tone: Friendly, casual, warm.]",
+                "coding" => " [SYSTEM: Tone: Technical, precise, developer-focused; preserve code identifiers and syntax cleanly.]",
+                "minimal" => " [SYSTEM: Tone: Direct and stripped-back with minimal filler.]",
+                "sarcastic" => " [SYSTEM: Tone: Sarcastic, witty, dry humor.]",
+                "pirate" => " [SYSTEM: Tone: Talk like a pirate! Arrr!]",
+                "detailed" => " [SYSTEM: Length: Comprehensive, in-depth, cover nuances.]",
+                "balanced" => " [SYSTEM: Length: Balanced, moderate detail.]",
+                _ => ""
+            };
+        }
+
+        internal static string GetVerbosityHint(string? verbosity)
+        {
+            if (string.IsNullOrWhiteSpace(verbosity)) return "";
+
+            return verbosity.Trim().ToLowerInvariant() switch
+            {
+                "concise" => " [SYSTEM: Length: Brief, concise, straight to the point.]",
+                "balanced" => " [SYSTEM: Length: Balanced, moderate detail.]",
+                "detailed" => " [SYSTEM: Length: Comprehensive, in-depth, cover nuances.]",
+                _ => ""
+            };
         }
 
         private string GetLanguageHint(string langCode)
@@ -637,7 +700,7 @@ namespace CosmoWhisper.Services
                     using (var cts = new System.Threading.CancellationTokenSource(3000))
                     {
                         var request = new HttpRequestMessage(HttpMethod.Head, url);
-                        await SharedHttpClient.Instance.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                        await _httpClient.SendAsync(request, cts.Token);
                     }
 
                     // Background Ping: Test Direct Route (for VPN Firewall logic)
@@ -648,7 +711,7 @@ namespace CosmoWhisper.Services
                             using (var cts = new System.Threading.CancellationTokenSource(2500))
                             {
                                 var pingReq = new HttpRequestMessage(HttpMethod.Head, DirectUrl);
-                                await SharedHttpClient.Instance.SendAsync(pingReq, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                                await _httpClient.SendAsync(pingReq, cts.Token);
                             }
                         }
                         catch (Exception directEx)
@@ -659,9 +722,10 @@ namespace CosmoWhisper.Services
                     }
                     
                     // 2. Warm up local model (trigger load/compile)
-                    if (_preferenceManager.Preferences.UseLocalWhisper)
+                    var localModel = ResolveLocalModelManager();
+                    if (_preferenceManager.Preferences.UseLocalWhisper && localModel != null)
                     {
-                        await LocalModelManager.Shared.WarmUp();
+                        await localModel.WarmUp();
                     }
 
                     LogEvent("[WarmUp] ✅ Environment pre-heated and ready.");

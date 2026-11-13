@@ -16,7 +16,7 @@ namespace CosmoWhisper.Managers
     /// </summary>
     public class VaultManager
     {
-        private static VaultManager _instance;
+        private static VaultManager? _instance;
         public static VaultManager Shared => _instance ??= new VaultManager();
 
         private const int SaltSize = 16; // 128 bits
@@ -144,7 +144,7 @@ namespace CosmoWhisper.Managers
             {
                  throw new UnauthorizedAccessException("Invalid password or corrupted backup.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, true);
                 throw; // Re-throw to controller
