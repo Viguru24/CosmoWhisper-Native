@@ -56,11 +56,41 @@ Publish_*/
 
 # Large Binary Outputs
 CosmoWhisper-Windows/CosmoWhisper/publish_output/
-CosmoWhisper-Windows/CosmoSetup/bin/
-CosmoWhisper-Windows/CosmoWhisper/bin/
+CosmoWhisper-Windows/CosmoWhisper/AppPackages/
+CosmoWhisper-Windows/CosmoWhisper-Package/Payload/
+CosmoWhisper-Windows/CosmoSetup/
 CosmoWhisper-Windows/Deploy/
+AppPackages/
+Payload/
 *.exe
 *.dll
 *.pdb
 *.zip
 *.vault
+*.dmp
+*.msix
+*.msixbundle
+*.appx
+*.pfx
+*.cer
+*.bak
+*_wpftmp.csproj
+*.onnx
+
+# Backups & Temporary Directories
+_ProjectBackups/
+Backups/
+Backup_Before_MSIX_*/
+Latest-Green-Build/
+Trailer_Assets/
+Store_Listing_Assets/
+MSIX_Layout/
+CosmoWhisper-Package/
+.kilo/
+task_plan.md
+findings.md
+progress.md
+cosmo_terminal.log
+*.tmp
+*.wav
+!CosmoWhisper-Windows/CosmoWhisper/Assets/*.wav
