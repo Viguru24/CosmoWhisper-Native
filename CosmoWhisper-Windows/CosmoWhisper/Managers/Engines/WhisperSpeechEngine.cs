@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Whisper.net;
 using Whisper.net.Logger;
+using Whisper.net.LibraryLoader;
 using CosmoWhisper.Interfaces;
 using CosmoWhisper.Services;
 
@@ -23,9 +24,12 @@ namespace CosmoWhisper.Managers.Engines
 
         public bool IsReady => File.Exists(_modelPath) && _factory != null;
 
-        public WhisperSpeechEngine(string appDataFolder, ILogger? logger = null)
+        private readonly bool _useGpu;
+
+        public WhisperSpeechEngine(string appDataFolder, ILogger? logger = null, bool useGpu = true)
         {
             _logger = logger;
+            _useGpu = useGpu;
             string modelDir = Path.Combine(appDataFolder, "models");
             Directory.CreateDirectory(modelDir);
 
@@ -90,7 +94,12 @@ namespace CosmoWhisper.Managers.Engines
             }
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            LogEvent("[WhisperEngine] 🚀 Initializing (CPU-Only)...");
+
+            // GPU first (CUDA), automatic CPU fallback if the CUDA runtime/driver is unavailable.
+            RuntimeOptions.RuntimeLibraryOrder = _useGpu
+                ? new List<RuntimeLibrary> { RuntimeLibrary.Cuda, RuntimeLibrary.Cpu }
+                : new List<RuntimeLibrary> { RuntimeLibrary.Cpu };
+            LogEvent($"[WhisperEngine] 🚀 Initializing (GPU acceleration: {(_useGpu ? "requested" : "disabled")})...");
 
             if (File.Exists(_modelPath))
             {
@@ -98,7 +107,7 @@ namespace CosmoWhisper.Managers.Engines
                 {
                     _factory = WhisperFactory.FromPath(_modelPath);
                     sw.Stop();
-                    LogEvent($"[WhisperEngine] ✅ Model loaded (CPU mode) in {sw.ElapsedMilliseconds}ms.");
+                    LogEvent($"[WhisperEngine] ✅ Model loaded on '{RuntimeOptions.LoadedLibrary}' in {sw.ElapsedMilliseconds}ms.");
                 }
                 catch (Exception ex)
                 {

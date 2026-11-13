@@ -24,7 +24,7 @@ namespace CosmoWhisper.Managers
         {
             _logger = logger;
             string appData = PreferenceManager.Shared.AppDataFolder;
-            _whisperEngine = new WhisperSpeechEngine(appData, logger);
+            _whisperEngine = new WhisperSpeechEngine(appData, logger, PreferenceManager.Shared.Preferences.UseGpuAcceleration);
             _parakeetEngine = new ParakeetSpeechEngine(appData, logger);
 
             _activeEngine = ResolveActiveEngine();
