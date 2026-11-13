@@ -75,7 +75,6 @@ namespace CosmoWhisper.Managers
             { "offense", "offence" },
             { "license", "licence" }, // Noun form
             { "practice", "practise" }, // Verb form (US uses practice for both)
-            { "check", "cheque" }, // Bank check
             { "catalog", "catalogue" },
             { "analog", "analogue" },
             { "dialog", "dialogue" },
@@ -157,3 +156,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

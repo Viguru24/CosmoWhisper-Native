@@ -1,0 +1,347 @@
+<UserControl x:Class="CosmoWhisper.Controls.PreferencesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="2500" d:DesignWidth="850">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
+        <StackPanel Margin="0,4,16,32">
+
+            <!-- SECTION: ACTIVATION METHODS -->
+            <TextBlock Text="Activation Methods" Style="{StaticResource SectionTitleStyle}" FontSize="15" Margin="0,0,0,12"/>
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,28">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                        <TextBlock Text="Activation Trigger" Style="{StaticResource CardTitleStyle}" FontSize="17" Margin="0,0,0,4"/>
+                        <TextBlock Text="Set your global shortcut. Hold any key or mouse button to configure." Style="{StaticResource CardDescriptionStyle}" Margin="0,0,0,12"/>
+                        <TextBlock Text="Cosmo works system-wide. Hold your trigger to speak, release to transcribe." Style="{StaticResource MicroLabelStyle}" FontWeight="Normal"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Border Width="104" Height="56" CornerRadius="12" Background="{DynamicResource ThemeInputBgBrush}" BorderBrush="{DynamicResource ThemeInputBorderBrush}" BorderThickness="1" Cursor="Hand" MouseLeftButtonDown="Hotkey_Click">
+                            <TextBlock x:Name="TxtHotkeyControl" Text="F9" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="RESET" Foreground="{DynamicResource ThemeDangerBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,0" Cursor="Hand" MouseLeftButtonDown="ResetHotkey_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- SECTION: AUTOMATION & FLOW -->
+            <TextBlock Text="Workflow &amp; Routing" Style="{StaticResource SectionTitleStyle}" FontSize="15" Margin="0,0,0,12"/>
+            <Border Style="{StaticResource CardContainerStyle}" Padding="0" Margin="0,0,0,28">
+                <StackPanel>
+                    <!-- Instant Paste Mode -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Instant Paste Mode" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Uses Ctrl+V for ultra-fast insertion. Disable for character-by-character natural typing." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="TogglePasteModeControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="TogglePasteMode_Click" AutomationProperties.Name="Instant Paste Mode"/>
+                        </Grid>
+                    </Border>
+                    <!-- Clipboard -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Restore Clipboard Content" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Automatically put back your old copied text after a voice paste." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleClipboardControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleClipboard_Click" AutomationProperties.Name="Restore Clipboard Content"/>
+                        </Grid>
+                    </Border>
+                    <!-- Auto Copy -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Auto-Copy Transcription" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Automatically copy processed text to your clipboard." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleAutoCopyControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleAutoCopy_Click" AutomationProperties.Name="Auto-Copy Transcription"/>
+                        </Grid>
+                    </Border>
+                    <!-- Speech Polish -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE945;" FontSize="14" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Enhanced Speech Polish (AI Filler &amp; Disfluency Cleanup)" Style="{StaticResource CardTitleStyle}"/>
+                                </StackPanel>
+                                <TextBlock Text="Automatically removes vocal hesitations, stutters, and formats speech fluently in real time." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleSpeechPolishControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleSpeechPolish_Click" AutomationProperties.Name="Enhanced Speech Polish"/>
+                        </Grid>
+                    </Border>
+                    <!-- Cloud Proxy -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Force Cloud Proxy (VPN Mode)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Always bypass direct routes and route requests through proxy servers." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleForceCloudProxyControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ForceCloudProxy_Click" AutomationProperties.Name="Force Cloud Proxy"/>
+                        </Grid>
+                    </Border>
+                    <!-- Force Direct API -->
+                    <Border Padding="24,20" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Force Direct API (No Proxy/Fallback)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Force cloud transcriptions to use only the direct API key, disabling local fallback and backend proxying." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleForceDirectApiControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ForceDirectApi_Click" AutomationProperties.Name="Force Direct API"/>
+                        </Grid>
+                    </Border>
+                    <!-- Local Voice Engine Selector -->
+                    <Border Padding="24,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Local Speech Engine" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Choose between Parakeet Redux (fast, accurate) or Whisper Tiny (lightweight fallback)." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ComboBox x:Name="ComboLocalVoiceEngineControl" Grid.Column="1" Width="210" Height="38" SelectionChanged="LocalVoiceEngine_Changed" VerticalAlignment="Center">
+                                <ComboBoxItem Content="Parakeet Redux" Tag="ParakeetRedux"/>
+                                <ComboBoxItem Content="Whisper Tiny (77MB)" Tag="WhisperTiny"/>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION: WIDGET & UI -->
+            <TextBlock Text="Widget &amp; UI Appearance" Style="{StaticResource SectionTitleStyle}" FontSize="15" Margin="0,0,0,12"/>
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,28">
+                <StackPanel>
+                    <!-- Widget Transparency -->
+                    <StackPanel Margin="0,0,0,28">
+                        <Grid Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,60,0">
+                                <TextBlock Text="Widget Transparency" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Adjust how see-through the floating widget appears." Style="{StaticResource CardDescriptionStyle}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <TextBlock x:Name="TxtWidgetOpacityValueControl" Text="95%" Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Slider x:Name="SldWidgetOpacityControl" Minimum="10" Maximum="100" Value="95" ValueChanged="WidgetOpacity_Changed"/>
+                    </StackPanel>
+
+                    <!-- Global UI Scale -->
+                    <StackPanel Margin="0,0,0,28">
+                        <Grid Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,60,0">
+                                <TextBlock Text="Global UI Scale (DPI Adjustment)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Scale the entire interface if fonts appear too small on high resolution screens." Style="{StaticResource CardDescriptionStyle}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <TextBlock x:Name="TxtUIScaleValueControl" Text="100%" Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Slider x:Name="SldUIScaleControl" Minimum="80" Maximum="150" Value="100" ValueChanged="UIScale_Changed"/>
+                    </StackPanel>
+
+                    <!-- Always on Top -->
+                    <Border Padding="0,22,0,0" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Always on Top" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Keep the CosmoWhisper window above all other applications." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ToggleAlwaysOnTopControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleAlwaysOnTop_Click" AutomationProperties.Name="Always on Top"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION: SECURITY & BACKUP -->
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,8">
+                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xEA18;" FontSize="20" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                <TextBlock Text="Security &amp; Backup" Style="{StaticResource SectionTitleStyle}" FontSize="20"/>
+            </StackPanel>
+            <TextBlock Text="&quot;Vault&quot; is a complete snapshot of your environment. We back up:" Style="{StaticResource CardDescriptionStyle}" FontSize="14" Margin="0,0,0,16"/>
+
+            <UniformGrid Columns="2" Margin="0,0,0,24">
+                <TextBlock Text="• Voice Studio: Speed, Pitch &amp; Selection" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+                <TextBlock Text="• Shortcuts: Hotkeys &amp; Mouse Buttons" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+                <TextBlock Text="• Intelligence: API Keys &amp; AI Models" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+                <TextBlock Text="• Vocabulary: Corrections &amp; Hints" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+                <TextBlock Text="• Setup: Mic ID &amp; Calibration" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+                <TextBlock Text="• Workflow: Auto-Submit &amp; Mode" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="13" Margin="0,0,0,8"/>
+            </UniformGrid>
+
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,28">
+                <StackPanel>
+                    <Grid Margin="0,0,0,22">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10" Background="{DynamicResource ThemeAccentSubtleBrush}" Margin="0,0,16,0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xEDA2;" FontSize="22" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="BACKUP DIRECTORY" Style="{StaticResource MicroLabelStyle}" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="TxtBackupPathControl" Text="C:\Users\...\CosmoWhisper\Backups" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="2" Content="Change" Style="{StaticResource SecondaryButtonStyle}" Click="ChangeBackupPath_Click" VerticalAlignment="Center" Padding="18,9" Margin="16,0,0,0"/>
+                    </Grid>
+
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="Local Backup" Style="{StaticResource CardTitleStyle}" FontSize="17"/>
+                            <TextBlock Text="Encrypted snapshot archive for instant restore" Style="{StaticResource CardDescriptionStyle}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="256-BIT AES ENCRYPTION" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right"/>
+                            <TextBlock Text="SECURE VAULT GATEWAY" Foreground="{DynamicResource ThemeSuccessBrush}" FontSize="9" FontWeight="ExtraBold" HorizontalAlignment="Right" Opacity="0.75"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,26,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Restore Backup" Style="{StaticResource SecondaryButtonStyle}" Click="Restore_Click" Height="44"/>
+                        <Button x:Name="BtnBackupNowControl" Grid.Column="2" Content="Back up now" Style="{StaticResource PrimaryButtonStyle}" Click="BackupNow_Click" Height="44"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION: DATE & TIME FORMATTING -->
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,28">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                        <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE787;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                        <TextBlock Text="Date &amp; Time Formatting" Style="{StaticResource SectionTitleStyle}" FontSize="17"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Date Format" Style="{StaticResource MicroLabelStyle}" Margin="0,0,0,6"/>
+                    <ComboBox x:Name="ComboDateFormatControl" Height="44" Margin="0,0,0,18" SelectionChanged="DateFormat_Changed">
+                        <ComboBoxItem Content="31/01/2026 (Short UK)" Tag="dd/MM/yyyy"/>
+                        <ComboBoxItem Content="01/31/2026 (Short US)" Tag="MM/dd/yyyy"/>
+                        <ComboBoxItem Content="31 January 2026 (Long UK)" Tag="dd MMMM yyyy"/>
+                        <ComboBoxItem Content="January 31, 2026 (Long US)" Tag="MMMM dd, yyyy"/>
+                    </ComboBox>
+
+                    <TextBlock Text="Time Format" Style="{StaticResource MicroLabelStyle}" Margin="0,0,0,6"/>
+                    <ComboBox x:Name="ComboTimeFormatControl" Height="44" SelectionChanged="TimeFormat_Changed">
+                        <ComboBoxItem Content="17:30 (24 Hour Time)" Tag="HH:mm"/>
+                        <ComboBoxItem Content="5:30 PM (12 Hour Time)" Tag="h:mm tt"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION: REGIONAL SPELLING -->
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,28">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE8F2;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                                <TextBlock Text="Regional Spelling" Style="{StaticResource SectionTitleStyle}" FontSize="17"/>
+                            </StackPanel>
+                            <TextBlock Text="Auto-Convert Spelling After Transcription" Style="{StaticResource CardTitleStyle}"/>
+                            <TextBlock Text="Automatically converts transcribed text to match your regional spelling preference." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ToggleRegionalSpellingControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleRegionalSpelling_Click" AutomationProperties.Name="Regional Spelling Auto-Convert"/>
+                    </Grid>
+
+                    <Border Style="{StaticResource SubtlePanelStyle}" Padding="20" Margin="0,20,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="US English" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="12" FontWeight="Bold" Margin="0,0,0,8"/>
+                                <TextBlock Text="• color" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• center" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• organize" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• realize" Style="{StaticResource CardDescriptionStyle}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Style="{StaticResource FluentIconStyle}" Text="&#xE8AB;" Foreground="{DynamicResource ThemeMutedBrush}" FontSize="18" Margin="20,0"/>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="UK English" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="12" FontWeight="Bold" Margin="0,0,0,8"/>
+                                <TextBlock Text="• colour" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• centre" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• organise" Style="{StaticResource CardDescriptionStyle}"/>
+                                <TextBlock Text="• realise" Style="{StaticResource CardDescriptionStyle}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION: WINDOWS INTEGRATION -->
+            <Border Style="{StaticResource CardContainerStyle}" Padding="26" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE770;" FontSize="18" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                            <TextBlock Text="Windows Integration" Style="{StaticResource SectionTitleStyle}" FontSize="17"/>
+                        </StackPanel>
+                        <TextBlock Text="Launch with Windows" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Automatically start CosmoWhisper when you log into Windows." Style="{StaticResource CardDescriptionStyle}" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <ToggleButton x:Name="ToggleLaunchOnStartupControl" Grid.Column="1" Style="{StaticResource CosmoToggleSwitchStyle}" VerticalAlignment="Center" Click="ToggleLaunchOnStartup_Click" AutomationProperties.Name="Launch with Windows"/>
+                </Grid>
+            </Border>
+
+            <!-- HIDDEN FIELDS FOR BACKWARD COMPATIBILITY -->
+            <TextBlock x:Name="TxtListeningPromptControl" Visibility="Collapsed"/>
+            <Border x:Name="ToggleLocalOnlyControl" Visibility="Collapsed"/>
+            <TextBlock x:Name="LocalModeStatusTitleControl" Visibility="Collapsed"/>
+            <TextBlock x:Name="LocalModeStatusDescControl" Visibility="Collapsed"/>
+            <TextBlock x:Name="LocalOverlayIconControl" Visibility="Collapsed"/>
+            <PasswordBox x:Name="TxtApiKeyControl" Visibility="Collapsed"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

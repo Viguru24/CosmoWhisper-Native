@@ -21,11 +21,11 @@ namespace CosmoWhisper.Managers
             {
                 var tier = PreferenceManager.Shared.Preferences?.UserTier?.ToLower() ?? "free";
                 
-                if (tier == "ultimate") return UserTier.Ultimate;
-                if (tier == "professional") return UserTier.Ultimate; // Legacy mapping
+                if (tier == "ultimate" || tier == "admin" || tier == "unlimited") return UserTier.Ultimate;
+                if (tier == "professional") return UserTier.Ultimate; 
                 
                 if (tier == "pro") return UserTier.Pro;
-                if (tier == "personal") return UserTier.Pro; // Legacy mapping
+                if (tier == "personal") return UserTier.Pro; 
 
                 return UserTier.Free;
             }
@@ -35,7 +35,9 @@ namespace CosmoWhisper.Managers
         {
             get
             {
-                if (PreferenceManager.Shared.Preferences.IsStoreVersion) return "Store Edition (Lite)";
+                if (PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier == UserTier.Free)
+                    return "Store Edition (Lite)";
+
                 return CurrentTier switch
                 {
                     UserTier.Ultimate => "Ultimate Plan",
@@ -47,7 +49,7 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        public string TierIcon => PreferenceManager.Shared.Preferences.IsStoreVersion ? "🛒" : CurrentTier switch
+        public string TierIcon => (PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier == UserTier.Free) ? "🛒" : CurrentTier switch
         {
             UserTier.Ultimate => "🚀",
             UserTier.Professional => "🚀",
@@ -56,17 +58,28 @@ namespace CosmoWhisper.Managers
             _ => "🌱"
         };
 
-        public bool IsUnlimited => !PreferenceManager.Shared.Preferences.IsStoreVersion && CurrentTier != UserTier.Free;
+        public bool IsUnlimited => PreferenceManager.Shared.IsDevMode || CurrentTier != UserTier.Free;
 
         // Feature Gating
         public bool HasUltraAccuracy => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
         public bool HasScreenOCR => CurrentTier == UserTier.Ultimate || CurrentTier == UserTier.Professional;
         public bool HasPrioritySupport => IsUnlimited;
 
-        public int MonthlyLimitMinutes => (PreferenceManager.Shared.Preferences.IsStoreVersion) ? 60 : CurrentTier switch
+        public int MonthlyLimitMinutes 
         {
-            UserTier.Free => 60,
-            _ => 999999 // All paid plans are unlimited
-        };
+            get
+            {
+                if (PreferenceManager.Shared.IsDevMode) return 999999;
+
+                if (CurrentTier == UserTier.Free)
+                {
+                    int configured = PreferenceManager.Shared.Preferences?.UsageLimitMinutes ?? 60;
+                    return Math.Max(60, configured);
+                }
+                return 999999; // All paid plans are unlimited
+            }
+        }
     }
 }
+
+

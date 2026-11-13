@@ -107,11 +107,11 @@ namespace CosmoWhisper.Managers
                 {
                     if (isPress)
                     {
-                        ButtonPressed?.Invoke();
+                        ThreadPool.QueueUserWorkItem(_ => ButtonPressed?.Invoke());
                     }
                     else if (isRelease)
                     {
-                        ButtonReleased?.Invoke();
+                        ThreadPool.QueueUserWorkItem(_ => ButtonReleased?.Invoke());
                     }
                 }
             }
@@ -140,3 +140,5 @@ namespace CosmoWhisper.Managers
         #endregion
     }
 }
+
+

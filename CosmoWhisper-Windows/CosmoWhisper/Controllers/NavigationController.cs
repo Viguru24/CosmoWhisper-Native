@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using Button = System.Windows.Controls.Button;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
+using System.Linq;
 using CosmoWhisper.Managers;
 
 namespace CosmoWhisper.Controllers
@@ -15,8 +17,9 @@ namespace CosmoWhisper.Controllers
 
         public void ShowDashboard()
         {
-            AudioRecorder.Shared.StartMonitoring();
+            AudioRecorder.Shared.StopMonitoring(); // Save resources on main dashboard
             SwitchToView(Window.DashboardHeader, Window.DashboardView, Window.BtnDashboard);
+            _ = Task.Run(() => CosmoWhisper.Services.AccountService.Shared.TriggerSync());
         }
 
         private List<UIElement?>? _allViews;
@@ -24,52 +27,82 @@ namespace CosmoWhisper.Controllers
 
         public void ShowSmartCommands()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.SmartCommandsHeader, Window.SmartCommandsView, Window.BtnSmartCommands);
+        }
+
+        private void SetActiveTab(Button activeTab)
+        {
+            if (Window.TabPrefGeneral != null) Window.TabPrefGeneral.Tag = null;
+            if (Window.TabPrefMicrophone != null) Window.TabPrefMicrophone.Tag = null;
+            if (Window.TabPrefVocabulary != null) Window.TabPrefVocabulary.Tag = null;
+            if (Window.TabPrefNarration != null) Window.TabPrefNarration.Tag = null;
+            if (Window.TabPrefIntelligence != null) Window.TabPrefIntelligence.Tag = null;
+            if (activeTab != null) activeTab.Tag = "Active";
         }
 
         public void ShowMicrophone()
         {
             AudioRecorder.Shared.StartMonitoring();
-            SwitchToView(Window.MicrophoneHeader, Window.MicrophoneView, Window.BtnMicrophone);
+            SetActiveTab(Window.TabPrefMicrophone);
+            SwitchToView(Window.PreferencesHeader, Window.MicrophoneView, Window.BtnPreferences);
         }
 
         public void ShowNarration()
         {
-            SwitchToView(Window.NarrationHeader, Window.NarrationView, Window.BtnNarration);
+            AudioRecorder.Shared.StopMonitoring();
+            SetActiveTab(Window.TabPrefNarration);
+            SwitchToView(Window.PreferencesHeader, Window.NarrationView, Window.BtnPreferences);
         }
 
         public void ShowLibrary()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(null, Window.CloudLibraryView, Window.BtnLibrary);
         }
 
         public void ShowAccount()
         {
-            if (string.IsNullOrEmpty(PreferenceManager.Shared.Preferences.UserEmail))
+            AudioRecorder.Shared.StopMonitoring();
+            var p = PreferenceManager.Shared.Preferences;
+            // Token is the ultimate source of truth for login. Email is just UI metadata.
+            bool isLoggedIn = !string.IsNullOrEmpty(p.AuthToken) || !string.IsNullOrEmpty(p.UserEmail);
+            
+            Debug.WriteLine($"[Navigation] ShowAccount: isLoggedIn={isLoggedIn}, Token={!string.IsNullOrEmpty(p.AuthToken)}, Email={!string.IsNullOrEmpty(p.UserEmail)}");
+
+            if (!isLoggedIn)
             {
                 ShowLogin();
                 return;
             }
             SwitchToView(Window.AccountHeader, Window.AccountView, Window.BtnAccount);
+            _ = Task.Run(() => CosmoWhisper.Services.AccountService.Shared.TriggerSync());
         }
 
         public void ShowLogin()
         {
+            AudioRecorder.Shared.StopMonitoring();
             SwitchToView(Window.LoginHeader, Window.LoginView, null);
         }
 
         public void ShowIntelligence()
         {
-            SwitchToView(Window.IntelligenceHeader, Window.IntelligenceView, Window.BtnIntelligence);
+            AudioRecorder.Shared.StopMonitoring();
+            SetActiveTab(Window.TabPrefIntelligence);
+            SwitchToView(Window.PreferencesHeader, Window.IntelligenceView, Window.BtnPreferences);
         }
 
         public void ShowVocabulary()
         {
-            SwitchToView(Window.VocabularyHeader, Window.VocabularyView, Window.BtnVocabulary);
+            AudioRecorder.Shared.StopMonitoring();
+            SetActiveTab(Window.TabPrefVocabulary);
+            SwitchToView(Window.PreferencesHeader, Window.VocabularyView, Window.BtnPreferences);
         }
 
         public void ShowPreferences()
         {
+            AudioRecorder.Shared.StopMonitoring();
+            SetActiveTab(Window.TabPrefGeneral);
             SwitchToView(Window.PreferencesHeader, Window.PreferencesView, Window.BtnPreferences);
         }
 
@@ -131,8 +164,7 @@ namespace CosmoWhisper.Controllers
 
                 // Inactivate all buttons (Comprehensive)
                 var allButtons = new List<Button?> {
-                    Window.BtnDashboard, Window.BtnSmartCommands, Window.BtnMicrophone, 
-                    Window.BtnVocabulary, Window.BtnNarration, Window.BtnIntelligence, 
+                    Window.BtnDashboard, Window.BtnSmartCommands, 
                     Window.BtnPreferences, Window.BtnAccount, Window.BtnLibrary
                 };
 
@@ -152,8 +184,28 @@ namespace CosmoWhisper.Controllers
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                 };
+                
+                // connected scale animation
+                var scaleX = new DoubleAnimation(0.97, 1.0, TimeSpan.FromMilliseconds(450)) { EasingFunction = new BackEase { Amplitude = 0.2, EasingMode = EasingMode.EaseOut } };
+                var scaleY = new DoubleAnimation(0.97, 1.0, TimeSpan.FromMilliseconds(450)) { EasingFunction = new BackEase { Amplitude = 0.2, EasingMode = EasingMode.EaseOut } };
+
                 view.BeginAnimation(UIElement.OpacityProperty, fadeIn);
                 view.BeginAnimation(FrameworkElement.MarginProperty, slideUp);
+
+                if (view.RenderTransform is ScaleTransform st)
+                {
+                    st.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
+                    st.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
+                }
+                else if (view.RenderTransform is TransformGroup tg)
+                {
+                    var stInGroup = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
+                    if (stInGroup != null)
+                    {
+                        stInGroup.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
+                        stInGroup.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
+                    }
+                }
 
                 // Ensure the view scrolls to the top when switched
                 if (view is ScrollViewer sv)
@@ -176,3 +228,5 @@ namespace CosmoWhisper.Controllers
         }
     }
 }
+
+

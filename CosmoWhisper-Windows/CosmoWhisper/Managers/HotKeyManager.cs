@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.IO;
 
 namespace CosmoWhisper.Managers
 {
@@ -42,7 +43,7 @@ namespace CosmoWhisper.Managers
             {
                 _currentVk = vkCode;
                 _isKeyCurrentlyPressed = false; // Reset state when changing keys
-                Debug.WriteLine($"[HotKey] Setting up for VK {vkCode}...");
+                LogEvent($"[HotKey] Setting up for VK {vkCode}...");
 
                 if (_hookID != IntPtr.Zero)
                 {
@@ -54,51 +55,68 @@ namespace CosmoWhisper.Managers
 
                 if (_hookID == IntPtr.Zero)
                 {
+                    LogEvent($"[HotKey] Key hook FAILED for VK {vkCode}. Error Code: {Marshal.GetLastWin32Error()}");
                     ErrorOccurred?.Invoke($"Key hook failed for VK {vkCode}. Use mic button instead.");
                 }
                 else
                 {
-                    Debug.WriteLine($"[HotKey] Enabled for VK {vkCode}");
+                    LogEvent($"[HotKey] Enabled for VK {vkCode} (HookID: {_hookID})");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[HotKey] Exception: {ex.Message}");
+                LogEvent($"[HotKey] Exception: {ex.Message}");
                 ErrorOccurred?.Invoke($"Hook Error: {ex.Message}");
             }
         }
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-            return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(null), 0);
+            using (Process curProcess = Process.GetCurrentProcess())
+            using (ProcessModule curModule = curProcess.MainModule!)
+            {
+                // For SingleFile apps, GetModuleHandle(null) is safer to get the EXE handle
+                return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(null), 0);
+            }
         }
 
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0)
-            {
-                int vkCode = Marshal.ReadInt32(lParam);
+            if (nCode < 0) return CallNextHookEx(_hookID, nCode, wParam, lParam);
 
-                if (vkCode == (int)_currentVk)
+            int vkCode = Marshal.ReadInt32(lParam);
+            if (vkCode == (int)_currentVk)
+            {
+                // Process all Down events (including auto-repeats and Alt+System keys)
+                if (wParam == (IntPtr)0x0100 || wParam == (IntPtr)0x0104) // WM_KEYDOWN, WM_SYSKEYDOWN
                 {
-                    if (wParam == (IntPtr)WM_KEYDOWN)
+                    if (!_isKeyCurrentlyPressed)
                     {
-                        // Only fire KeyPressed on the FIRST keydown (ignore repeats)
-                        if (!_isKeyCurrentlyPressed)
-                        {
-                            _isKeyCurrentlyPressed = true;
-                            KeyPressed?.Invoke();
-                        }
+                        _isKeyCurrentlyPressed = true;
+                        // Fire-off action on background thread instantly
+                        System.Threading.ThreadPool.QueueUserWorkItem(_ => KeyPressed?.Invoke());
                     }
-                    else if (wParam == (IntPtr)WM_KEYUP)
-                    {
-                        _isKeyCurrentlyPressed = false;
-                        KeyReleased?.Invoke();
-                    }
+                    return (IntPtr)1; // Consume message immediately to prevent leakage
                 }
+                // Process all Up events
+                else if (wParam == (IntPtr)0x0101 || wParam == (IntPtr)0x0105) // WM_KEYUP, WM_SYSKEYUP
+                {
+                    _isKeyCurrentlyPressed = false;
+                    System.Threading.ThreadPool.QueueUserWorkItem(_ => KeyReleased?.Invoke());
+                    return (IntPtr)1; // Consume message immediately
+                }
+
+                // Total lockdown for this key - suppress any other WM messages associated with it
+                return (IntPtr)1;
             }
+
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
+        }
+
+        private void LogEvent(string msg)
+        {
+            CosmoWhisper.Services.FileLogger.WriteShared("INFO", msg);
         }
 
         public void Dispose()
@@ -111,3 +129,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

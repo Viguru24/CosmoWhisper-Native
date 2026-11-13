@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,219 +11,194 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using CosmoWhisper.Managers;
+using CosmoWhisper.Interfaces;
+using CosmoWhisper.Services;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Brush = System.Windows.Media.Brush;
+using CosmoWhisper.ViewModels;
+
 
 namespace CosmoWhisper
 {
     public partial class WidgetWindow : Window
     {
-        private Storyboard _pulseStoryboard;
-        private List<System.Windows.Shapes.Rectangle> _bars = new List<System.Windows.Shapes.Rectangle>();
-        private Random _rnd = new Random();
-        private HotKeyManager _hotKeyManager = new HotKeyManager();
-        private MouseButtonManager _mouseButtonManager = new MouseButtonManager();
-        public static DashboardWindow _dashboard;
-        private Storyboard _soundWaveStoryboard;
-        private Storyboard _rippleStoryboard;
-        private Storyboard _idleBreathingStoryboard;
-        private Storyboard _thinkingStoryboard;
-        private SolidColorBrush _cachedWhiteBrush;
-        private SolidColorBrush _cachedBlueBrush;
+        private readonly List<System.Windows.Shapes.Rectangle> _bars = new();
+        private readonly Random _rnd = new();
+        private readonly HotKeyManager _hotKeyManager = new();
+        private readonly MouseButtonManager _mouseButtonManager = new();
+        public static DashboardWindow? _dashboard;
+        private readonly SolidColorBrush _cachedWhiteBrush;
+        private readonly SolidColorBrush _cachedGreenBrush;
+        private readonly SolidColorBrush _orbMainBrush = new(Color.FromRgb(0, 122, 255));
+        private readonly SolidColorBrush _orbGlowBrush = new(Color.FromRgb(0, 122, 255));
+        private readonly SolidColorBrush _satelliteBrush = new(Color.FromRgb(0, 122, 255));
 
-        public WidgetWindow()
+        private Action? _hotKeyPressedHandler;
+        private Action? _hotKeyReleasedHandler;
+        private Action? _mousePressedHandler;
+        private Action? _mouseReleasedHandler;
+        private Action? _preferencesUpdatedHandler;
+        private CancellationTokenSource? _hintRestoreCts;
+        private CancellationTokenSource? _savePositionCts;
+        private string _baseHotkeyHint = "Double-click to dictate";
+        
+        private readonly ILogger _logger;
+        private readonly IColorProvider _colorProvider;
+        private readonly Services.AnimationService _animationService;
+        private readonly WidgetViewModel _viewModel;
+
+        private double _sinePhase = 0.0;
+        private double _currentAmplitude = 2.0;
+        private System.Threading.Timer? _sineAnimTimer;
+        private readonly System.Diagnostics.Stopwatch _visualizerThrottle = System.Diagnostics.Stopwatch.StartNew();
+        private const int VisualizerFpsLimit = 16; // ~60fps
+
+        public WidgetWindow(
+            WidgetViewModel viewModel,
+            ILogger logger,
+            IColorProvider colorProvider,
+            Services.AnimationService animationService)
         {
             InitializeComponent();
+            _viewModel = viewModel;
+            _logger = logger;
+            _colorProvider = colorProvider;
+            _animationService = animationService;
+            
+            DataContext = _viewModel;
 
-            // Apply Glassmorphism (ITEM 1)
+            _cachedWhiteBrush = new SolidColorBrush(Colors.White) { Opacity = 0.8 };
+            if (_cachedWhiteBrush.CanFreeze) _cachedWhiteBrush.Freeze();
+
+            _cachedGreenBrush = new SolidColorBrush(Color.FromRgb(50, 215, 75));
+            if (_cachedGreenBrush.CanFreeze) _cachedGreenBrush.Freeze();
+
+            OrbMain.Fill = _orbMainBrush;
+            OrbGlow.Fill = _orbGlowBrush;
+            SatelliteOrb.Fill = _satelliteBrush;
+
             this.SourceInitialized += (s, e) =>
             {
-                // WindowEffectManager.ApplyEffect(this, BackdropType.Mica); // Disabled to prevent square corners
+                // Set gear color based on build type/mode
+                if (PreferenceManager.Shared.IsDevMode) GearIcon.Fill = Brushes.Orange;
+                else if (!PreferenceManager.Shared.Preferences.IsStoreVersion) GearIcon.Fill = _cachedGreenBrush;
+                else GearIcon.Fill = Brushes.Gray;
+
                 _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
                 _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
                 UpdateTopmostState();
             };
 
-            // Ensure we stay on top when other windows are focused
-            this.Deactivated += (s, e) =>
+            this.Deactivated += (s, e) => UpdateTopmostState();
+            this.Loaded += (s, e) => 
             {
-                UpdateTopmostState();
+                LoadPosition();
+                _baseHotkeyHint = TxtHotkeyHint.Text;
+                this.LocationChanged += (s2, e2) => ScheduleSavePosition();
+                _animationService.StartIdleAnimations(this);
             };
 
-            // Apply widget transparency from preferences
             ApplyWidgetTransparency();
-            _pulseStoryboard = (Storyboard)FindResource("PulseAnimation");
-            _soundWaveStoryboard = (Storyboard)FindResource("SoundWaveAnimation");
-            _rippleStoryboard = (Storyboard)FindResource("RippleAnimation");
-            _idleBreathingStoryboard = (Storyboard)FindResource("IdleBreathingAnimation");
-            _thinkingStoryboard = (Storyboard)FindResource("ThinkingAnimation");
 
-            // Start animations
-            _idleBreathingStoryboard.Begin();
-
-            // Capture the bars we created in XAML
             foreach (var child in VisualizerPanel.Children)
             {
                 if (child is System.Windows.Shapes.Rectangle rect) _bars.Add(rect);
             }
 
-            // Cache brushes
-            _cachedWhiteBrush = new SolidColorBrush(Colors.White) { Opacity = 0.8 };
-            if (_cachedWhiteBrush.CanFreeze) _cachedWhiteBrush.Freeze();
+            WireEvents();
+        }
 
-            _cachedBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255)) { Opacity = 0.8 }; // Original logic used White 0.8 too? No, it used different color.
-            // Wait, line 185 was: new SolidColorBrush(isRecordingActive ? Colors.White : System.Windows.Media.Color.FromRgb(255, 255, 255)) { Opacity = 0.8 };
-            // Both are White? "System.Windows.Media.Color.FromRgb(255, 255, 255)" IS White.
-            // So we only need one brush.
-
-            // Wire up Audio Events
+        private void WireEvents()
+        {
             AudioRecorder.Shared.IsRecordingChanged += OnIsRecordingChanged;
             AudioRecorder.Shared.AudioLevelChanged += OnAudioLevelChanged;
             AudioRecorder.Shared.TranscriptionReceived += OnTranscriptionReceived;
+            AudioRecorder.Shared.TranscriptionSourceReceived += OnTranscriptionSourceReceived;
             AudioRecorder.Shared.ErrorOccurred += OnErrorOccurred;
-
-            // Command feedback
             CommandController.Shared.CommandExecuted += OnCommandExecuted;
 
-            // Wire up HotKey for push-to-talk
-            _hotKeyManager.KeyPressed += () =>
-            {
-                if (!AudioRecorder.Shared.IsRecording)
-                {
-                    AudioRecorder.Shared.StartRecording();
-                }
-                Dispatcher.Invoke(() =>
-                {
-                });
-            };
-            _hotKeyManager.KeyReleased += () =>
-            {
-                if (AudioRecorder.Shared.IsRecording)
-                {
-                    AudioRecorder.Shared.StopRecording();
-                }
-                Dispatcher.Invoke(() =>
-                {
-                });
-            };
-            _hotKeyManager.ErrorOccurred += (msg) =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    string keyName = PreferenceManager.Shared.Preferences.ActivationKey;
+            _hotKeyPressedHandler = () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _hotKeyReleasedHandler = () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _mousePressedHandler = () => { if (!_viewModel.IsRecording) _viewModel.ToggleRecording(); };
+            _mouseReleasedHandler = () => { if (_viewModel.IsRecording) _viewModel.ToggleRecording(); };
 
-                });
-            };
+            _hotKeyManager.KeyPressed += _hotKeyPressedHandler;
+            _hotKeyManager.KeyReleased += _hotKeyReleasedHandler;
+            _mouseButtonManager.ButtonPressed += _mousePressedHandler;
+            _mouseButtonManager.ButtonReleased += _mouseReleasedHandler;
 
-            // Wire up Mouse Button for push-to-talk
-            _mouseButtonManager.ButtonPressed += () =>
+            _preferencesUpdatedHandler = () =>
             {
-                if (!AudioRecorder.Shared.IsRecording)
-                {
-                    AudioRecorder.Shared.StartRecording();
-                }
-            };
-            _mouseButtonManager.ButtonReleased += () =>
-            {
-                if (AudioRecorder.Shared.IsRecording)
-                {
-                    AudioRecorder.Shared.StopRecording();
-                }
-            };
-            _mouseButtonManager.ErrorOccurred += (msg) =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    // Handle mouse button errors silently
-                });
-            };
-
-            PreferenceManager.Shared.PreferencesUpdated += () =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    _hotKeyManager.Register(this, PreferenceManager.Shared.Preferences.VirtualKey);
-                    _mouseButtonManager.Register(PreferenceManager.Shared.Preferences.MouseButton);
-                    
+                if (!this.IsLoaded) return;
+                Dispatcher.BeginInvoke(() => {
                     var p = PreferenceManager.Shared.Preferences;
-                    if (p.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {p.MouseButton}";
-                    else TxtHotkeyHint.Text = $"Hold {p.ActivationKey}";
-                    
+                    _hotKeyManager.Register(this, p.VirtualKey);
+                    _mouseButtonManager.Register(p.MouseButton);
                     ApplyWidgetTransparency();
                 });
             };
+            PreferenceManager.Shared.PreferencesUpdated += _preferencesUpdatedHandler;
 
-            this.Closed += (s, e) =>
-            {
+            this.Closed += (s, e) => {
+                _savePositionCts?.Cancel();
+                _savePositionCts?.Dispose();
+                _hintRestoreCts?.Cancel();
+                _hintRestoreCts?.Dispose();
                 SavePosition();
+
+                AudioRecorder.Shared.IsRecordingChanged -= OnIsRecordingChanged;
+                AudioRecorder.Shared.AudioLevelChanged -= OnAudioLevelChanged;
+                AudioRecorder.Shared.TranscriptionReceived -= OnTranscriptionReceived;
+                AudioRecorder.Shared.TranscriptionSourceReceived -= OnTranscriptionSourceReceived;
+                AudioRecorder.Shared.ErrorOccurred -= OnErrorOccurred;
+                CommandController.Shared.CommandExecuted -= OnCommandExecuted;
+
+                if (_hotKeyPressedHandler != null) _hotKeyManager.KeyPressed -= _hotKeyPressedHandler;
+                if (_hotKeyReleasedHandler != null) _hotKeyManager.KeyReleased -= _hotKeyReleasedHandler;
+                if (_mousePressedHandler != null) _mouseButtonManager.ButtonPressed -= _mousePressedHandler;
+                if (_mouseReleasedHandler != null) _mouseButtonManager.ButtonReleased -= _mouseReleasedHandler;
+                if (_preferencesUpdatedHandler != null) PreferenceManager.Shared.PreferencesUpdated -= _preferencesUpdatedHandler;
+
                 _hotKeyManager.Dispose();
                 _mouseButtonManager.Dispose();
+                _sineAnimTimer?.Dispose();
             };
-
-            this.LocationChanged += (s, e) => SavePosition();
-
-            LoadPosition();
-
-#if DEBUG
-            GearIcon.Fill = Brushes.Orange;
-#endif
-            // Init hotkey hint
-            var pref = PreferenceManager.Shared.Preferences;
-            if (pref.MouseButton != "None") TxtHotkeyHint.Text = $"Hold {pref.MouseButton}";
-            else TxtHotkeyHint.Text = $"Hold {pref.ActivationKey}";
-
-            // LOG STARTUP
-            Dispatcher.Invoke(() => {
-                try {
-                    string logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                    System.IO.Directory.CreateDirectory(logDir);
-                    string logPath = System.IO.Path.Combine(logDir, "cosmo_errors.log");
-                    System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - --- APP STARTING v2.2.20 ---\n");
-                } catch { }
-            });
-
-            // WARM UP: Initialize audio graph immediately so the first request is instant
-            // and the pre-roll buffer starts filling.
-            AudioRecorder.Shared.StartMonitoring();
-        }
-
-        private void LoadPosition()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            this.Top = p.WidgetTop;
-            this.Left = p.WidgetLeft;
-        }
-
-        private void SavePosition()
-        {
-            var p = PreferenceManager.Shared.Preferences;
-            p.WidgetTop = this.Top;
-            p.WidgetLeft = this.Left;
-            PreferenceManager.Shared.Save();
         }
 
         private void OnIsRecordingChanged(bool isRecording)
         {
-            Dispatcher.Invoke(() =>
+            _viewModel.IsRecording = isRecording;
+            Dispatcher.BeginInvoke(() =>
             {
                 if (isRecording)
                 {
-                    // Show colorful sound wave, hide visualizer
+                    UpdateTopmostState();
                     VisualizerPanel.Visibility = Visibility.Collapsed;
-                    TxtHotkeyHint.Visibility = Visibility.Collapsed;
-                    SoundWavePanel.Visibility = Visibility.Visible;
-                    _soundWaveStoryboard.Begin();
-                    SetTheme(Colors.LimeGreen, "");
+                    SineWaveCanvas.Visibility = Visibility.Visible;
+                    _currentAmplitude = 2.0;
+
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = new System.Threading.Timer(_ =>
+                    {
+                        _sinePhase += 0.18;
+                        Dispatcher.BeginInvoke(() => _animationService.DrawSineWave(SineWaveCanvas, SineWavePath, SineWaveGlow, _sinePhase, _currentAmplitude));
+                    }, null, 0, 33);
+
+                    _animationService.StartRecordingAnimations(this);
+                    SetTheme(Colors.White, "");
+                    _animationService.SetSatelliteSpeed(this, 2.0);
                 }
                 else
                 {
-                    // Hide sound wave, show visualizer
-                    _soundWaveStoryboard.Stop();
-                    SoundWavePanel.Visibility = Visibility.Collapsed;
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = null;
+                    _animationService.StopThinkingAnimations(this);
+                    _animationService.StartIdleAnimations(this);
+                    SineWaveCanvas.Visibility = Visibility.Collapsed;
                     VisualizerPanel.Visibility = Visibility.Visible;
-                    TxtHotkeyHint.Visibility = Visibility.Visible;
-                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
+                    SetTheme(Color.FromRgb(0, 122, 255), ""); 
+                    _animationService.SetSatelliteSpeed(this, 1.0);
                     ResetBars();
                 }
             });
@@ -229,132 +206,265 @@ namespace CosmoWhisper
 
         public void UpdateVolumeIndicator(float normalized)
         {
-            Dispatcher.Invoke(() =>
+            _currentAmplitude = normalized;
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                // Scale Orb based on level
-                float scale = 1.0f + (normalized * 0.5f);
+                float scale = 1.0f + (normalized * 0.4f);
                 OrbScale.ScaleX = scale;
                 OrbScale.ScaleY = scale;
-
-                // Animate Bars
                 foreach (var bar in _bars)
                 {
-                    double variation = _rnd.NextDouble() * 0.5 + 0.5;
-                    bar.Height = Math.Max(4, normalized * 30 * variation);
+                    bar.Height = Math.Max(4, normalized * 30 * (_rnd.NextDouble() * 0.5 + 0.5));
                     bar.Fill = _cachedWhiteBrush;
                 }
-            });
+            }));
         }
 
         private void OnAudioLevelChanged(float db)
         {
-            // Use same logic as Dashboard for consistency
+            if (_visualizerThrottle.ElapsedMilliseconds < VisualizerFpsLimit) return;
+            _visualizerThrottle.Restart();
+
             float minDb = -80;
             float sensitivityFactor = (float)AudioRecorder.Shared.Sensitivity * 2.0f;
-
             float normalized = (db - minDb) / (0 - minDb);
             normalized *= sensitivityFactor;
-
             if (normalized < 0) normalized = 0;
             if (normalized > 1) normalized = 1;
-
             UpdateVolumeIndicator(normalized);
         }
 
-        private bool isRecordingActive => AudioRecorder.Shared.IsRecording;
-
         private void OnTranscriptionReceived(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return;
-
-            Dispatcher.Invoke(async () =>
+            Dispatcher.BeginInvoke(new Action(async () =>
             {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    ResetOrbToIdle();
+                    return;
+                }
+
                 if (text.Contains("Thinking"))
                 {
-                    _thinkingStoryboard?.Begin();
+                    SineWaveCanvas.Visibility = Visibility.Collapsed;
+                    _sineAnimTimer?.Dispose();
+                    _sineAnimTimer = null;
+                    ThinkingDotsPanel.Visibility = Visibility.Visible;
+                    _animationService.StartThinkingAnimations(this);
                     ThinkingAura.Opacity = 1;
-                    SetTheme(Colors.MediumPurple, "THINKING");
+                    _animationService.SetSatelliteSpeed(this, 3.5); // Fast orbit for thinking
+                    SetTheme(Color.FromRgb(245, 158, 11), ""); // Warm Amber for thinking (No-Purple compliance)
                 }
                 else
                 {
-                    _thinkingStoryboard?.Stop();
+                    _animationService.StopThinkingAnimations(this);
+                    ThinkingDotsPanel.Visibility = Visibility.Collapsed;
                     ThinkingAura.Opacity = 0;
-                    SetTheme(System.Windows.Media.Color.FromRgb(0, 122, 255), ""); // Back to Blue
+                    SetTheme(Color.FromRgb(0, 122, 255), "");
 
-                    // UI provides feedback via Orb
-                    if (!isRecordingActive)
+                    if (!AudioRecorder.Shared.IsRecording)
                     {
                         var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
                         OrbMain.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
                     }
                 }
-
                 await Task.Delay(2000);
-            });
+            }));
+        }
+
+        private void OnTranscriptionSourceReceived(string source, long timeMs)
+        {
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                _hintRestoreCts?.Cancel();
+                _hintRestoreCts?.Dispose();
+                _hintRestoreCts = new CancellationTokenSource();
+                var token = _hintRestoreCts.Token;
+
+                string icon = source.Contains("Local") ? "🏠" : "☁️";
+                TxtHotkeyHint.Text = $"{icon} {source}: {timeMs}ms";
+                TxtHotkeyHint.Opacity = 1.0;
+                TxtHotkeyHint.Foreground = source.Contains("Local") ? Brushes.Cyan : Brushes.White;
+
+                if (source.Contains("Local"))
+                {
+                    var colorAnim = new ColorAnimation(Colors.Cyan, TimeSpan.FromMilliseconds(300)) { AutoReverse = true };
+                    _orbMainBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+                }
+
+                try
+                {
+                    await Task.Delay(3000, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                TxtHotkeyHint.Text = _baseHotkeyHint;
+                TxtHotkeyHint.Opacity = 0.3;
+                TxtHotkeyHint.Foreground = Brushes.White;
+            }));
         }
 
         private void OnCommandExecuted()
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                _rippleStoryboard?.Begin();
-
-                // Extra flash
+                _animationService.BeginRipple(this);
                 var colorAnim = new ColorAnimation(Colors.Gold, TimeSpan.FromMilliseconds(200)) { AutoReverse = true };
-                OrbGlow.Fill.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
-            });
+                _orbGlowBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+            }));
         }
 
         private void OnErrorOccurred(string error)
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                // Show full error in status (don't use SetTheme as it overwrites the text)
-
-                OrbMain.Fill = new SolidColorBrush(Colors.OrangeRed);
-                OrbGlow.Fill = new SolidColorBrush(Colors.OrangeRed);
-
-                System.Diagnostics.Debug.WriteLine($"Cosmo Error: {error}");
-
-                // Log to file for debugging
-                try
-                {
-                    string logDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                    System.IO.Directory.CreateDirectory(logDir);
-                    string logPath = System.IO.Path.Combine(logDir, "cosmo_errors.log");
-                    System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
-                }
-                catch { }
-            });
+                SetTheme(Colors.OrangeRed, "Error: " + error);
+                Task.Delay(3000).ContinueWith(_ => Dispatcher.BeginInvoke(new Action(() => ResetOrbToIdle())));
+            }));
         }
 
-        private void SetTheme(System.Windows.Media.Color color, string statusText)
+        private void ResetOrbToIdle()
         {
-            OrbMain.Fill = new SolidColorBrush(color);
-            OrbGlow.Fill = new SolidColorBrush(color);
-            if (OrbShadow != null) OrbShadow.Color = color;
-
-            if (MainBorder != null)
+            SetTheme(Color.FromRgb(0, 122, 255), ""); 
+            if (TxtStatus != null)
             {
-                MainBorder.BorderBrush = new SolidColorBrush(color) { Opacity = 0.5 };
+                TxtStatus.Text = "Ready";
+                TxtStatus.Visibility = Visibility.Collapsed;
             }
+        }
 
-            if (statusText == "ERROR") OrbMain.Fill = Brushes.OrangeRed;
-            if (statusText.Contains("THINKING")) OrbMain.Fill = new SolidColorBrush(Colors.MediumPurple);
+        private void SetTheme(Color color, string statusText)
+        {
+            _orbMainBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            _orbGlowBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            _satelliteBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+
+            _orbMainBrush.Color = color;
+            _orbGlowBrush.Color = color;
+            _satelliteBrush.Color = color;
+
+            OrbMain.Fill = _orbMainBrush;
+            OrbGlow.Fill = _orbGlowBrush;
+            SatelliteOrb.Fill = _satelliteBrush;
+
+            // Only show status text if it's an error or important notification (not normal states like Thinking/Ready)
+            if (!string.IsNullOrEmpty(statusText) && TxtStatus != null)
+            {
+                TxtStatus.Text = statusText;
+                TxtStatus.Visibility = Visibility.Visible;
+            }
+            else if (TxtStatus != null && string.IsNullOrEmpty(statusText))
+            {
+                TxtStatus.Visibility = Visibility.Collapsed;
+            }
         }
 
         public void ApplyWidgetTransparency()
         {
-            var p = PreferenceManager.Shared.Preferences;
-            if (MainBorder != null && MainBorder.Background != null)
+            double opacity = PreferenceManager.Shared.Preferences.WidgetOpacity;
+            this.Opacity = opacity;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_SHOWWINDOW = 0x0040;
+
+        public void UpdateTopmostState()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                MainBorder.Background.Opacity = p.WidgetOpacity;
+                try
+                {
+                    this.Topmost = false;
+                    this.Topmost = true;
+
+                    var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to update topmost state: {ex.Message}");
+                }
+            }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private async void ScheduleSavePosition()
+        {
+            _savePositionCts?.Cancel();
+            _savePositionCts?.Dispose();
+            _savePositionCts = new CancellationTokenSource();
+            var token = _savePositionCts.Token;
+
+            try
+            {
+                await Task.Delay(400, token);
+                SavePosition();
             }
+            catch (OperationCanceledException) { }
+        }
+
+        private void SavePosition()
+        {
+            _viewModel.SaveWidgetPosition(this.Left, this.Top);
+        }
+
+
+        private void LoadPosition()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            double left = p.WidgetLeft;
+            double top = p.WidgetTop;
+
+            double screenLeft = SystemParameters.VirtualScreenLeft;
+            double screenTop = SystemParameters.VirtualScreenTop;
+            double screenWidth = SystemParameters.VirtualScreenWidth;
+            double screenHeight = SystemParameters.VirtualScreenHeight;
+
+            // If the saved position is completely off-screen, reset to safe defaults
+            if (left < screenLeft || left > (screenLeft + screenWidth - 50) ||
+                top < screenTop || top > (screenTop + screenHeight - 50))
+            {
+                left = 100;
+                top = 100;
+                
+                // Save corrected bounds immediately to prevent repeat occurrences on hard crashes
+                _viewModel.SaveWidgetPosition(left, top);
+            }
+
+            this.Left = left;
+            this.Top = top;
         }
 
         private void ResetBars()
         {
             foreach (var bar in _bars) bar.Height = 4;
+        }
+
+        public void ToggleDashboard()
+        {
+            if (_dashboard == null)
+            {
+                _dashboard = new DashboardWindow();
+                _dashboard.Closed += (s, e) => _dashboard = null;
+                _dashboard.Show();
+            }
+            else
+            {
+                if (_dashboard.IsVisible) _dashboard.Hide();
+                else _dashboard.Show();
+            }
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -364,75 +474,7 @@ namespace CosmoWhisper
 
         private void MicControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            AudioRecorder.Shared.ToggleRecording();
-        }
-
-        public void ToggleDashboard()
-        {
-            try
-            {
-                // Ensure dashboard is valid
-                if (_dashboard == null || !_dashboard.IsLoaded)
-                {
-                    _dashboard = new DashboardWindow();
-                    _dashboard.IsVisibleChanged += (s, e) =>
-                    {
-                        UpdateTopmostState();
-                    };
-                }
-
-                if (_dashboard.IsVisible && _dashboard.WindowState != WindowState.Minimized)
-                {
-                    _dashboard.Hide();
-                }
-                else
-                {
-                    _dashboard.Show();
-
-                    if (_dashboard.WindowState == WindowState.Minimized)
-                    {
-                        _dashboard.WindowState = WindowState.Normal;
-                    }
-
-                    _dashboard.Activate();
-                    _dashboard.Topmost = true;
-                    _dashboard.Topmost = false;
-                    _dashboard.Focus();
-
-                    // Force layout update
-                    _dashboard.InvalidateVisual();
-
-                    // If coordinates are weird (offscreen), force center
-                    if (_dashboard.Left < -10000 || _dashboard.Top < -10000)
-                    {
-                        _dashboard.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                        _dashboard.Left = (SystemParameters.PrimaryScreenWidth - _dashboard.Width) / 2;
-                        _dashboard.Top = (SystemParameters.PrimaryScreenHeight - _dashboard.Height) / 2;
-                    }
-                }
-                UpdateTopmostState();
-            }
-            catch (Exception ex)
-            {
-                _ = CosmoMessage.Show("Widget Error", $"Failed to toggle Dashboard: {ex.Message}", "⚠️");
-            }
-        }
-
-        private void UpdateTopmostState()
-        {
-            try
-            {
-                // Widget should ALWAYS be topmost to ensure it's accessible as a mini-controller
-                if (!this.Topmost)
-                {
-                    this.Topmost = true;
-                }
-
-                // Periodic "kick" ensuring we stay above other topmost windows
-                this.Topmost = false;
-                this.Topmost = true;
-            }
-            catch { }
+             _viewModel.ToggleRecording();
         }
 
         private void Gear_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -444,13 +486,13 @@ namespace CosmoWhisper
         {
             // Right click logic: Open Confirm Exit Dialog
             e.Handled = true; 
-
             var exitWindow = new Views.ConfirmExitWindow();
-            exitWindow.Owner = this; // Optional: keeps it related to widget
-            exitWindow.ShowDialog();
-
-            if (exitWindow.ConfirmedExit)
+            exitWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            exitWindow.Topmost = true;
+            
+            if (exitWindow.ShowDialog() == true || exitWindow.ConfirmedExit)
             {
+                _logger.LogInformation("User confirmed exit. Shutting down application.");
                 System.Windows.Application.Current.Shutdown();
             }
         }

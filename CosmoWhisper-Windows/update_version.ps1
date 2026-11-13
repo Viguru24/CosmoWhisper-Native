@@ -1,0 +1,60 @@
+param(
+    [string]$Version = ""
+)
+
+$RepoRoot = $PSScriptRoot
+$ManifestPath = "$RepoRoot\CosmoWhisper-Package\Package.appxmanifest"
+$CsprojPath = "$RepoRoot\CosmoWhisper\CosmoWhisper.csproj"
+$DashboardPath = "$RepoRoot\CosmoWhisper\DashboardWindow.xaml"
+$SetupIssPath = "$RepoRoot\CosmoWhisper\setup.iss"
+
+# 1. READ CURRENT VERSION FROM MANIFEST
+if (-not (Test-Path $ManifestPath)) {
+    Write-Error "Cannot find Package.appxmanifest at $ManifestPath"
+    exit 1
+}
+
+[xml]$xml = Get-Content $ManifestPath
+$currentVersion = $xml.Package.Identity.Version
+Write-Host "Current Version: $currentVersion" -ForegroundColor Cyan
+
+# 2. CALCULATE NEW VERSION
+if ($Version -ne "") {
+    $newVersion = $Version
+} else {
+    $parts = $currentVersion.Split('.')
+    $newRevision = [int]$parts[2] + 1 
+    $newVersion = "$($parts[0]).$($parts[1]).$newRevision.0"
+}
+
+$parts = $newVersion.Split('.')
+$newRevision = $parts[2]
+
+Write-Host "New Version: $newVersion" -ForegroundColor Green
+
+# 3. UPDATE PACKAGE.APPXMANIFEST
+$xml.Package.Identity.Version = $newVersion
+$xml.Save($ManifestPath)
+Write-Host "Updated Package.appxmanifest"
+
+# 4. UPDATE CSPROJ (Assembly Version)
+$csprojContent = Get-Content $CsprojPath
+$csprojContent = $csprojContent -replace "<Version>.*?</Version>", "<Version>$newVersion</Version>"
+Set-Content -Path $CsprojPath -Value $csprojContent
+Write-Host "Updated CosmoWhisper.csproj"
+
+# 5. UPDATE DASHBOARD (UI Display)
+$dashboardContent = Get-Content $DashboardPath
+$dashboardContent = $dashboardContent -replace 'Version [\d\.]+-PRO', "Version $newVersion-PRO"
+Set-Content -Path $DashboardPath -Value $dashboardContent
+Write-Host "Updated DashboardWindow.xaml"
+
+# 6. UPDATE SETUP.ISS (Installer)
+$shortVersion = "$($parts[0]).$($parts[1]).$newRevision" # e.g. 2.3.2
+$setupContent = Get-Content $SetupIssPath
+$setupContent = $setupContent -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion ""$shortVersion"""
+Set-Content -Path $SetupIssPath -Value $setupContent
+Write-Host "Updated setup.iss"
+
+Write-Host "Version Synchronization Complete!" -ForegroundColor Yellow
+exit 0

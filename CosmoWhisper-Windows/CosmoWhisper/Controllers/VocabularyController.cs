@@ -55,6 +55,17 @@ namespace CosmoWhisper.Controllers
                 Window.TxtVocabHints.TextChanged -= TxtVocabHints_TextChanged;
                 Window.TxtVocabHints.TextChanged += TxtVocabHints_TextChanged;
             }
+
+            // Load Signature
+            if (Window.TxtSignature != null)
+            {
+                Window.TxtSignature.Text = PreferenceManager.Shared.Preferences.SignOffSignature;
+                UpdateSignature();
+
+                Window.TxtSignature.TextChanged -= TxtSignature_TextChanged;
+                Window.TxtSignature.TextChanged += TxtSignature_TextChanged;
+            }
+            UpdateSignOffUI();
         }
 
         private void TxtVocabHints_TextChanged(object sender, TextChangedEventArgs e)
@@ -65,6 +76,36 @@ namespace CosmoWhisper.Controllers
                 VocabularyManager.Shared.Save();
                 UpdateHintsPlaceholder(tb);
             }
+        }
+
+        private void TxtSignature_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateSignature();
+        }
+
+        public void UpdateSignature()
+        {
+            if (Window.TxtSignature == null) return;
+            var p = PreferenceManager.Shared.Preferences;
+            p.SignOffSignature = Window.TxtSignature.Text;
+            PreferenceManager.Shared.Save();
+            
+            if (Window.PlaceholderSignature != null)
+                Window.PlaceholderSignature.Visibility = string.IsNullOrEmpty(p.SignOffSignature) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public void ToggleSignOff()
+        {
+            var p = PreferenceManager.Shared.Preferences;
+            p.EnableSignOff = !p.EnableSignOff;
+            PreferenceManager.Shared.Save();
+            UpdateSignOffUI();
+        }
+
+        public void UpdateSignOffUI()
+        {
+            if (Window.ToggleSignOff == null) return;
+            Window.ToggleSignOff.IsChecked = PreferenceManager.Shared.Preferences.EnableSignOff;
         }
 
         private void UpdateHintsPlaceholder(TextBox tb)
@@ -86,7 +127,7 @@ namespace CosmoWhisper.Controllers
             {
                 if (VocabularyManager.Shared.Replacements.ContainsKey(key))
                 {
-                    _ = CosmoMessage.Show("Duplicate Entry", $"'{key}' already exists in your vocabulary.", "🗒️");
+                    _ = CosmoMessage.Show("Duplicate Entry", $"'{key}' already exists in your vocabulary.", "\uE946");
                     return;
                 }
 
@@ -149,7 +190,7 @@ namespace CosmoWhisper.Controllers
 
                 if (string.IsNullOrEmpty(newKey) || string.IsNullOrEmpty(newValue))
                 {
-                    _ = CosmoMessage.Show("Invalid Input", "Key and Value cannot be empty.", "⚠️");
+                    _ = CosmoMessage.Show("Invalid Input", "Key and Value cannot be empty.", "\uE7BA");
                     return;
                 }
 
@@ -158,7 +199,7 @@ namespace CosmoWhisper.Controllers
                 {
                     if (VocabularyManager.Shared.Replacements.ContainsKey(newKey))
                     {
-                        _ = CosmoMessage.Show("Duplicate Entry", $"'{newKey}' already exists.", "🗒️");
+                        _ = CosmoMessage.Show("Duplicate Entry", $"'{newKey}' already exists.", "\uE946");
                         return;
                     }
                     VocabularyManager.Shared.RemoveReplacement(item.OriginalKey);
@@ -212,14 +253,16 @@ namespace CosmoWhisper.Controllers
 
         public void UpdatePlaceholderVisibility(TextBox txt)
         {
-            if (txt.Name == "TxtNewKey" && Window.PlaceholderKey != null)
+            if (txt.Name == "TxtNewKeyControl" && Window.PlaceholderKey != null)
             {
                 Window.PlaceholderKey.Visibility = string.IsNullOrEmpty(txt.Text) ? Visibility.Visible : Visibility.Collapsed;
             }
-            else if (txt.Name == "TxtNewValue" && Window.PlaceholderValue != null)
+            else if (txt.Name == "TxtNewValueControl" && Window.PlaceholderValue != null)
             {
                 Window.PlaceholderValue.Visibility = string.IsNullOrEmpty(txt.Text) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
     }
 }
+
+

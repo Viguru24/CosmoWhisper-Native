@@ -7,20 +7,37 @@ using MessageBoxImage = System.Windows.MessageBoxImage;
 using MessageBoxResult = System.Windows.MessageBoxResult;
 using CosmoWhisper.Managers;
 using CosmoWhisper;
+using System.IO;
+using System.Threading.Tasks;
+using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
     public class ProtocolHandler
     {
-        private const string ProtocolName = "cosmowhisper";
+        public static string ProtocolName => PreferenceManager.Shared.IsDevMode ? "cosmowhisper-dev" : "cosmowhisper";
+        private static readonly object _dedupeLock = new object();
+        private static string _lastHandledUrl = "";
+        private static DateTime _lastHandledTime = DateTime.MinValue;
+
+        private static void LogEvent(string msg)
+        {
+            FileLogger.WriteShared("INFO", $"[Protocol] {msg}");
+        }
 
         public static void Register()
         {
+            // Skip manual registry registration for Store/Packaged versions (it's in the manifest)
+            if (PreferenceManager.Shared.Preferences.IsStoreVersion) return;
+
             try
             {
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string? exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath;
+                if (string.IsNullOrWhiteSpace(exePath)) return;
 
-                using (var key = Registry.ClassesRoot.CreateSubKey(ProtocolName))
+                // Use CurrentUser instead of ClassesRoot to avoid requiring Administrator privileges
+                using (var classes = Registry.CurrentUser.CreateSubKey(@"Software\Classes"))
+                using (var key = classes.CreateSubKey(ProtocolName))
                 {
                     key.SetValue("", "URL:CosmoWhisper Protocol");
                     key.SetValue("URL Protocol", "");
@@ -39,99 +56,166 @@ namespace CosmoWhisper.Managers
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to register protocol: {ex.Message}");
+                // Fallback to HKCR if HKCU fails for some reason (rare)
+                try
+                {
+                    string? fallbackExePath = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath;
+                    if (string.IsNullOrWhiteSpace(fallbackExePath)) return;
+
+                    using (var key = Registry.ClassesRoot.CreateSubKey(ProtocolName))
+                    {
+                        key.SetValue("", "URL:CosmoWhisper Protocol");
+                        key.SetValue("URL Protocol", "");
+                        using (var command = key.CreateSubKey(@"shell\open\command"))
+                        {
+                            command.SetValue("", $"\"{fallbackExePath}\" \"%1\"");
+                        }
+                    }
+                }
+                catch { }
             }
         }
 
         public static void Handle(string url)
         {
-            if (string.IsNullOrEmpty(url) || !url.StartsWith(ProtocolName + "://")) return;
+            if (string.IsNullOrEmpty(url) || !url.StartsWith(ProtocolName + ":", StringComparison.OrdinalIgnoreCase)) return;
+
+            lock (_dedupeLock)
+            {
+                if (string.Equals(url, _lastHandledUrl, StringComparison.Ordinal) && (DateTime.UtcNow - _lastHandledTime).TotalSeconds < 2.0)
+                {
+                    return;
+                }
+                _lastHandledUrl = url;
+                _lastHandledTime = DateTime.UtcNow;
+            }
 
             try
             {
-                string command = url.Substring((ProtocolName + "://").Length);
+                string command = url;
+                if (command.StartsWith(ProtocolName + "://", StringComparison.OrdinalIgnoreCase))
+                    command = command.Substring((ProtocolName + "://").Length);
+                else if (command.StartsWith(ProtocolName + ":", StringComparison.OrdinalIgnoreCase))
+                    command = command.Substring((ProtocolName + ":").Length);
+                    
                 if (command.Contains("?"))
                 {
-                    string action = command.Split('?')[0];
+                    string action = command.Split('?')[0].TrimEnd('/');
                     string query = command.Split('?')[1];
-                    var parms = System.Web.HttpUtility.ParseQueryString(query);
+                    
+                    LogEvent($"Protocol Action: {action}, Query: {query}");
 
-                    if (action.Equals("unlock", StringComparison.OrdinalIgnoreCase))
+                    if (action.Equals("auth", StringComparison.OrdinalIgnoreCase))
                     {
-                        var key = GetQueryParam(query, "key");
-                        if (key == "COSMO_PREMIUM_2024") // Example key
-                        {
-                            PreferenceManager.Shared.Preferences.IsAIUnlocked = true;
-                            PreferenceManager.Shared.Save();
-                            _ = CosmoMessage.Show("Protocol Activation", "Welcome to the Inner Circle. Cosmo Intelligence Unlocked!", "👤");
-                        }
-                    }
-                    else if (action.Equals("auth", StringComparison.OrdinalIgnoreCase))
-                    {
-                        string token = GetQueryParam(query, "token");
+                        string token = GetQueryParam(query, "token") ?? "";
+                        string email = GetQueryParam(query, "email") ?? "";
+                        string tier = GetQueryParam(query, "tier") ?? "";
+
                         if (!string.IsNullOrEmpty(token))
                         {
-                            PreferenceManager.Shared.Preferences.AuthToken = token;
+                            // Step 1: Save to prefs immediately (synchronous)
+                            var p = PreferenceManager.Shared.Preferences;
+                            p.AuthToken = token;
+                            if (!string.IsNullOrEmpty(email)) p.UserEmail = email;
+                            if (!string.IsNullOrEmpty(tier)) p.UserTier = tier;
                             PreferenceManager.Shared.Save();
-                            System.Windows.Application.Current.Dispatcher.Invoke(async () =>
-                            {
-                                if (DashboardWindow.Instance != null)
+
+                            // Step 1.5: Force clear blocked state and start heartbeat
+                            AppState.Shared.IsAccessBlocked = false;
+                            AccountService.Shared.StartHeartbeat();
+
+                            // Step 2: Update UI
+                            _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => {
+                                var dashboard = DashboardWindow.Instance;
+                                if (dashboard == null)
                                 {
-                                    await DashboardWindow.Instance.CheckAuthStatus();
-                                    DashboardWindow.Instance._navigation.ShowAccount();
-                                    _ = CosmoMessage.Show("Verified", "Logged in successfully!", "👋");
+                                    // Create it if it doesn't exist
+                                    dashboard = new DashboardWindow();
                                 }
+
+                                dashboard.Show();
+                                dashboard.WindowState = WindowState.Normal;
+                                dashboard.Activate();
+                                dashboard.Topmost = true;
+                                dashboard.Topmost = false; // Kick to front but don't stay topmost
+                                
+                                if (dashboard._navigation != null)
+                                {
+                                    dashboard._navigation.ShowDashboard();
+                                }
+                                
+                                await UIEvents.Shared.ShowMessageAsync("Signed In", $"Welcome, {(string.IsNullOrEmpty(email) ? "user" : email)}! 🎉", "👋");
+                                await dashboard.CheckAuthStatus();
                             });
                         }
-                    }
-                    else if (action.Equals("configure", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var groqKey = GetQueryParam(query, "groq");
-                        if (!string.IsNullOrEmpty(groqKey))
+                        else
                         {
-                            PreferenceManager.Shared.Preferences.GroqApiKey = groqKey;
-                            PreferenceManager.Shared.Save();
-                            _ = CosmoMessage.Show("Configuration Synced", "Groq API Key synced from website!", "☁️");
+                            LogEvent("Auth token was empty, skipping UI update.");
                         }
                     }
                     else if (action.Equals("license", StringComparison.OrdinalIgnoreCase))
                     {
-                        string token = GetQueryParam(query, "token");
+                        string token = GetQueryParam(query, "token") ?? "";
+                        LogEvent($"License action received. Token: {!string.IsNullOrEmpty(token)}");
                         if (!string.IsNullOrEmpty(token))
                         {
                             PreferenceManager.Shared.Preferences.LicenseToken = token;
                             PreferenceManager.Shared.Save();
+                            LogEvent("License token saved to preferences.");
 
-                            // Immediately sync status
-                            Task.Run(async () =>
+                            _ = Task.Run(async () =>
                             {
-                                bool success = await LicenseManager.Shared.SyncStatusAsync();
-                                if (success)
+                                LogEvent("Attempting to sync license status in background.");
+                                var result = await BackendService.Shared.SyncStatus();
+                                if (result == SyncResult.Success)
                                 {
-                                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                                    {
-                                        _ = CosmoMessage.Show("Access Granted", "License Token successfully activated!", "🎟️");
-                                    });
+                                    await UIEvents.Shared.ShowMessageAsync("Access Granted", "License Token successfully activated!", "🎟️");
+                                    LogEvent("License activated message shown.");
+                                }
+                                else
+                                {
+                                    LogEvent("License sync failed.");
                                 }
                             });
                         }
                     }
+                    else if (action.Equals("unlock", StringComparison.OrdinalIgnoreCase))
+                    {
+#if DEV_BUILD
+                        var key = GetQueryParam(query, "key");
+                        if (PreferenceManager.Shared.IsDevMode && key == "COSMO_PREMIUM_2024")
+                        {
+                            PreferenceManager.Shared.Preferences.IsAIUnlocked = true;
+                            PreferenceManager.Shared.Save();
+                            _ = UIEvents.Shared.ShowMessageAsync("Protocol Activation", "Dev build intelligence unlocked.", "👤");
+                            LogEvent("AI Unlocked via dev protocol.");
+                        }
+#else
+                        LogEvent("Protocol unlock skipped in production build.");
+#endif
+                    }
+                }
+                else
+                {
+                    LogEvent("Command does not contain a query parameter.");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error handling protocol: {ex.Message}");
+                LogEvent($"Error handling protocol: {ex.Message}");
             }
         }
 
-        private static string GetQueryParam(string query, string name)
+        private static string? GetQueryParam(string query, string name)
         {
             var parts = query.Split('&');
             foreach (var part in parts)
             {
                 var kv = part.Split('=');
-                if (kv.Length == 2 && kv[0].Equals(name, StringComparison.OrdinalIgnoreCase))
+                if (kv.Length >= 2 && kv[0].Equals(name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return Uri.UnescapeDataString(kv[1]);
+                    // Handle values that might contain '=' (like JWT padding or nested params)
+                    return Uri.UnescapeDataString(string.Join("=", kv.Skip(1)));
                 }
             }
             return null;

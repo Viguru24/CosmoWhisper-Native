@@ -1,4 +1,5 @@
 using System;
+using CosmoWhisper.Interfaces;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,9 +7,9 @@ using System.Windows;
 
 namespace CosmoWhisper.Managers
 {
-    public class InputController
+    public class InputController : IInputController
     {
-        public static InputController Shared { get; } = new InputController();
+        public static InputController Shared => (InputController)ServiceLocator.GetService<IInputController>();
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
@@ -23,6 +24,78 @@ namespace CosmoWhisper.Managers
         private const byte VK_MENU = 0x12; // Alt
         private const byte VK_LWIN = 0x5B;
 
+        private string? SafeGetClipboardText()
+        {
+            if (System.Windows.Application.Current == null) return null;
+            
+            string? result = null;
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    try
+                    {
+                        if (System.Windows.Clipboard.ContainsText())
+                        {
+                            result = System.Windows.Clipboard.GetText();
+                            break;
+                        }
+                    }
+                    catch (COMException) { Thread.Sleep(50); }
+                    catch (Exception) { break; }
+                }
+            });
+            return result;
+        }
+
+        public void SafeSetClipboardText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    System.Windows.Clipboard.SetText(text);
+                    return;
+                }
+                catch (COMException) { Thread.Sleep(50); }
+                catch (Exception) { break; }
+            }
+        }
+
+        public async Task<string> CaptureSelectedText()
+        {
+            // 1. Clear clipboard on UI thread
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                try { System.Windows.Clipboard.Clear(); } catch { }
+            });
+
+            // 2. Send Ctrl+C via Win32 (Thread-safe)
+            ExecuteKeystroke("c", ctrl: true);
+
+            // 3. Wait and check
+            string captured = "";
+            for (int i = 0; i < 6; i++) // Check for up to 1.5 seconds
+            {
+                await Task.Delay(250);
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        if (System.Windows.Clipboard.ContainsText())
+                            captured = System.Windows.Clipboard.GetText();
+                    }
+                    catch { }
+                });
+
+                if (!string.IsNullOrWhiteSpace(captured)) return captured;
+            }
+
+            return "";
+        }
+
         public async Task PasteText(string text, bool autoSubmit = false, bool restoreClipboard = true)
         {
             string? oldText = null;
@@ -31,18 +104,33 @@ namespace CosmoWhisper.Managers
                 // Must be on UI thread for System.Windows.Clipboard access
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (System.Windows.Clipboard.ContainsText())
-                        oldText = System.Windows.Clipboard.GetText();
+                    oldText = SafeGetClipboardText();
                 });
             }
 
+            // --- RESTORED MASTER LOGIC ---
+            // If the text is ONLY newlines/whitespace, we use TypeText (Direct Unicode)
+            // This is exactly how the old version worked and is 100% reliable.
+            if (!string.IsNullOrEmpty(text) && string.IsNullOrWhiteSpace(text))
+            {
+                await TypeText(text, false);
+                return;
+            }
+
+            string normalizedText = text.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                System.Windows.Clipboard.SetText(text);
+                // Clear clipboard first to ensure the new format is registered
+                System.Windows.Clipboard.Clear();
+                var data = new System.Windows.DataObject();
+                data.SetText(normalizedText, System.Windows.TextDataFormat.UnicodeText);
+                data.SetText(normalizedText, System.Windows.TextDataFormat.Text);
+                System.Windows.Clipboard.SetDataObject(data, true);
             });
 
-            // Small delay to allow clipboard to sync
-            await Task.Delay(100);
+            // Increased delay for stability in Word/Excel
+            await Task.Delay(150);
 
             // Ctrl + V
             SendModifierKey(VK_CONTROL, false);
@@ -59,10 +147,11 @@ namespace CosmoWhisper.Managers
 
             if (restoreClipboard && oldText != null)
             {
-                await Task.Delay(500);
+                // Increased delay to 1 second to ensure heavy apps (Word) finished pasting before we revert
+                await Task.Delay(1000);
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    System.Windows.Clipboard.SetText(oldText);
+                    SafeSetClipboardText(oldText);
                 });
             }
         }
@@ -176,8 +265,25 @@ namespace CosmoWhisper.Managers
             // Real Direct Typing using SendInput with Unicode support
             foreach (char c in text)
             {
-                INPUT[] inputs = new INPUT[2];
+                if (c == '\n' || c == '\r')
+                {
+                    SendKey(0x0D, false); // Enter Down
+                    SendKey(0x0D, true);  // Enter Up
+                    await Task.Delay(10);
+                    continue;
+                }
 
+                if (c == '\v') // Soft Return (Shift+Enter)
+                {
+                    SendKey(0x10, false); // Shift Down
+                    SendKey(0x0D, false); // Enter Down
+                    SendKey(0x0D, true);  // Enter Up
+                    SendKey(0x10, true);  // Shift Up
+                    await Task.Delay(10);
+                    continue;
+                }
+
+                INPUT[] inputs = new INPUT[2];
                 // Key Down
                 inputs[0].type = INPUT_KEYBOARD;
                 inputs[0].U.ki.wVk = 0;
@@ -189,9 +295,8 @@ namespace CosmoWhisper.Managers
                 inputs[1].U.ki.wVk = 0;
                 inputs[1].U.ki.wScan = (ushort)c;
                 inputs[1].U.ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-
+                
                 SendInput(2, inputs, INPUT.Size);
-
                 // Small delay to simulate natural typing and prevent UI freeze
                 await Task.Delay(1);
             }
@@ -205,3 +310,5 @@ namespace CosmoWhisper.Managers
         }
     }
 }
+
+

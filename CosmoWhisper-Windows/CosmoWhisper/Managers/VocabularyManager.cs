@@ -4,24 +4,25 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using CosmoWhisper.Interfaces;
+
 
 namespace CosmoWhisper.Managers
 {
-    public class VocabularyManager
+    public class VocabularyManager : IVocabularyManager
+
     {
-        public static VocabularyManager Shared { get; } = new VocabularyManager();
+        public static VocabularyManager Shared => (VocabularyManager)ServiceLocator.GetService<IVocabularyManager>();
+        private readonly IPreferenceManager _preferenceManager;
 
         public Dictionary<string, string> Replacements { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public string TranscriptionHints { get; set; } = "";
         private readonly string _filePath;
 
-        public VocabularyManager()
+        public VocabularyManager(IPreferenceManager preferenceManager)
         {
-#if DEBUG
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper_Dev");
-#else
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper");
-#endif
+            _preferenceManager = preferenceManager;
+            string folder = _preferenceManager.AppDataFolder;
             Directory.CreateDirectory(folder);
             _filePath = Path.Combine(folder, "vocabulary.json");
             Load();
@@ -43,7 +44,11 @@ namespace CosmoWhisper.Managers
                 // Fallback for dev environment path
                 if (!File.Exists(defaultsPath))
                 {
-                    defaultsPath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName, "Managers", "VocabularyDefaults.json");
+                    var devRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)?.Parent?.Parent;
+                    if (devRoot != null)
+                    {
+                        defaultsPath = Path.Combine(devRoot.FullName, "Managers", "VocabularyDefaults.json");
+                    }
                 }
 
                 if (File.Exists(defaultsPath))
@@ -162,7 +167,7 @@ namespace CosmoWhisper.Managers
                 _appReplacements.Clear();
                 _appHints = "";
 
-                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "Contexts");
+                string folder = Path.Combine(_preferenceManager.AppDataFolder, "Contexts");
                 Directory.CreateDirectory(folder);
                 string path = Path.Combine(folder, $"{appName}.json");
 
@@ -191,12 +196,14 @@ namespace CosmoWhisper.Managers
             foreach (var kvp in _appReplacements) blendedReplacements[kvp.Key] = kvp.Value;
 
             // STEP 1: Apply smart email/domain corrections FIRST (if enabled)
-            if (PreferenceManager.Shared.Preferences.EnableSmartEmailCorrections)
+            if (_preferenceManager.Preferences.EnableSmartEmailCorrections)
             {
                 // 1. Smart "at" to "@" conversion (Only if it looks like an email)
                 processed = Regex.Replace(processed, @"(\S+)\s+at\s+([a-zA-Z0-9-]+\.[a-zA-Z]{2,})", "$1@$2", RegexOptions.IgnoreCase);
                 processed = Regex.Replace(processed, @"\s*@\s*", "@");
-                processed = Regex.Replace(processed, @"([a-zA-Z0-9@])\s*\.\s*([a-z0-9])", "$1.$2");
+                // Collapse spaces around dots only for known domain TLDs or email addresses (never normal sentence punctuation like "Hello. world")
+                processed = Regex.Replace(processed, @"([a-zA-Z0-9-]+)\s*\.\s*(com|org|net|io|ai|app|dev|edu|gov|co(?:\.uk)?)\b", "$1.$2", RegexOptions.IgnoreCase);
+                processed = Regex.Replace(processed, @"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+)\s*\.\s*([a-zA-Z]{2,})", m => $"{m.Groups[1].Value}.{m.Groups[2].Value}".ToLower(), RegexOptions.IgnoreCase);
                 processed = Regex.Replace(processed, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", m => m.Value.ToLower());
             }
 
@@ -208,22 +215,82 @@ namespace CosmoWhisper.Managers
                 string key = kvp.Key;
                 string value = kvp.Value;
                 
-                string pattern = $@"\b{Regex.Escape(key)}(?:\s+(?:is|was|are|were|be|been|being))?\b";
-                var match = Regex.Match(processed, pattern, RegexOptions.IgnoreCase);
+                processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
+            }
+
+            // STEP 3: Apply Transcription Hints (Casing, Acronyms & Whole-Word Alignment)
+            string activeHints = GetActiveHints();
+            if (!string.IsNullOrWhiteSpace(activeHints))
+            {
+                var hintsList = activeHints.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(h => h.Trim())
+                                           .Where(h => !string.IsNullOrEmpty(h))
+                                           .OrderByDescending(h => h.Length);
+
+                foreach (var hint in hintsList)
+                {
+                    string pattern = (char.IsLetterOrDigit(hint[0]) ? @"\b" : "") +
+                                     Regex.Escape(hint) +
+                                     (char.IsLetterOrDigit(hint[hint.Length - 1]) ? @"\b" : "");
+                    processed = Regex.Replace(processed, pattern, hint, RegexOptions.IgnoreCase);
+                }
+            }
+
+            // STEP 4: Handle Automatic Sign-Off (Signature)
+            var p = _preferenceManager.Preferences;
+            if (p.EnableSignOff && !string.IsNullOrWhiteSpace(p.SignOffSignature))
+            {
+                // Triggers: "sign off", "regards" (if not already part of a replacement)
+                string signature = p.SignOffSignature.Replace("\\n", "\n").Replace("\r", "");
                 
-                if (match.Success)
-                    processed = processed.Substring(0, match.Index) + value + processed.Substring(match.Index + match.Length);
-                else
-                    processed = Regex.Replace(processed, $@"\b{Regex.Escape(key)}\b", value, RegexOptions.IgnoreCase);
+                // Case 1: "Sign off" -> Replacement with full signature
+                if (Regex.IsMatch(processed, @"\bsign\s*off\b", RegexOptions.IgnoreCase))
+                {
+                    processed = Regex.Replace(processed, @"\bsign\s*off\b", signature, RegexOptions.IgnoreCase);
+                }
+                // Case 2: "Regards" at the very end -> Append the rest of signature if not already present
+                else if (processed.TrimEnd().EndsWith("regards", StringComparison.OrdinalIgnoreCase))
+                {
+                    // If the signature starts with "Regards", we just append the rest
+                    if (signature.StartsWith("regards", StringComparison.OrdinalIgnoreCase))
+                    {
+                        processed = Regex.Replace(processed, @"\bregards\b\s*$", signature, RegexOptions.IgnoreCase);
+                    }
+                    else
+                    {
+                        // Append full signature if it doesn't contain "Regards" already
+                        processed = processed.TrimEnd() + "\n\n" + signature;
+                    }
+                }
             }
 
             return processed;
         }
 
-        // Expose hints for AI Prompt
+        /// <summary>
+        /// Checks if the resulting text consists entirely of an instant correction value.
+        /// Useful for suppressing spaces on passwords/IDs.
+        /// </summary>
+        public bool IsSoloCorrection(string processedText)
+        {
+            if (string.IsNullOrWhiteSpace(processedText)) return false;
+            
+            // Normalize: Trim whitespace and trailing punctuation
+            string normalized = processedText.Trim().TrimEnd('.', ',');
+            
+            // Check against both global and app replacements
+            return Replacements.Values.Any(v => v.Equals(normalized, StringComparison.OrdinalIgnoreCase)) ||
+                   _appReplacements.Values.Any(v => v.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
         public string GetActiveHints()
         {
-            return string.IsNullOrWhiteSpace(_appHints) ? TranscriptionHints : $"{TranscriptionHints}, {_appHints}";
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(TranscriptionHints)) parts.Add(TranscriptionHints.Trim().TrimEnd(','));
+            if (!string.IsNullOrWhiteSpace(_appHints)) parts.Add(_appHints.Trim().TrimEnd(','));
+            return string.Join(", ", parts);
         }
     }
 }
+
+

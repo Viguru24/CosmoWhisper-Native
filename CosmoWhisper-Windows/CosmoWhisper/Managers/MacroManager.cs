@@ -18,10 +18,13 @@ namespace CosmoWhisper.Managers
         public static MacroManager Shared { get; } = new MacroManager();
         private List<Macro> _macros = new();
         private readonly string _path;
+        private readonly HashSet<string> _activeTriggers = new(StringComparer.OrdinalIgnoreCase);
+        private int _executionDepth = 0;
+        private const int MaxMacroDepth = 3;
 
         public MacroManager()
         {
-            _path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "Macros.json");
+            _path = Path.Combine(PreferenceManager.Shared.AppDataFolder, "Macros.json");
             Load();
         }
 
@@ -51,16 +54,27 @@ namespace CosmoWhisper.Managers
 
         public async Task<bool> TryExecuteMacro(string text)
         {
+            if (_executionDepth >= MaxMacroDepth) return false;
+
             string cmd = text.ToLower().Trim();
-            var macro = _macros.FirstOrDefault(m => m.Trigger.ToLower() == cmd);
-            if (macro != null)
+            var macro = _macros.FirstOrDefault(m => m.Trigger.Equals(cmd, StringComparison.OrdinalIgnoreCase));
+            if (macro != null && _activeTriggers.Add(cmd))
             {
-                foreach (var step in macro.Sequence)
+                _executionDepth++;
+                try
                 {
-                    await CommandController.Shared.Handle(step);
-                    await Task.Delay(200); // Small delay between steps
+                    foreach (var step in macro.Sequence)
+                    {
+                        await CommandController.Shared.Handle(step);
+                        await Task.Delay(200); // Small delay between steps
+                    }
+                    return true;
                 }
-                return true;
+                finally
+                {
+                    _executionDepth--;
+                    _activeTriggers.Remove(cmd);
+                }
             }
             return false;
         }
@@ -75,3 +89,5 @@ namespace CosmoWhisper.Managers
         public List<Macro> GetMacros() => _macros;
     }
 }
+
+

@@ -1,4 +1,5 @@
 using System;
+using CosmoWhisper.Interfaces;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,13 +7,14 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.IO;
+using System.Runtime.InteropServices;
 using CosmoWhisper.Services;
 
 namespace CosmoWhisper.Managers
 {
-    public class CommandController
+    public class CommandController : ICommandController
     {
-        public static CommandController Shared { get; } = new CommandController();
+        public static CommandController Shared => (CommandController)ServiceLocator.GetService<ICommandController>();
         public event Action? CommandExecuted;
 
         private readonly Dictionary<string, string> _webShortcuts = new()
@@ -35,19 +37,28 @@ namespace CosmoWhisper.Managers
             {"outlook", "https://outlook.live.com"},
             {"twitch", "https://twitch.tv"},
             {"youtube", "https://youtube.com"},
-            {"cosmowhisper", "https://cosmowhisper-app.web.app"},
-            {"library", "https://cosmowhisper-app.web.app/features"},
-            {"commands", "https://cosmowhisper-app.web.app/features"}
+            {"microsoft", "https://microsoft.com"},
+            {"microsoft.com", "https://microsoft.com"},
+            {"cosmowhisper", "https://cosmowhisper.com"},
+            {"library", "https://cosmowhisper.com/features"},
+            {"commands", "https://cosmowhisper.com/features"}
         };
 
         private readonly Dictionary<string, string> _appShortcuts = new()
         {
             {"word", "winword"},
             {"microsoft word", "winword"},
+            {"textmaker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe"},
+            {"text maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe"},
             {"excel", "excel"},
             {"microsoft excel", "excel"},
+            {"planmaker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe"},
+            {"plan maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe"},
             {"powerpoint", "powerpnt"},
             {"microsoft powerpoint", "powerpnt"},
+            {"presentations", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
+            {"present maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
+            {"presentation maker", @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe"},
             {"outlook", "outlook"},
             {"microsoft outlook", "outlook"},
             {"chrome", "chrome"},
@@ -86,11 +97,21 @@ namespace CosmoWhisper.Managers
             if (await MacroManager.Shared.TryExecuteMacro(text)) return true;
 
             string cmd = Regex.Replace(text.ToLower(), @"[^\w\s\.]", "").Trim();
+            cmd = cmd.TrimStart('.', ' ', '\t');
+            cmd = cmd.TrimEnd('.', '!', '?'); // Remove trailing punctuation
+            cmd = cmd.Trim().ToLower();
+            
+            // CLEANUP: If the command starts with junk (like repeat hashes from a leaking hook), remove it.
+            // This ensures commands like "Translate into French" are recognized even if some hashes leak.
+            cmd = Regex.Replace(cmd, @"^[#\s]+", "").Trim();
 
             if (string.IsNullOrWhiteSpace(cmd)) return false;
 
             // Debug logging
             LogToFile($"[CommandController] Original: '{text}' | Processed: '{cmd}'");
+            
+            if (cmd.Contains("help")) { LogToFile($"[CommandController] HELP DETECTED: {cmd}"); }
+            if (cmd.Contains("stop")) { LogToFile($"[CommandController] STOP DETECTED: {cmd}"); }
 
             // Normalize "openapp" -> "open app"
             if (cmd.StartsWith("open") && !cmd.StartsWith("open ") && cmd.Length > 4)
@@ -107,27 +128,85 @@ namespace CosmoWhisper.Managers
 
             // Helper for trigger matching
             bool IsTriggered(params string[] triggers)
-                => triggers.Any(t => cmd == t || cmd.StartsWith(t + " "));
+            {
+                // 1. Strict match or starts with (e.g. "open WhatsApp")
+                if (triggers.Any(t => cmd == t || cmd.StartsWith(t + " "))) return true;
+                
+                // 2. Flexible matching (ignore filler words like "okay", "please")
+                // Only apply for specific smart commands
+                var flexibleTriggers = new[] { "summarize", "summarise", "write summary", "right summary", "type summary", "paste summary", "translate", "polish" };
+                if (triggers.Any(t => flexibleTriggers.Contains(t)))
+                {
+                    // Look for the trigger at the end of a command that might have junk at the start
+                    foreach (var t in triggers)
+                    {
+                        if (cmd.EndsWith(" " + t) || cmd.EndsWith(t))
+                        {
+                            // Verify it's not preceded by something that negates it (e.g. "don't summarize")
+                            // (Simple heuristic: if it's longer than just filler, we allow it)
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
+            }
 
             // --- 1. CONFIG / MODES ---
-            if (IsTriggered("typing mode", "use typing mode")) { return true; } // Mocked setting
-            if (IsTriggered("paste mode", "use paste mode")) { return true; }
+            if (IsTriggered("typing mode", "use typing mode"))
+            {
+                PreferenceManager.Shared.Preferences.UsePasteMode = false;
+                PreferenceManager.Shared.Save();
+                CommandExecuted?.Invoke();
+                return true;
+            }
+            if (IsTriggered("paste mode", "use paste mode"))
+            {
+                PreferenceManager.Shared.Preferences.UsePasteMode = true;
+                PreferenceManager.Shared.Save();
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
+            if (IsTriggered("press enter on", "enable press enter", "turn on press enter"))
+            {
+                PreferenceManager.Shared.Preferences.AutoSubmit = true;
+                PreferenceManager.Shared.Save();
+                _ = NarrationManager.Shared.SpeakAsync("Press enter enabled.");
+                CommandExecuted?.Invoke();
+                return true;
+            }
+            if (IsTriggered("press enter off", "disable press enter", "turn off press enter"))
+            {
+                PreferenceManager.Shared.Preferences.AutoSubmit = false;
+                PreferenceManager.Shared.Save();
+                _ = NarrationManager.Shared.SpeakAsync("Press enter disabled.");
+                CommandExecuted?.Invoke();
+                return true;
+            }
 
             // --- 2. TEXT FORMATTING ---
-            if (IsTriggered("uppercase", "all caps")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
-            if (IsTriggered("lowercase", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
+            if (IsTriggered("uppercase", "upper case", "all caps", "i'll put case", "apple case", "up a case")) { await ProcessAIOnSelection("Make the text uppercase. Output ONLY the uppercase text.", usePersonality: false); return true; }
+            if (IsTriggered("lowercase", "lower case", "all lowercase")) { await ProcessAIOnSelection("Make the text lowercase. Output ONLY the lowercase text.", usePersonality: false); return true; }
             if (IsTriggered("title case")) { await ProcessAIOnSelection("Convert the text to Title Case. Output ONLY the text.", usePersonality: false); return true; }
 
-            if (cmd == "select all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); return true; }
-            if (cmd == "undo" || cmd == "undo that") { InputController.Shared.ExecuteKeystroke("z", ctrl: true); return true; }
-            if (cmd == "redo" || cmd == "redo that") { InputController.Shared.ExecuteKeystroke("y", ctrl: true); return true; }
-            if (cmd == "paste" || cmd == "paste that") { InputController.Shared.ExecuteKeystroke("v", ctrl: true); return true; }
+            if (IsTriggered("select all", "select everything")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("undo", "undo that")) { InputController.Shared.ExecuteKeystroke("z", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("redo", "redo that")) { InputController.Shared.ExecuteKeystroke("y", ctrl: true); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("paste", "paste that", "paste all", "past all", "past that")) 
+            { 
+                if (cmd.Contains("all")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
+                InputController.Shared.ExecuteKeystroke("v", ctrl: true); 
+                CommandExecuted?.Invoke();
+                return true; 
+            }
 
-            if (cmd == "delete all" || cmd == "clear all")
+            if (IsTriggered("delete all", "clear all", "delete everything", "clear everything"))
             {
                 InputController.Shared.ExecuteKeystroke("a", ctrl: true);
                 await Task.Delay(100);
                 InputController.Shared.ExecuteKeystroke("backspace");
+                CommandExecuted?.Invoke();
                 return true;
             }
 
@@ -137,30 +216,39 @@ namespace CosmoWhisper.Managers
                 InputController.Shared.ExecuteKeystroke("a", ctrl: true);
                 await Task.Delay(100);
                 InputController.Shared.ExecuteKeystroke("x", ctrl: true);
+                CommandExecuted?.Invoke();
                 return true;
             }
-            if (IsTriggered("copy that", "copy all"))
+            if (IsTriggered("copy that", "copy all", "copy everything"))
             {
-                if (cmd == "copy all") { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
+                if (cmd.Contains("all") || cmd.Contains("everything")) { InputController.Shared.ExecuteKeystroke("a", ctrl: true); await Task.Delay(100); }
                 InputController.Shared.ExecuteKeystroke("c", ctrl: true);
+                CommandExecuted?.Invoke();
+                return true;
+            }
+
+            // --- 3.5 SCREENSHOTS ---
+            if (IsTriggered("screenshot", "take screenshot", "take screen shot", "take screen show", "screen clip", "snipping tool", "capture screen"))
+            {
+                Process.Start(new ProcessStartInfo { FileName = "ms-screenclip:", UseShellExecute = true });
+                CommandExecuted?.Invoke();
                 return true;
             }
 
             // --- 4. SYSTEM ---
-            // --- 4. SYSTEM ---
-            if (IsTriggered("insert date", "todays date", "current date"))
+            if (IsTriggered("insert date", "insert the date", "todays date", "current date"))
             {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
                 await InputController.Shared.PasteText(DateTime.Now.ToString(fmt) + " ", false, false);
                 CommandExecuted?.Invoke(); return true;
             }
-            if (IsTriggered("insert time", "current time"))
+            if (IsTriggered("insert time", "insert the time", "current time"))
             {
                 string fmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
                 await InputController.Shared.PasteText(DateTime.Now.ToString(fmt) + " ", false, false);
                 CommandExecuted?.Invoke(); return true;
             }
-            if (IsTriggered("insert date and time"))
+            if (IsTriggered("insert date and time", "insert the date and time"))
             {
                 string dFmt = PreferenceManager.Shared.Preferences.SelectedDateFormat;
                 string tFmt = PreferenceManager.Shared.Preferences.SelectedTimeFormat;
@@ -175,22 +263,53 @@ namespace CosmoWhisper.Managers
             // --- 5. WEB / SEARCH ---
             if (cmd.StartsWith("visit ") || cmd.StartsWith("go to "))
             {
-                string site = cmd.Replace("visit ", "").Replace("go to ", "").Trim();
+                string site = (cmd.StartsWith("visit ") ? cmd.Substring(6) : cmd.Substring(6)).Trim();
                 bool ok = OpenSite(site);
                 if (ok) CommandExecuted?.Invoke();
                 return ok;
             }
+            // Search Google
             if (cmd.StartsWith("search ") || cmd.StartsWith("google "))
             {
-                string query = cmd.Replace("search ", "").Replace("google ", "").Trim();
+                string query = (cmd.StartsWith("search ") ? cmd.Substring(7) : cmd.Substring(7)).Trim();
+                if (query.StartsWith("for ")) query = query.Substring(4).Trim();
+                if (query.StartsWith("youtube "))
+                {
+                    string ytQuery = query.Substring(8).Trim();
+                    Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(ytQuery)}") { UseShellExecute = true });
+                    CommandExecuted?.Invoke(); return true;
+                }
                 Process.Start(new ProcessStartInfo($"https://www.google.com/search?q={Uri.EscapeDataString(query)}") { UseShellExecute = true });
                 CommandExecuted?.Invoke(); return true;
             }
-            if (cmd.StartsWith("youtube "))
+
+            // Search / Open YouTube with search query (e.g. "open youtube kitty cats", "youtube american politics")
+            if (cmd.StartsWith("open youtube ") || cmd.StartsWith("open utube ") || cmd.StartsWith("open u tube ") ||
+                cmd.StartsWith("youtube ") || cmd.StartsWith("utube ") || cmd.StartsWith("u tube "))
             {
-                string query = cmd.Replace("youtube ", "").Trim();
-                Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(query)}") { UseShellExecute = true });
-                CommandExecuted?.Invoke(); return true;
+                string query = cmd;
+                if (cmd.StartsWith("open youtube ")) query = cmd.Substring(13);
+                else if (cmd.StartsWith("open utube ")) query = cmd.Substring(11);
+                else if (cmd.StartsWith("open u tube ")) query = cmd.Substring(12);
+                else if (cmd.StartsWith("youtube ")) query = cmd.Substring(8);
+                else if (cmd.StartsWith("utube ")) query = cmd.Substring(6);
+                else if (cmd.StartsWith("u tube ")) query = cmd.Substring(7);
+                
+                query = query.Trim();
+                if (query.StartsWith("for ")) query = query.Substring(4).Trim();
+
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    Process.Start(new ProcessStartInfo($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(query)}") { UseShellExecute = true });
+                    CommandExecuted?.Invoke();
+                    return true;
+                }
+                else
+                {
+                    Process.Start(new ProcessStartInfo("https://youtube.com") { UseShellExecute = true });
+                    CommandExecuted?.Invoke();
+                    return true;
+                }
             }
 
             // --- 6. DEVELOPER TOOLS ---
@@ -220,13 +339,30 @@ namespace CosmoWhisper.Managers
             // --- 7. APP LAUNCHING ---
             if (cmd.StartsWith("open ") || cmd.StartsWith("launch "))
             {
-                string appQuery = cmd.Replace("open ", "").Replace("launch ", "").Trim();
-                LogToFile($"[CommandController] Attempting to launch app: '{appQuery}'");
+                string appQuery = (cmd.StartsWith("open ") ? cmd.Substring(5) : cmd.Substring(7)).Trim();
+                LogToFile($"[CommandController] Attempting to launch app or site: '{appQuery}'");
                 
-                // 1. Try exact match
+                // 1. Try if it's a known web shortcut or has a TLD suffix (e.g. "microsoft", "google.com")
+                string nameWithoutTld = appQuery.TrimEnd('.');
+                string[] commonTlds = { ".com", ".org", ".net", ".io", ".ai", ".app", ".dev" };
+                bool isWebSite = _webShortcuts.ContainsKey(nameWithoutTld) || 
+                                 nameWithoutTld.Contains(".") ||
+                                 commonTlds.Any(tld => nameWithoutTld.EndsWith(tld));
+                                 
+                if (isWebSite)
+                {
+                    bool okWeb = OpenSite(appQuery);
+                    if (okWeb)
+                    {
+                        CommandExecuted?.Invoke();
+                        return true;
+                    }
+                }
+
+                // 2. Try launching as local app
                 bool ok = await LaunchApp(appQuery);
                 
-                // 2. Try identifying the app name within a longer sentence (e.g. "Launch WhatsApp is not working")
+                // 3. Try identifying the app name within a longer sentence (e.g. "Launch WhatsApp is not working")
                 if (!ok)
                 {
                     var knownApp = _appShortcuts.Keys
@@ -240,6 +376,12 @@ namespace CosmoWhisper.Managers
                     }
                 }
                 
+                // 4. Final fallback: try OpenSite if local app launching completely failed and it wasn't already run
+                if (!ok && !isWebSite)
+                {
+                    ok = OpenSite(appQuery);
+                }
+                
                 LogToFile($"[CommandController] Launch result: {ok}");
                 if (ok) CommandExecuted?.Invoke();
                 return ok;
@@ -249,74 +391,97 @@ namespace CosmoWhisper.Managers
             if (cmd.StartsWith("ask "))
             {
                 string question = text.Substring(text.ToLower().IndexOf("ask ") + 4);
-                _ = ProcessAI(question, "You are a helpful assistant. Answer concisely.");
+                _ = ProcessAI("You are a helpful assistant. Answer concisely.", question);
                 CommandExecuted?.Invoke(); return true;
             }
 
-            // Summarize (Voice vs Text)
-            if (IsTriggered("write summary", "type summary", "paste summary", "summarize to text")) 
+            // Normalize common misspellings (summerise/summerize -> summarize)
+            if (cmd.Contains("summerise")) cmd = cmd.Replace("summerise", "summarize");
+            if (cmd.Contains("summerize")) cmd = cmd.Replace("summerize", "summarize");
+
+            // Summarize (TEXT ONLY)
+            if (IsTriggered("summarize", "summarise", "write summary", "type summary", "paste summary", "summarize that", "summarise that", "right summary") && !cmd.Contains("out loud") && !cmd.Contains("read")) 
             { 
-                await ProcessAIOnSelection("You are a strict summarization tool. TASK: Summarize the following text concisely. CONSTRAINTS: Capture key points only. Do not add external info. Do not hallucinate. Output ONLY the summary text.", usePersonality: false); 
+                await ProcessAIOnSelection("Summarize the following text concisely. Capture key points only. Output ONLY the summary text.", usePersonality: false, useInterfaceLanguage: false); 
                 CommandExecuted?.Invoke(); 
                 return true; 
             }
-            // Default "Summarize" -> Read aloud
-            if (IsTriggered("summarize", "summarize this", "summarise", "summarise this", "read summary")) 
+            // Summarize (VOICE ONLY - Explicitly requested)
+            if (IsTriggered("summarize out loud", "summarise out loud", "read summary", "tell me summary")) 
             { 
                 await SummarizeAndRead(); 
                 CommandExecuted?.Invoke(); 
                 return true; 
             }
-            if (IsTriggered("fix grammar", "polish", "fix this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to spanish")) { await ProcessAIOnSelection("Translate the following text into Spanish."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("translate to french")) { await ProcessAIOnSelection("Translate the following text into French."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("bullet points", "make bullet list")) { await ProcessAIOnSelection("Convert this text into a clean bulleted list using '•'. Output ONLY the list.", usePersonality: false); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy."); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive."); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("grammar", "correct grammar", "polish", "correct this")) { await ProcessAIOnSelection("Fix the grammar and improve the flow of this text. Maintain the original meaning. Output ONLY the fixed text.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("make professional", "professionalize")) { await ProcessAIOnSelection("Rewrite the following text to sound professional, corporate, and polite. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("make friendly")) { await ProcessAIOnSelection("Rewrite the following text to sound friendly and approachable. Output ONLY the rewritten text without conversational filler or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to spanish", "translate into spanish", "translate spanish", "translate to castilian", "translate into castilian")) { await ProcessAIOnSelection("Translate the following text into Spanish. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to french", "translate into french", "translate french")) { await ProcessAIOnSelection("Translate the following text into French. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to german", "translate into german", "translate german")) { await ProcessAIOnSelection("Translate the following text into German. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to italian", "translate into italian", "translate italian")) { await ProcessAIOnSelection("Translate the following text into Italian. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to portuguese", "translate into portuguese", "translate portuguese")) { await ProcessAIOnSelection("Translate the following text into Portuguese. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to chinese", "translate into chinese", "translate chinese", "translate to mandarin")) { await ProcessAIOnSelection("Translate the following text into Chinese. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to japanese", "translate into japanese", "translate japanese")) { await ProcessAIOnSelection("Translate the following text into Japanese. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("translate to russian", "translate into russian", "translate russian")) { await ProcessAIOnSelection("Translate the following text into Russian. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+
+            // --- EXTRACT LANGUAGE FROM COMMAND ---
+            string? language = null;
+            // Only trigger translation if the word "translate" or "translation" is explicitly used
+            var translationMatch = Regex.Match(cmd, @"(?:^|\s)(?:translate|translation)(?:\s+(?:it|this|that|the|text|message))?\s+(?:to|into|in)?\s+(\w+)(?:\s+translation)?");
+            if (translationMatch.Success) 
+            {
+                language = translationMatch.Groups[1].Value.Trim();
+            }
+            else 
+            {
+                // Fallback for just "translate spanish"
+                var simpleMatch = Regex.Match(cmd, @"(?:^|\s)translate\s+(\w+)$");
+                if (simpleMatch.Success) language = simpleMatch.Groups[1].Value.Trim();
+            }
+
+            // Handle common languages without prefix ONLY if it's the exact command
+            if (string.IsNullOrEmpty(language))
+            {
+                var exactCmd = cmd.Replace(" please", "").Trim();
+                if (exactCmd == "to spanish" || exactCmd == "into spanish") language = "spanish";
+                else if (exactCmd == "to french" || exactCmd == "into french") language = "french";
+                else if (exactCmd == "to german" || exactCmd == "into german") language = "german";
+                else if (exactCmd == "to italian" || exactCmd == "into italian") language = "italian";
+                else if (exactCmd == "to portuguese" || exactCmd == "into portuguese") language = "portuguese";
+                else if (exactCmd == "to chinese" || exactCmd == "into chinese") language = "chinese";
+                else if (exactCmd == "to japanese" || exactCmd == "into japanese") language = "japanese";
+                else if (exactCmd == "to russian" || exactCmd == "into russian") language = "russian";
+            }
+
+            if (!string.IsNullOrEmpty(language) && language != "the" && language != "this" && language != "that" && language != "please" && language != "now")
+            {
+                LogToFile($"[CommandController] Translation detected for language: '{language}' from cmd: '{cmd}'");
+                await ProcessAIOnSelection($"Translate the following text into {language}. Output ONLY the translated text without conversational filler, explanations, or notes.", usePersonality: false, useInterfaceLanguage: false);
+                CommandExecuted?.Invoke();
+                return true;
+            }
+            if (IsTriggered("bullet points", "make bullet list", "organize", "organize this")) { await ProcessAIOnSelection("Format the following text into a logical bulleted list using '•'. Identify distinct concepts, sentences, or items, but do NOT simply make every single word a separate bullet point. Output ONLY the formatted list.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("shorter", "condense")) { await ProcessAIOnSelection("Make the following text concise and punchy. Output ONLY the condensed text.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("expand", "flesh out")) { await ProcessAIOnSelection("Expand on this text to make it more descriptive. Output ONLY the expanded text.", usePersonality: false, useInterfaceLanguage: false); CommandExecuted?.Invoke(); return true; }
 
             // --- 8. OPEN ACCESSIBILITY ---
             if (IsTriggered("read this", "read that", "read the", "read selection", "speak this", "say this")) { await ReadSelection(); CommandExecuted?.Invoke(); return true; }
-            if (IsTriggered("stop reading", "stop speaking", "stop playback", "shush", "hush")) { NarrationManager.Shared.CancelSpeech(); CommandExecuted?.Invoke(); return true; }
+            if (IsTriggered("stop reading", "stop speaking", "stop playback", "shush", "hush", "shut up", "quiet")) { NarrationManager.Shared.CancelSpeech(); CommandExecuted?.Invoke(); return true; }
+            if (cmd == "stop" && AudioRecorder.Shared.IsPlaying) { NarrationManager.Shared.CancelSpeech(); CommandExecuted?.Invoke(); return true; }
 
+            LogToFile($"[CommandController] No command match found for: '{cmd}'");
             return false;
         }
 
-        private async Task<string> CaptureSelectionRobust()
-        {
-            // 1. Send Ctrl+C to try to update clipboard with current selection
-            InputController.Shared.ExecuteKeystroke("c", ctrl: true);
-            
-            // 2. Wait for clipboard to update (progressive checks)
-            for (int i = 0; i < 10; i++)
-            {
-                await Task.Delay(250); // Checks at 250, 500, ..., 2500ms
-                
-                string current = "";
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    try { if (System.Windows.Clipboard.ContainsText()) current = System.Windows.Clipboard.GetText(); } catch { }
-                });
-
-                if (!string.IsNullOrWhiteSpace(current)) return current;
-            }
-
-            // Fallback: Check one last time without waiting
-            string finalCheck = "";
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                try { if (System.Windows.Clipboard.ContainsText()) finalCheck = System.Windows.Clipboard.GetText(); } catch { }
-            });
-            
-            return finalCheck;
-        }
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
 
         private async Task ReadSelection()
         {
             try
             {
-                string selection = await CaptureSelectionRobust();
+                string selection = await InputController.Shared.CaptureSelectedText();
 
                 if (string.IsNullOrWhiteSpace(selection))
                 {
@@ -339,7 +504,7 @@ namespace CosmoWhisper.Managers
             {
                 LogToFile("SummarizeAndRead started.");
 
-                string selection = await CaptureSelectionRobust();
+                string selection = await InputController.Shared.CaptureSelectedText();
 
                 if (string.IsNullOrWhiteSpace(selection))
                 {
@@ -348,7 +513,7 @@ namespace CosmoWhisper.Managers
                     return;
                 }
 
-                await NarrationManager.Shared.SpeakAsync("Summarizing selection...");
+                // Removed the "Summarizing selection..." voice announcement for a quieter experience.
 
                 string prompt = "You are a concise summarization tool. TASK: Summarize the provided text in maximum 2 short sentences. CONSTRAINTS: Stick STRICTLY to the text provided. Do not add outside knowledge. No intro/outro.";
                 string summary = await AIService.Shared.ProcessCommand(prompt, selection, usePersonality: false);
@@ -375,7 +540,7 @@ namespace CosmoWhisper.Managers
             name = name.TrimEnd('.');
 
             // 1. Check exact dictionary match
-            if (_webShortcuts.TryGetValue(name, out string url))
+            if (_webShortcuts.TryGetValue(name, out string? url))
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 return true;
@@ -388,7 +553,7 @@ namespace CosmoWhisper.Managers
                 if (name.EndsWith(tld))
                 {
                     string root = name.Substring(0, name.Length - tld.Length);
-                    if (_webShortcuts.TryGetValue(root, out string shortcutUrl))
+                    if (_webShortcuts.TryGetValue(root, out string? shortcutUrl))
                     {
                         Process.Start(new ProcessStartInfo(shortcutUrl) { UseShellExecute = true });
                         return true;
@@ -414,7 +579,7 @@ namespace CosmoWhisper.Managers
             return Regex.Replace(name.ToLower(), @"[^a-z0-9]", "");
         }
 
-        private string FindAppInStartMenu(string appName)
+        private string? FindAppInStartMenu(string appName)
         {
             try
             {
@@ -474,10 +639,10 @@ namespace CosmoWhisper.Managers
 
         private async Task<bool> LaunchApp(string name)
         {
-            string target = null;
+            string? target = null;
             
             // 1. Check hardcoded dictionary (Exact)
-            if (_appShortcuts.TryGetValue(name.ToLower(), out string shortcut))
+            if (_appShortcuts.TryGetValue(name.ToLower(), out string? shortcut))
             {
                 target = shortcut;
             }
@@ -492,34 +657,69 @@ namespace CosmoWhisper.Managers
                     .FirstOrDefault();
             }
             
+            // Only trust dictionary shortcuts that exist (or shell/protocol commands without directory separators)
+            if (target != null && Path.IsPathRooted(target) && !File.Exists(target))
+            {
+                target = null;
+            }
+
             // 2. Dynamic Search in Start Menu (Background Task)
             if (target == null)
             {
                 target = await Task.Run(() => FindAppInStartMenu(name));
             }
 
-            // 3. Try to launch whatever we found (or the original name as a last resort)
-            string launchPath = target ?? name;
-            
-            try
+            // Fallback chains for common suites (e.g. MS Office -> SoftMaker FreeOffice)
+            var officeFallbacks = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
-                Process.Start(new ProcessStartInfo(launchPath) { UseShellExecute = true });
-                return true;
-            }
-            catch (Exception ex)
+                { "word", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\TextMaker.exe", "textmaker" } },
+                { "winword", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\TextMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\TextMaker.exe", "textmaker" } },
+                { "excel", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\PlanMaker.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\PlanMaker.exe", "planmaker" } },
+                { "powerpoint", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\Presentations.exe", "presentations" } },
+                { "powerpnt", new[] { @"C:\Program Files (x86)\SoftMaker FreeOffice 2024\Presentations.exe", @"C:\Program Files\SoftMaker FreeOffice 2024\Presentations.exe", "presentations" } },
+                { "textmaker", new[] { "winword" } },
+                { "planmaker", new[] { "excel" } },
+                { "presentations", new[] { "powerpnt" } }
+            };
+
+            if (target != null)
             {
-                LogToFile($"[LaunchApp] Error opening '{launchPath}': {ex.Message}");
-                
-                // Show pop-up if the app absolutely could not be opened
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    System.Windows.MessageBox.Show($"The application '{name}' could not be opened or found.", 
-                        "CosmoWhisper - App Launch Error", 
-                        System.Windows.MessageBoxButton.OK, 
-                        System.Windows.MessageBoxImage.Warning);
-                });
-                
-                return false;
+                try
+                {
+                    Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"[LaunchApp] Error opening '{target}': {ex.Message}. Checking fallback alternatives...");
+                }
             }
+
+            // Try suite fallback only for recognized app aliases
+            string normKey = NormalizeAppName(name);
+            string normTarget = target != null ? NormalizeAppName(target) : string.Empty;
+            foreach (var kvp in officeFallbacks)
+            {
+                if (NormalizeAppName(kvp.Key) == normKey || (!string.IsNullOrEmpty(normTarget) && normTarget == NormalizeAppName(kvp.Key)))
+                {
+                    foreach (var alt in kvp.Value)
+                    {
+                        try
+                        {
+                            if (File.Exists(alt) || !alt.Contains(@"\"))
+                            {
+                                Process.Start(new ProcessStartInfo(alt) { UseShellExecute = true });
+                                LogToFile($"[LaunchApp] Successfully launched fallback alternative: '{alt}' for '{name}'");
+                                return true;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            LogToFile($"[LaunchApp] Application '{name}' not found; skipping ShellExecute fallback.");
+            return false;
         }
 
         private async Task ProcessAI(string context, string prompt)
@@ -542,13 +742,13 @@ namespace CosmoWhisper.Managers
             }
         }
 
-        private async Task ProcessAIOnSelection(string prompt, bool usePersonality = true)
+        private async Task ProcessAIOnSelection(string prompt, bool usePersonality = true, bool useInterfaceLanguage = true)
         {
             try
             {
                 LogToFile($"ProcessAIOnSelection started with prompt: {prompt}");
 
-                string selection = await CaptureSelectionRobust();
+                string selection = await InputController.Shared.CaptureSelectedText();
 
                 if (string.IsNullOrWhiteSpace(selection))
                 {
@@ -558,7 +758,7 @@ namespace CosmoWhisper.Managers
                 }
 
                 // Process
-                string result = await AIService.Shared.ProcessCommand(prompt, selection, usePersonality);
+                string result = await AIService.Shared.ProcessCommand(prompt, selection, usePersonality, useInterfaceLanguage);
                 LogToFile($"AI Result received: {result.Length} chars");
 
                 // Paste back
@@ -581,13 +781,9 @@ namespace CosmoWhisper.Managers
 
         private void LogToFile(string msg)
         {
-            try
-            {
-                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CosmoWhisper", "logs");
-                Directory.CreateDirectory(logPath);
-                File.AppendAllText(Path.Combine(logPath, "command_debug.txt"), $"{DateTime.Now}: {msg}\n");
-            }
-            catch { }
+            FileLogger.WriteShared("INFO", msg);
         }
     }
 }
+
+
