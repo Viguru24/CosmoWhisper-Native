@@ -17,6 +17,9 @@
         <!-- DYNAMIC THEME TOKENS (DIRECTION B: CRISP OBSIDIAN & ZINC GREY) -->
         <Color x:Key="ThemeAccentColor">#10B981</Color>
         <SolidColorBrush x:Key="ThemeAccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
+        <SolidColorBrush x:Key="ThemeAccentHoverBrush" Color="#34D399"/>
+        <SolidColorBrush x:Key="ThemeAccentSubtleBrush" Color="#1F10B981"/>
+        <SolidColorBrush x:Key="ThemeAccentForegroundBrush" Color="#09090B"/>
         
         <Color x:Key="ThemeForegroundColor">#F4F4F5</Color>
         <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{DynamicResource ThemeForegroundColor}"/>
@@ -26,9 +29,25 @@
 
         <Color x:Key="ThemeSecondaryColor">#A1A1AA</Color>
         <SolidColorBrush x:Key="ThemeSecondaryBrush" Color="{DynamicResource ThemeSecondaryColor}"/>
+        <SolidColorBrush x:Key="ThemeMutedBrush" Color="#71717A"/>
 
         <Color x:Key="ThemeSurfaceColor">#18181B</Color>
-        <SolidColorBrush x:Key="ThemeSurfaceBrush" Color="{DynamicResource ThemeSurfaceColor}" Opacity="0.95"/>
+        <SolidColorBrush x:Key="ThemeSurfaceBrush" Color="{DynamicResource ThemeSurfaceColor}"/>
+        <SolidColorBrush x:Key="ThemeSubtleSurfaceBrush" Color="#202025"/>
+        <SolidColorBrush x:Key="ThemeHoverSurfaceBrush" Color="#27272E"/>
+        <SolidColorBrush x:Key="ThemeCardBorderBrush" Color="#27272A"/>
+        <SolidColorBrush x:Key="ThemeCardBorderHoverBrush" Color="#3F3F46"/>
+        <SolidColorBrush x:Key="ThemeInputBgBrush" Color="#121216"/>
+        <SolidColorBrush x:Key="ThemeInputBorderBrush" Color="#2E2E36"/>
+        <SolidColorBrush x:Key="ThemeSidebarBrush" Color="#C80B0B0E"/>
+        <SolidColorBrush x:Key="ThemeWindowBackdropBrush" Color="#D60D0D10"/>
+
+        <SolidColorBrush x:Key="ThemeSuccessBrush" Color="#10B981"/>
+        <SolidColorBrush x:Key="ThemeSuccessSubtleBrush" Color="#1F10B981"/>
+        <SolidColorBrush x:Key="ThemeWarningBrush" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="ThemeWarningSubtleBrush" Color="#1FF59E0B"/>
+        <SolidColorBrush x:Key="ThemeDangerBrush" Color="#EF4444"/>
+        <SolidColorBrush x:Key="ThemeDangerSubtleBrush" Color="#24EF4444"/>
 
         <Color x:Key="ThemeBgStartColor">#09090B</Color>
         <Color x:Key="ThemeBgMidColor">#121215</Color>
@@ -44,6 +63,7 @@
         <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource ThemeAccentColor}"/>
         
         <Color x:Key="GlassColor">#121215</Color>
+        <SolidColorBrush x:Key="ThemeSurfaceGlassBrush" Color="{DynamicResource ThemeSurfaceColor}" Opacity="0.92"/>
         <SolidColorBrush x:Key="GlassBrush" Color="{DynamicResource ThemeBgStartColor}" Opacity="0.95"/>
 
         <!-- GLOBAL STYLES -->

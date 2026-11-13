@@ -37,14 +37,14 @@ namespace CosmoWhisper.Controllers
             _statsUpdatedHandler = () => UpdateDashboardStats();
             _accessBlockedHandler = () => {
                 Window.Dispatcher.BeginInvoke(() => {
-                    _ = CosmoMessage.Show("Access Paused", "Your access has been paused by an administrator. It will resume automatically when restored.", "🔒");
+                    _ = CosmoMessage.Show("Access Paused", "Your access has been paused by an administrator. It will resume automatically when restored.", "\uE72E");
                 });
             };
             _sessionExpiredHandler = () => {
                 SignOut();
                 _ = Task.Delay(500).ContinueWith(_ => Window.Dispatcher.BeginInvoke(() =>
                 {
-                    _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "🔒");
+                    _ = CosmoMessage.Show("Session Expired", "Your session has expired or your access was paused. Please log in again.", "\uE72E");
                 }));
             };
             _preferencesUpdatedHandler = () => UpdateDashboardStats();
@@ -190,7 +190,7 @@ namespace CosmoWhisper.Controllers
 
         public async void ResetStats()
         {
-            var result = await CosmoMessage.Show("Reset Stats", "Are you sure you want to reset all performance stats? This cannot be undone.", "🧹", true);
+            var result = await CosmoMessage.Show("Reset Stats", "Are you sure you want to reset all performance stats? This cannot be undone.", "\uE74D", true);
             if (result)
             {
                 AccountService.Shared.ResetStats();
@@ -204,11 +204,11 @@ namespace CosmoWhisper.Controllers
             
             if (success)
             {
-                _ = CosmoMessage.Show("Success", "License Activated Successfully!", "✨");
+                _ = CosmoMessage.Show("Success", "License Activated Successfully!", "\uE73E");
             }
             else
             {
-                _ = CosmoMessage.Show("Error", "Invalid License Key or Server Offline", "❌");
+                _ = CosmoMessage.Show("Error", "Invalid License Key or Server Offline", "\uE783");
             }
         }
 
@@ -217,7 +217,7 @@ namespace CosmoWhisper.Controllers
             try
             {
                 // Step 1: Prompt user for email address
-                string? email = await Window.ShowInputDialogAsync("Sign in with Magic Code", "Enter your account email address to receive your sign-in code:", "", "📧");
+                string? email = await Window.ShowInputDialogAsync("Sign in with Magic Code", "Enter your account email address to receive your sign-in code:", "", "\uE715");
                 if (string.IsNullOrWhiteSpace(email)) return;
 
                 email = email.Trim();
@@ -228,12 +228,12 @@ namespace CosmoWhisper.Controllers
 
                 if (!reqSuccess)
                 {
-                    _ = CosmoMessage.Show("Request Failed", reqMessage, "❌");
+                    _ = CosmoMessage.Show("Request Failed", reqMessage, "\uE783");
                     return;
                 }
 
                 // Step 3: Prompt for the 6-digit verification code
-                string? inputCode = await Window.ShowInputDialogAsync("Enter Verification Code", $"A 6-digit code was sent to {email}.\nEnter the code below:", "", "🔑");
+                string? inputCode = await Window.ShowInputDialogAsync("Enter Verification Code", $"A 6-digit code was sent to {email}.\nEnter the code below:", "", "\uE8D7");
                 if (string.IsNullOrWhiteSpace(inputCode)) return;
 
                 inputCode = inputCode.Trim();
@@ -250,18 +250,18 @@ namespace CosmoWhisper.Controllers
                     // Navigate to Dashboard
                     Window._navigation?.ShowDashboard();
 
-                    _ = CosmoMessage.Show("Welcome", $"Signed in successfully as {email}!", "🎉");
+                    _ = CosmoMessage.Show("Welcome", $"Signed in successfully as {email}!", "\uE73E");
                     await CheckAuthStatus();
                 }
                 else
                 {
-                    _ = CosmoMessage.Show("Verification Failed", verifyMessage, "❌");
+                    _ = CosmoMessage.Show("Verification Failed", verifyMessage, "\uE783");
                 }
             }
             catch (Exception ex)
             {
                 DiagnosticManager.Shared.Log($"PerformMagicLogin Exception: {ex.Message}", "ERROR");
-                _ = CosmoMessage.Show("Error", "An unexpected error occurred during sign-in. Please try again.", "❌");
+                _ = CosmoMessage.Show("Error", "An unexpected error occurred during sign-in. Please try again.", "\uE783");
             }
         }
 

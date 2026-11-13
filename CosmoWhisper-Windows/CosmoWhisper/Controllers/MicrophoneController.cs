@@ -122,17 +122,7 @@ namespace CosmoWhisper.Controllers
         public void UpdateInteractionSoundsUI()
         {
             if (Window.ToggleInteractionSounds == null) return;
-
-            bool isActive = AudioRecorder.Shared.PlayInteractionSounds;
-            Window.ToggleInteractionSounds.Background = isActive
-                ? (Brush)Application.Current.Resources["ThemeAccentBrush"]
-                : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#30FFFFFF"));
-
-            var ellipse = Window.ToggleInteractionSounds.Child as System.Windows.Shapes.Shape;
-            if (ellipse != null)
-            {
-                ellipse.HorizontalAlignment = isActive ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-            }
+            Window.ToggleInteractionSounds.IsChecked = AudioRecorder.Shared.PlayInteractionSounds;
         }
 
         public async Task Calibrate()
@@ -148,7 +138,7 @@ namespace CosmoWhisper.Controllers
 
             Window.BtnCalibrate.Content = "✓ Optimized";
             await Task.Delay(1000);
-            Window.BtnCalibrate.Content = "⚡ Calibrate";
+            Window.BtnCalibrate.Content = "Calibrate";
             Window.BtnCalibrate.IsEnabled = true;
         }
     }

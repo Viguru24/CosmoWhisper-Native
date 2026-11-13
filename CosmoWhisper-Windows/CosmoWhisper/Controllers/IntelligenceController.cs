@@ -51,7 +51,7 @@ namespace CosmoWhisper.Controllers
             }
 
             PreferenceManager.Shared.Save();
-            Window.ShowToast("API Keys Saved & Encrypted 🔒", "🔒");
+            Window.ShowToast("API Keys Saved & Encrypted", "\uE72E");
         }
 
         public void PersonalityChanged(string personality)

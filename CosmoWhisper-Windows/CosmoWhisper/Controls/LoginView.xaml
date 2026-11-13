@@ -1,104 +1,68 @@
 <UserControl x:Class="CosmoWhisper.Controls.LoginView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:CosmoWhisper.Controls"
-             mc:Ignorable="d" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Themes/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel VerticalAlignment="Center" Margin="0,50,0,0">
-            <Border Background="#252A3D" CornerRadius="20" Padding="40" HorizontalAlignment="Center" Width="400">
+        <StackPanel VerticalAlignment="Center" Margin="0,36,16,32">
+            <Border Style="{StaticResource CardContainerStyle}" Padding="36" HorizontalAlignment="Center" Width="420">
                 <StackPanel>
-                    <TextBlock Text="Sign in to CosmoWhisper" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Unlock the power of your voice and sync your data with the cloud." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.7" FontSize="12" Margin="0,0,0,30" TextWrapping="Wrap" TextAlignment="Center"/>
+                    <TextBlock Text="Sign in to CosmoWhisper" Style="{StaticResource SectionTitleStyle}" FontSize="20" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Unlock the power of your voice and sync your preferences seamlessly." Style="{StaticResource CardDescriptionStyle}" Margin="0,0,0,26" TextAlignment="Center"/>
 
                     <!-- Google Login -->
-                    <Button Click="GoogleLogin_Click" Height="55" Margin="0,0,0,12" Cursor="Hand">
+                    <Button Click="GoogleLogin_Click" Height="50" Margin="0,0,0,12" Cursor="Hand" FocusVisualStyle="{StaticResource CosmoFocusVisual}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="bdr" Background="White" CornerRadius="16" BorderBrush="#20000000" BorderThickness="1">
-                                    <Grid>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Viewbox Width="24" Height="24" Margin="0,0,12,0">
-                                                <Path Data="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.147-1.133 7.973-3.04 1.84-1.92 2.347-4.64 2.347-6.813 0-.68-.067-1.347-.187-1.973h-10.133z" Fill="#4285F4"/>
-                                            </Viewbox>
-                                            <TextBlock Text="Sign in with Google" Foreground="#1F1F1F" FontSize="16" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Grid>
+                                <Border x:Name="bdr" Background="#FFFFFF" CornerRadius="10" BorderBrush="#20000000" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Viewbox Width="20" Height="20" Margin="0,0,12,0">
+                                            <Path Data="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.147-1.133 7.973-3.04 1.84-1.92 2.347-4.64 2.347-6.813 0-.68-.067-1.347-.187-1.973h-10.133z" Fill="#4285F4"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Sign in with Google" Foreground="#18181B" FontSize="14" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="bdr" Property="Background" Value="#F8F9FA"/>
-                                        <Setter TargetName="bdr" Property="BorderBrush" Value="#40000000"/>
+                                        <Setter TargetName="bdr" Property="Background" Value="#F4F4F5"/>
                                     </Trigger>
                                     <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
+                                        <Setter TargetName="bdr" Property="Opacity" Value="0.85"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-
-                    <TextBlock Text="By signing in, you agree to our Terms of Service." Foreground="{DynamicResource ThemeForegroundBrush}" Opacity="0.4" FontSize="10" Margin="0,20,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
 
                     <!-- Magic Link -->
-                    <Button Click="MagicLink_Click" Height="48" Margin="0,20,0,10" Cursor="Hand">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="bdr" Background="#1AFFFFFF" CornerRadius="14" BorderBrush="#30FFFFFF" BorderThickness="1.2">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="✨" Margin="0,0,12,0" FontSize="18"/>
-                                        <TextBlock Text="Sign in with Magic Code" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="15" FontWeight="SemiBold"/>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="bdr" Property="Background" Value="#30FFFFFF"/>
-                                        <Setter TargetName="bdr" Property="BorderBrush" Value="#60FFFFFF"/>
-                                        <Setter TargetName="bdr" Property="Effect">
-                                            <Setter.Value>
-                                                <DropShadowEffect Color="White" BlurRadius="15" Opacity="0.2" ShadowDepth="0"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Click="MagicLink_Click" Height="46" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE8D7;" FontSize="15" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,10,0"/>
+                            <TextBlock Text="Sign in with Magic Code" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </Button>
 
-                    <Button Click="SignUp_Click" Height="40" Margin="0,20,0,0" Cursor="Hand">
+                    <TextBlock Text="By signing in, you agree to our Terms of Service." Style="{StaticResource MicroLabelStyle}" FontWeight="Normal" Margin="0,12,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+
+                    <Button Click="SignUp_Click" Height="38" Margin="0,16,0,0" Cursor="Hand" FocusVisualStyle="{StaticResource CosmoFocusVisual}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="bdr" Background="Transparent" CornerRadius="10">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="txt" Text="Create an Account" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="arrow" Text=" →" Foreground="{DynamicResource ThemeGlowBrush}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Opacity="0" Margin="5,0,0,0"/>
+                                <Border x:Name="bdr" Background="Transparent" CornerRadius="8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock x:Name="txt" Text="Create an Account" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="arrow" Style="{StaticResource FluentIconStyle}" Text="&#xE72A;" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="12" VerticalAlignment="Center" Opacity="0" Margin="6,1,0,0"/>
                                     </StackPanel>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="txt" Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}"/>
+                                        <Setter TargetName="txt" Property="Foreground" Value="{DynamicResource ThemeAccentHoverBrush}"/>
                                         <Setter TargetName="arrow" Property="Opacity" Value="1"/>
-                                        <Setter TargetName="txt" Property="Effect">
-                                            <Setter.Value>
-                                                <DropShadowEffect Color="#3b82f6" BlurRadius="10" Opacity="0.6" ShadowDepth="0"/>
-                                            </Setter.Value>
-                                        </Setter>
                                     </Trigger>
                                     <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="bdr" Property="Opacity" Value="0.7"/>
+                                        <Setter TargetName="bdr" Property="Opacity" Value="0.75"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>

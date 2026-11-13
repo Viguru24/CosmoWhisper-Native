@@ -20,14 +20,14 @@ namespace CosmoWhisper.Controls
 
 
         // FLOW & AUTOMATION
-        private void ToggleClipboard_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleClipboard_Click(sender, e);
-        private void TogglePasteMode_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.TogglePasteMode_Click(sender, e);
+        private void ToggleClipboard_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleClipboard_Click(sender, e);
+        private void TogglePasteMode_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.TogglePasteMode_Click(sender, e);
         private void ToggleAutoSubmit_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAutoSubmit_Click(sender, e);
-        private void ToggleAutoCopy_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAutoCopy_Click(sender, e);
-        private void ToggleSpeechPolish_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleSpeechPolish_Click(sender, e);
+        private void ToggleAutoCopy_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleAutoCopy_Click(sender, e);
+        private void ToggleSpeechPolish_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleSpeechPolish_Click(sender, e);
         private void ToggleLocalWhisper_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleLocalWhisper_Click(sender, e);
-        private void ForceCloudProxy_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleForceCloudProxy_Click(sender, e);
-        private void ForceDirectApi_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleForceDirectApi_Click(sender, e);
+        private void ForceCloudProxy_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleForceCloudProxy_Click(sender, e);
+        private void ForceDirectApi_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleForceDirectApi_Click(sender, e);
         private void LocalVoiceEngine_Changed(object sender, SelectionChangedEventArgs e) => GetParentWindow()?.ComboLocalVoiceEngine_SelectionChanged(sender, e);
 
         // DATA & RECOVERY
@@ -36,8 +36,8 @@ namespace CosmoWhisper.Controls
         private void Restore_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnRestore_Click(sender, e);
 
         // REGIONAL & WINDOWS
-        private void ToggleRegionalSpelling_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleRegionalSpelling_Click(sender, e);
-        private void ToggleLaunchOnStartup_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleLaunchOnStartup_Click(sender, e);
+        private void ToggleRegionalSpelling_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleRegionalSpelling_Click(sender, e);
+        private void ToggleLaunchOnStartup_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleLaunchOnStartup_Click(sender, e);
 
         // FORMATTING
         private void DateFormat_Changed(object sender, SelectionChangedEventArgs e) => GetParentWindow()?.ComboDateFormat_SelectionChanged(sender, e);
@@ -54,6 +54,6 @@ namespace CosmoWhisper.Controls
             if (this.IsLoaded) GetParentWindow()?.SldUIScale_ValueChanged(sender, e);
         }
 
-        private void ToggleAlwaysOnTop_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleAlwaysOnTop_Click(sender, e);
+        private void ToggleAlwaysOnTop_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleAlwaysOnTop_Click(sender, e);
     }
 }

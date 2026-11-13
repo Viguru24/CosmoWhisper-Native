@@ -5,427 +5,32 @@
         xmlns:controls="clr-namespace:CosmoWhisper.Controls"
         xmlns:views="clr-namespace:CosmoWhisper.Views"
         Title="CosmoWhisper Dashboard" Height="850" Width="1100"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        MinWidth="960" MinHeight="640"
+        WindowStyle="SingleBorderWindow" AllowsTransparency="False" Background="#0D0D10"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="CanResize"
         MouseDown="Window_MouseDown"
         Loaded="Window_Loaded"
+        StateChanged="Window_StateChanged"
         PreviewKeyDown="Window_PreviewKeyDown">
 
-    <Window.Resources>
-        <ResourceDictionary>
-
-            <Style x:Key="LibraryTileButton" TargetType="Button">
-                <Setter Property="Background" Value="#10FFFFFF"/>
-                <Setter Property="BorderBrush" Value="#20FFFFFF"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="20"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Border" Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                    BorderThickness="{TemplateBinding BorderThickness}" 
-                                    CornerRadius="20" Padding="{TemplateBinding Padding}">
-                                <Border.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                </Border.RenderTransform>
-                                <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="#1AFFFFFF"/>
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="#40FFFFFF"/>
-                                    <Setter TargetName="Border" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="2" Opacity="0.3"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.03" Duration="0:0:0.25">
-                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.03" Duration="0:0:0.25">
-                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
-                                                <DoubleAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="#25FFFFFF"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="PrefTabButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Padding" Value="14,0"/>
-                <Setter Property="Margin" Value="0,0,8,0"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="16" BorderThickness="1" BorderBrush="#15FFFFFF">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="TabBorder" Property="Background" Value="#10FFFFFF"/>
-                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="#30FFFFFF"/>
-                                </Trigger>
-                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Active">
-                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ThemeSecondaryBrush}"/>
-                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#151A2C"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </DataTrigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-        <Style x:Key="SidebarButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#A1A1AA"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="44"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="14,0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="10" Margin="6,2" BorderThickness="1" BorderBrush="Transparent">
-                            <Grid>
-                                <!-- Left Active Pill Indicator -->
-                                <Border x:Name="AccentLine" Width="3" Height="18" HorizontalAlignment="Left" CornerRadius="1.5" Background="{DynamicResource ThemeAccentBrush}" Opacity="0" Margin="4,0,0,0"/>
-                                <ContentPresenter x:Name="Content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#1C1C21"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#27272A"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#16161A"/>
-                            </Trigger>
-                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Active">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#202025"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#33333A"/>
-                                <Setter TargetName="AccentLine" Property="Opacity" Value="1"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                            </DataTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-
-
-        <!-- Nearly Invisible ScrollBar Style -->
-
-        <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="10"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="Transparent">
-                            <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsEnabled}">
-                                <Track.Thumb>
-                                    <Thumb Background="#40FFFFFF" Opacity="0.3">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Margin="1,0"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-
-
-        <!-- COMPREHENSIVE DARK COMBOBOX STYLE -->
-
-        <Style TargetType="ComboBox">
-
-            <Setter Property="Background" Value="#252A3D"/>
-
-            <Setter Property="Foreground" Value="White"/>
-
-            <Setter Property="BorderBrush" Value="#40FFFFFF"/>
-
-            <Setter Property="BorderThickness" Value="1"/>
-
-            <Setter Property="Padding" Value="10,5"/>
-
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-
-            <Setter Property="Template">
-
-                <Setter.Value>
-
-                    <ControlTemplate TargetType="ComboBox">
-
-                        <Grid>
-
-                            <ToggleButton Name="ToggleButton" 
-
-                                          Background="{TemplateBinding Background}"
-
-                                          BorderBrush="{TemplateBinding BorderBrush}"
-
-                                          BorderThickness="{TemplateBinding BorderThickness}"
-
-                                          Foreground="{TemplateBinding Foreground}"
-
-                                          Grid.Column="2" 
-
-                                          Focusable="false"
-
-                                          IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
-
-                                          ClickMode="Press">
-
-                                <ToggleButton.Template>
-
-                                    <ControlTemplate TargetType="ToggleButton">
-
-                                        <Border x:Name="Border" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-
-                                            <Path x:Name="Arrow" Fill="White" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" Data="M 0 0 L 4 4 L 8 0 Z"/>
-
-                                        </Border>
-
-                                        <ControlTemplate.Triggers>
-
-                                            <Trigger Property="IsMouseOver" Value="True">
-
-                                                <Setter TargetName="Border" Property="Background" Value="#353A4D"/>
-
-                                            </Trigger>
-
-                                        </ControlTemplate.Triggers>
-
-                                    </ControlTemplate>
-
-                                </ToggleButton.Template>
-
-                            </ToggleButton>
-
-                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False"  Content="{TemplateBinding SelectionBoxItem}"
-
-                                            ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-
-                                            ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-
-                                            Margin="10,3,30,3" VerticalAlignment="Center" HorizontalAlignment="Left" />
-
-                            <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-
-                                <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-
-                                    <Border x:Name="DropDownBorder" Background="#18181B" BorderThickness="1" BorderBrush="#27272A" CornerRadius="8"/>
-
-                                    <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
-
-                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
-
-                                    </ScrollViewer>
-
-                                </Grid>
-
-                            </Popup>
-
-                        </Grid>
-
-                    </ControlTemplate>
-
-                </Setter.Value>
-
-            </Setter>
-
-        </Style>
-
-
-
-        <Style TargetType="ComboBoxItem">
-
-            <Setter Property="Foreground" Value="White"/>
-
-            <Setter Property="Background" Value="Transparent"/>
-
-            <Setter Property="Padding" Value="10,8"/>
-
-            <Setter Property="Template">
-
-                <Setter.Value>
-
-                    <ControlTemplate TargetType="ComboBoxItem">
-
-                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="4" Margin="2">
-
-                            <ContentPresenter Margin="{TemplateBinding Padding}"/>
-
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-
-                            <Trigger Property="IsMouseOver" Value="True">
-
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#1AFFFFFF"/>
-
-                            </Trigger>
-
-                            <Trigger Property="IsSelected" Value="True">
-
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
-
-                            </Trigger>
-
-                        </ControlTemplate.Triggers>
-
-                    </ControlTemplate>
-
-                </Setter.Value>
-
-            </Setter>
-
-        </Style>
-
-
-
-        <Style x:Key="PremiumTileStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1AFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#20FFFFFF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="15"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#60FFFFFF"/>
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.04" Duration="0:0:0.25">
-                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.04" Duration="0:0:0.25">
-                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Trigger.ExitActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.2"/>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.2"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.ExitActions>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="Menu">
-
-            <Setter Property="Background" Value="#18181B"/>
-
-            <Setter Property="Foreground" Value="White"/>
-
-        </Style>
-
-
-
-        <Style TargetType="MenuItem">
-
-            <Setter Property="Background" Value="#18181B"/>
-
-            <Setter Property="Foreground" Value="White"/>
-
-        </Style>
-
-        </ResourceDictionary>
-    </Window.Resources>
-
-
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="52"
+                      ResizeBorderThickness="6"
+                      GlassFrameThickness="-1"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
 
     <Grid>
-
-        <!-- PREMIUM AMBIENT NEBULA BACKGROUND -->
-
-        <!-- Clean Studio Canvas (Nebula Removed) -->
-
-
-
-
-
-
-
-        <!-- Premium Glass Container -->
-
-        <Border x:Name="RootContentBorder" CornerRadius="22" Margin="16" Background="#121215" BorderBrush="#27272A" BorderThickness="1">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="36" Color="#000000" Opacity="0.6" ShadowDepth="6"/>
-            </Border.Effect>
+        <Border x:Name="RootContentBorder" Background="{DynamicResource ThemeWindowBackdropBrush}">
             <Grid x:Name="MainContainer">
-
                     <Grid.ColumnDefinitions>
-
-                        <ColumnDefinition Width="280"/>
-
+                        <ColumnDefinition Width="260"/>
                         <ColumnDefinition Width="*"/>
-
                     </Grid.ColumnDefinitions>
 
-
-
-                    <!-- Top Edge highlight for physical depth -->
-
-                    <Border Height="1" VerticalAlignment="Top" Margin="30,1,30,0" Background="#30FFFFFF" Grid.ColumnSpan="2"/>
-
-
-
-                    <!-- Sidebar (Menu) -->
-
-                    <Border Grid.Column="0" CornerRadius="22,0,0,22" Background="#0E0E11" BorderBrush="#27272A" BorderThickness="0,0,1,0">
+                    <!-- Sidebar Navigation Rail -->
+                    <Border Grid.Column="0" Background="{DynamicResource ThemeSidebarBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="0,0,1,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -433,751 +38,436 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Clean Minimalist Logo Section -->
-                            <StackPanel Grid.Row="0" Margin="0,26,0,22" HorizontalAlignment="Center">
-                                <Border Width="56" Height="56" CornerRadius="14" Background="Transparent" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                    <Image Source="sidebar_logo.png" Width="56" Height="56" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- Minimalist Brand Header -->
+                            <StackPanel Grid.Row="0" Margin="0,28,0,22" HorizontalAlignment="Center">
+                                <Border Width="52" Height="52" CornerRadius="14" Background="Transparent" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                    <Image Source="sidebar_logo.png" Width="52" Height="52" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="Cosmo" FontSize="19" FontWeight="Bold" Foreground="#F4F4F5"/>
-                                    <TextBlock Text="Whisper" FontSize="19" FontWeight="Normal" Foreground="#A1A1AA" Margin="4,0,0,0"/>
+                                    <TextBlock Text="Cosmo" FontFamily="{DynamicResource DisplayFont}" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource ThemeForegroundBrush}"/>
+                                    <TextBlock Text="Whisper" FontFamily="{DynamicResource DisplayFont}" FontSize="19" FontWeight="Normal" Foreground="{DynamicResource ThemeSecondaryBrush}" Margin="4,0,0,0"/>
                                 </StackPanel>
-                                <TextBlock Text="VOICE INTELLIGENCE" FontSize="8.5" FontWeight="SemiBold" Foreground="#71717A" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock Text="VOICE INTELLIGENCE" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeMutedBrush}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
 
-
-
-                            <!-- Scrollable Navigation (Main Body) -->
-
+                            <!-- Navigation Buttons -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-
-                                <StackPanel Margin="10,0,20,10">
-
-                                    <!-- Main Navigation -->
-
+                                <StackPanel Margin="10,0,14,10">
                                     <Button x:Name="BtnDashboard" Style="{DynamicResource SidebarButton}" Click="Dashboard_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <Path Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" 
-                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            <Grid Width="18" Height="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z"
+                                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
                                             </Grid>
-                                            <TextBlock Text="Dashboard" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                            <TextBlock Text="Dashboard" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
                                     <Button x:Name="BtnAccount" Style="{DynamicResource SidebarButton}" Click="Account_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <Path Data="M12,12 C14.21,12 16,10.21 16,8 C16,5.79 14.21,4 12,4 C9.79,4 8,5.79 8,8 C8,10.21 9.79,12 12,12 Z M12,14 C9.33,14 4,15.34 4,18 L4,20 L20,20 L20,18 C20,15.34 14.67,14 12,14 Z" 
-                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            <Grid Width="18" Height="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M12,12 C14.21,12 16,10.21 16,8 C16,5.79 14.21,4 12,4 C9.79,4 8,5.79 8,8 C8,10.21 9.79,12 12,12 Z M12,14 C9.33,14 4,15.34 4,18 L4,20 L20,20 L20,18 C20,15.34 14.67,14 12,14 Z"
+                                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
                                             </Grid>
-                                            <TextBlock Text="Account" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                            <TextBlock Text="Account" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
                                     <Button x:Name="BtnSmartCommands" Style="{DynamicResource SidebarButton}" Click="SmartCommands_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <Path Data="M13,2 L4.5,13.5 L11,13.5 L9.5,22 L19.5,10.5 L13,10.5 Z" 
-                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            <Grid Width="18" Height="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M13,2 L4.5,13.5 L11,13.5 L9.5,22 L19.5,10.5 L13,10.5 Z"
+                                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
                                             </Grid>
-                                            <TextBlock Text="Smart Commands" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                            <TextBlock Text="Smart Commands" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
                                     <Button x:Name="BtnLibrary" Style="{DynamicResource SidebarButton}" Click="Library_Click">
                                         <StackPanel Orientation="Horizontal">
-                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <Path Data="M4,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L4,20 C4,18 4,6 4,4 Z M6,6 L6,18 L18,18 L18,6 Z" 
-                                                      Fill="#A1A1AA" Stretch="Uniform"/>
+                                            <Grid Width="18" Height="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <Path Data="M4,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L4,20 C4,18 4,6 4,4 Z M6,6 L6,18 L18,18 L18,6 Z"
+                                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
                                             </Grid>
-                                            <TextBlock Text="Library" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                            <TextBlock Text="Library" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
 
                                     <Button x:Name="BtnPreferences" Style="{DynamicResource SidebarButton}" Click="Preferences_Click" MouseRightButtonDown="Preferences_MouseRightButtonDown">
                                         <StackPanel Orientation="Horizontal">
-                                            <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <TextBlock x:Name="SidebarGearIcon" Text="⚙" FontSize="16" Foreground="#A1A1AA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Grid Width="18" Height="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                <TextBlock x:Name="SidebarGearIcon" Style="{DynamicResource FluentIconStyle}" Text="&#xE713;" FontSize="16" Foreground="{DynamicResource ThemeSecondaryBrush}"/>
                                             </Grid>
-                                            <TextBlock Text="Preferences" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                                            <TextBlock Text="Preferences" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" FontWeight="Medium" FontSize="14"/>
                                         </StackPanel>
                                     </Button>
-
                                 </StackPanel>
-
                             </ScrollViewer>
 
-
-
-                            <!-- Footer Section (Pinned Bottom) -->
-
-                            <StackPanel Grid.Row="2" Margin="10,0,10,30">
-                                <Separator Background="#10FFFFFF" Margin="20,0,20,15" Height="1"/>
-                                
-                                <!-- Hidden for controller compatibility but removed from visual layout -->
+                            <!-- Sidebar Footer -->
+                            <StackPanel Grid.Row="2" Margin="10,0,14,20">
+                                <Separator Margin="12,0,12,12"/>
                                 <TextBlock x:Name="TxtUserEmail" Visibility="Collapsed"/>
 
-                                <Button Style="{DynamicResource SidebarButton}" Click="Exit_Click">
+                                <Button Style="{DynamicResource SidebarButton}" Click="Exit_Click" ToolTip="Completely close CosmoWhisper">
                                     <StackPanel Orientation="Horizontal">
-                                        <Grid Width="20" Height="20" Margin="0,0,12,0">
-                                            <Path Data="M13,3 L16,3 C17.1,3 18,3.9 18,5 L18,19 C18,20.1 17.1,21 16,21 L13,21 M10,17 L15,12 L10,7 M15,12 L3,12" 
-                                                  Stroke="#FF453A" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                        <Grid Width="18" Height="18" Margin="0,0,12,0">
+                                            <Path Data="M13,3 L16,3 C17.1,3 18,3.9 18,5 L18,19 C18,20.1 17.1,21 16,21 L13,21 M10,17 L15,12 L10,7 M15,12 L3,12"
+                                                  Stroke="{DynamicResource ThemeDangerBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                   Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                         </Grid>
-                                        <TextBlock Text="Exit App" Foreground="#FF453A" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        <TextBlock Text="Quit App" Foreground="{DynamicResource ThemeDangerBrush}" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Button>
 
-                                <TextBlock Text="v2.3.4.0-PRO" Foreground="White" Opacity="0.25" FontSize="8" HorizontalAlignment="Center" Margin="0,15,0,0"/>
-
+                                <TextBlock x:Name="TxtAppVersion" Text="v2.3.67" Foreground="{DynamicResource ThemeMutedBrush}" FontSize="10" HorizontalAlignment="Center" Margin="0,10,0,0"/>
                             </StackPanel>
-
                         </Grid>
-
                     </Border>
 
-
-
-                    <!-- Main Content (Window) -->
-
-                    <Border Grid.Column="1" CornerRadius="0,30,30,0">
-
-                        <!-- THEME 1: OCEAN BLUE (Default) -->
-
-                        <!-- Change x:Name to switch themes: ThemeOcean, ThemeSunset, ThemeForest, ThemePurple -->
-
-                        <Border.Background>
-
-                            <DynamicResource ResourceKey="ThemeBackgroundBrush"/>
-
-                        </Border.Background>
-
-                        
-
-                        <!-- THEME 2: SUNSET GLOW -->
-
-                        <!--
-
-                        <Border.Background>
-
-                            <LinearGradientBrush x:Name="ThemeSunset" StartPoint="0,0" EndPoint="1,1">
-
-                                <GradientStop Color="#1A1A2E" Offset="0"/>
-
-                                <GradientStop Color="#16213E" Offset="0.3"/>
-
-                                <GradientStop Color="#0F3460" Offset="0.6"/>
-
-                                <GradientStop Color="#E94560" Offset="1"/>
-
-                            </LinearGradientBrush>
-
-                        </Border.Background>
-
-                        -->
-
-                        
-
-                        <!-- THEME 3: FOREST NIGHT -->
-
-                        <!--
-
-                        <Border.Background>
-
-                            <LinearGradientBrush x:Name="ThemeForest" StartPoint="0,0" EndPoint="1,1">
-
-                                <GradientStop Color="#0A1F1F" Offset="0"/>
-
-                                <GradientStop Color="#134E4A" Offset="0.5"/>
-
-                                <GradientStop Color="#065F46" Offset="1"/>
-
-                            </LinearGradientBrush>
-
-                        </Border.Background>
-
-                        -->
-
-                        
-
-                        <!-- THEME 4: PURPLE DREAM -->
-
-                        <!--
-
-                        <Border.Background>
-
-                            <LinearGradientBrush x:Name="ThemePurple" StartPoint="0,0" EndPoint="1,1">
-
-                                <GradientStop Color="#1A0B2E" Offset="0"/>
-
-                                <GradientStop Color="#2D1B4E" Offset="0.5"/>
-
-                                <GradientStop Color="#4A1C6F" Offset="1"/>
-
-                            </LinearGradientBrush>
-
-                        </Border.Background>
-
-                        -->
-
-                        
+                    <!-- Main Content Pane -->
+                    <Border Grid.Column="1" Background="{DynamicResource ThemeBackgroundBrush}">
 
                         <Grid>
-
-                            
-
-                            <!-- Window Controls (Top Right) -->
-                            <!-- Window Controls (Top Right) -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,20,0" Canvas.ZIndex="1000">
-                                
-                                <!-- EXIT Button (Premium Red Pill) -->
-                                <Button Click="Close_Click" Width="90" Height="34" Background="#E81123" BorderThickness="0" Cursor="Hand" ToolTip="Close Application" FocusVisualStyle="{x:Null}">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="17" BorderThickness="1.2" BorderBrush="#30FFFFFF" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                                                <Border.RenderTransform>
-                                                    <ScaleTransform ScaleX="1" ScaleY="1" CenterX="45" CenterY="17"/>
-                                                </Border.RenderTransform>
-                                                <Grid>
-                                                    <!-- Subtle inner sheen -->
-                                                    <Border CornerRadius="17" Background="White" Opacity="0.05" Margin="1"/>
-                                                    
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Path x:Name="CloseIcon" Data="M0,0 L10,10 M0,10 L10,0" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                            <Path.Effect>
-                                                                <DropShadowEffect Color="White" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
-                                                            </Path.Effect>
-                                                        </Path>
-                                                        <TextBlock Text="EXIT" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center">
-                                                            <TextBlock.Effect>
-                                                                <DropShadowEffect Color="Black" BlurRadius="2" ShadowDepth="1" Opacity="0.4"/>
-                                                            </TextBlock.Effect>
-                                                        </TextBlock>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="bdr" Property="Background">
-                                                        <Setter.Value>
-                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                <GradientStop Color="#FF5555" Offset="0"/>
-                                                                <GradientStop Color="#E81123" Offset="1"/>
-                                                            </LinearGradientBrush>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter TargetName="bdr" Property="BorderBrush" Value="#80FFFFFF"/>
-                                                    <Setter TargetName="bdr" Property="Effect">
-                                                        <Setter.Value>
-                                                            <DropShadowEffect Color="#E81123" BlurRadius="18" ShadowDepth="0" Opacity="0.6"/>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Trigger.EnterActions>
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <DoubleAnimation Storyboard.TargetName="bdr" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.04" Duration="0:0:0.2">
-                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                                                </DoubleAnimation>
-                                                                <DoubleAnimation Storyboard.TargetName="bdr" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.04" Duration="0:0:0.2">
-                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                                                </DoubleAnimation>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </Trigger.EnterActions>
-                                                    <Trigger.ExitActions>
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <DoubleAnimation Storyboard.TargetName="bdr" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
-                                                                <DoubleAnimation Storyboard.TargetName="bdr" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </Trigger.ExitActions>
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter TargetName="bdr" Property="Opacity" Value="0.8"/>
-                                                    <Setter TargetName="bdr" Property="RenderTransform">
-                                                        <Setter.Value>
-                                                            <ScaleTransform ScaleX="0.96" ScaleY="0.96" CenterX="45" CenterY="17"/>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                                
+                            <!-- Native Win11 Caption Cluster (Top Right) -->
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,12,14,0"
+                                        Panel.ZIndex="1000">
+                                <Button x:Name="BtnMinimizeWindow"
+                                        Content="&#xE921;"
+                                        Style="{StaticResource WindowCaptionButtonStyle}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="Minimize_Click"
+                                        ToolTip="Minimize"
+                                        AutomationProperties.Name="Minimize"/>
+                                <Button x:Name="BtnMaximizeRestore"
+                                        Content="&#xE922;"
+                                        Style="{StaticResource WindowCaptionButtonStyle}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="MaximizeRestore_Click"
+                                        ToolTip="Maximize"
+                                        Margin="2,0"
+                                        AutomationProperties.Name="Maximize or Restore"/>
+                                <Button x:Name="BtnCloseToTray"
+                                        Content="&#xE8BB;"
+                                        Style="{StaticResource WindowCaptionButtonStyle}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="Close_Click"
+                                        ToolTip="Hide to System Tray"
+                                        AutomationProperties.Name="Hide to System Tray"/>
                             </StackPanel>
 
                             <!-- Content Grid -->
+                            <Grid Margin="32,26,32,26">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                            <Grid Margin="30">
+                                <!-- Header -->
+                                <StackPanel Grid.Row="0" Margin="0,0,120,24">
+                                    <!-- Dashboard Header -->
+                                    <StackPanel x:Name="DashboardHeader">
+                                        <TextBlock Text="Productivity" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Your dictation efficiency at a glance." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
-                        <Grid.RowDefinitions>
+                                    <!-- Smart Commands Header -->
+                                    <StackPanel x:Name="SmartCommandsHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Smart Commands" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Voice-activated shortcuts for your active text field." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
-                            <RowDefinition Height="Auto"/>
+                                    <!-- Microphone Header -->
+                                    <StackPanel x:Name="MicrophoneHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Audio Input" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Manage your recording hardware." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
-                            <RowDefinition Height="*"/>
+                                    <!-- Vocabulary Header -->
+                                    <StackPanel x:Name="VocabularyHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Personal Dictionary" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
-                        </Grid.RowDefinitions>
+                                    <!-- Narration Header -->
+                                    <StackPanel x:Name="NarrationHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Voice &amp; Narration" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Fine-tune how AI reads text back to you." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
+                                    <!-- Intelligence Header -->
+                                    <StackPanel x:Name="IntelligenceHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Intelligence" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Configure your AI Provider and Personality." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
+                                    <!-- Preferences Header -->
+                                    <StackPanel x:Name="PreferencesHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Preferences" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="System configuration and backups." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,14"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                            <Button x:Name="TabPrefGeneral" Content="General" Click="TabPrefGeneral_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                            <Button x:Name="TabPrefMicrophone" Content="Microphone" Click="TabPrefMicrophone_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                            <Button x:Name="TabPrefVocabulary" Content="Vocabulary" Click="TabPrefVocabulary_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                            <Button x:Name="TabPrefNarration" Content="Narration" Click="TabPrefNarration_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                            <Button x:Name="TabPrefIntelligence" Content="Intelligence" Click="TabPrefIntelligence_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                        </StackPanel>
+                                    </StackPanel>
 
-                        <!-- Header -->
+                                    <!-- Account Header -->
+                                    <StackPanel x:Name="AccountHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Account" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Manage your subscription and profile." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
 
-                        <StackPanel Grid.Row="0" Margin="0,0,0,30">
-
-                            <!-- Dashboard Header -->
- 
-                                 <StackPanel x:Name="DashboardHeader" Margin="0,0,0,30">
-                                     <TextBlock Text="Productivity" Foreground="White" FontSize="32" FontWeight="Bold"/>
-                                     <TextBlock Text="Your dictation efficiency at a glance." Foreground="White" Opacity="0.6" FontSize="14"/>
-                                 </StackPanel>
-
-                            
-
-                            <!-- Smart Commands Header (Hidden by default) -->
-
-                            <StackPanel x:Name="SmartCommandsHeader" Visibility="Collapsed">
-                                <TextBlock Text="Smart Commands" Foreground="White" FontSize="32" FontWeight="Bold"/>
-                                <TextBlock Text="Voice-activated shortcuts for your active text field." Foreground="White" Opacity="0.6" FontSize="14"/>
-                            </StackPanel>
-
-
-
-                            <!-- Microphone Header (Hidden by default) -->
-
-                            <StackPanel x:Name="MicrophoneHeader" Visibility="Collapsed">
-
-                                <TextBlock Text="Audio Input" Foreground="White" FontSize="28" FontWeight="Bold"/>
-
-                                <TextBlock Text="Manage your recording hardware." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
-
-
-
-                            <!-- Vocabulary Header -->
-
-                            <StackPanel x:Name="VocabularyHeader" Visibility="Collapsed">
-                                <TextBlock Text="Personal Dictionary" Foreground="White" FontSize="28" FontWeight="Bold"/>
-                                <TextBlock Text="Teach CosmoWhisper your names and specific terminology." Foreground="White" Opacity="0.6" FontSize="14"/>
-                            </StackPanel>
-
-
-
-                            <!-- Narration Header (Hidden by default) -->
-
-                            <StackPanel x:Name="NarrationHeader" Visibility="Collapsed">
-
-                                <TextBlock Text="Voice &amp; Narration" Foreground="White" FontSize="28" FontWeight="Bold"/>
-
-                                <TextBlock Text="Fine-tune how AI reads text back to you." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
-
-                            <!-- Intelligence Header -->
-
-                            <StackPanel x:Name="IntelligenceHeader" Visibility="Collapsed">
-
-                                <TextBlock Text="Intelligence" Foreground="White" FontSize="28" FontWeight="Bold"/>
-
-                                <TextBlock Text="Configure your AI Provider and Personality." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
-
-
-
-                            <StackPanel x:Name="PreferencesHeader" Visibility="Collapsed">
-                                <TextBlock Text="Preferences" Foreground="White" FontSize="28" FontWeight="Bold"/>
-                                <TextBlock Text="System configuration and backups." Foreground="White" Opacity="0.6" FontSize="14" Margin="0,0,0,15"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                    <Button x:Name="TabPrefGeneral" Content="General" Click="TabPrefGeneral_Click" Style="{StaticResource PrefTabButtonStyle}"/>
-                                    <Button x:Name="TabPrefMicrophone" Content="Microphone" Click="TabPrefMicrophone_Click" Style="{StaticResource PrefTabButtonStyle}"/>
-                                    <Button x:Name="TabPrefVocabulary" Content="Vocabulary" Click="TabPrefVocabulary_Click" Style="{StaticResource PrefTabButtonStyle}"/>
-                                    <Button x:Name="TabPrefNarration" Content="Narration" Click="TabPrefNarration_Click" Style="{StaticResource PrefTabButtonStyle}"/>
-                                    <Button x:Name="TabPrefIntelligence" Content="Intelligence" Click="TabPrefIntelligence_Click" Style="{StaticResource PrefTabButtonStyle}"/>
+                                    <!-- Login Header -->
+                                    <StackPanel x:Name="LoginHeader" Visibility="Collapsed">
+                                        <TextBlock Text="Welcome Back" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="28" FontWeight="Bold"/>
+                                        <TextBlock Text="Sign in to access your pro features." Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
 
+                                <!-- Content Area -->
+                                <Grid Grid.Row="1">
+                                    <Grid.Resources>
+                                        <Style TargetType="ScrollViewer">
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1" CenterX="400" CenterY="300"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
 
+                                    <controls:DashboardView x:Name="DashboardViewControl" />
+                                    <controls:SmartCommandsView x:Name="SmartCommandsViewControl" Visibility="Collapsed" />
+                                    <controls:AccountView x:Name="AccountViewControl" Visibility="Collapsed" />
+                                    <controls:LoginView x:Name="LoginViewControl" Visibility="Collapsed" />
 
+                                    <views:MicrophoneView x:Name="MicrophoneViewControl" Visibility="Collapsed" />
+                                    <controls:VocabularyView x:Name="VocabularyViewControl" Visibility="Collapsed" />
+                                    <controls:NarrationView x:Name="NarrationViewControl" Visibility="Collapsed" />
+                                    <controls:IntelligenceView x:Name="IntelligenceViewControl" Visibility="Collapsed" />
+                                    <controls:PreferencesView x:Name="PreferencesViewControl" Visibility="Collapsed" />
 
-
-
-
-                            <!-- Account Header -->
-
-                            <StackPanel x:Name="AccountHeader" Visibility="Collapsed">
-
-                                <TextBlock Text="Account" Foreground="White" FontSize="28" FontWeight="Bold"/>
-
-                                <TextBlock Text="Manage your subscription and profile." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
-
-
-
-                            <!-- Login Header -->
-
-                            <StackPanel x:Name="LoginHeader" Visibility="Collapsed">
-
-                                <TextBlock Text="Welcome Back" Foreground="White" FontSize="28" FontWeight="Bold"/>
-
-                                <TextBlock Text="Sign in to access your pro features." Foreground="White" Opacity="0.6" FontSize="14"/>
-
-                            </StackPanel>
-
-                        </StackPanel>
-
-
-
-                        <!-- Content Area -->
-
-                        <Grid Grid.Row="1">
-                            <Grid.Resources>
-                                <Style TargetType="ScrollViewer">
-                                    <Setter Property="RenderTransform">
-                                        <Setter.Value>
-                                            <ScaleTransform ScaleX="1" ScaleY="1" CenterX="400" CenterY="300"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Grid.Resources>
-
-                            <!-- VIEW 1: PRODUCTIVITY DASHBOARD -->
-
-                            <controls:DashboardView x:Name="DashboardViewControl" />
-                            <controls:SmartCommandsView x:Name="SmartCommandsViewControl" Visibility="Collapsed" />
-                            <controls:AccountView x:Name="AccountViewControl" Visibility="Collapsed" />
-                            <controls:LoginView x:Name="LoginViewControl" Visibility="Collapsed" />
-                            
-                            <views:MicrophoneView x:Name="MicrophoneViewControl" Visibility="Collapsed" />
-                            <controls:VocabularyView x:Name="VocabularyViewControl" Visibility="Collapsed" />
-                            <controls:NarrationView x:Name="NarrationViewControl" Visibility="Collapsed" />
-                            <controls:IntelligenceView x:Name="IntelligenceViewControl" Visibility="Collapsed" />
-                            <controls:PreferencesView x:Name="PreferencesViewControl" Visibility="Collapsed" />
-
-                            <!-- VIEW 12: LIBRARY -->
-                            <controls:CloudLibraryView x:Name="CloudLibraryViewControl" Visibility="Collapsed" />
-
+                                    <controls:CloudLibraryView x:Name="CloudLibraryViewControl" Visibility="Collapsed" />
+                                </Grid>
+                            </Grid>
                         </Grid>
-
-
-
-                        <!-- Close Button -->
-
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Foreground="White" Width="30" Height="30" Content="&#x2715;" Click="Close_Click">
-
-                            <Button.Template>
-
-                                <ControlTemplate TargetType="Button">
-
-                                    <Border Background="Transparent">
-
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                                    </Border>
-
-                                </ControlTemplate>
-
-                            </Button.Template>
-
-                        </Button>
-
-                    </Grid>
-
+                    </Border>
                 </Grid>
-
-            </Border>
-
-        </Grid>
-
-    </Border>
-
-
-
-
-
-        <!-- Premium Toast Notification Overlay -->
-
-        <Border x:Name="ToastContainer" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,30,0,0" 
-
-                Background="#18181B" CornerRadius="12" BorderBrush="#27272A" BorderThickness="1" Padding="20,12" 
-
-                Visibility="Collapsed" Opacity="0">
-
-            <Border.Effect>
-
-                <DropShadowEffect BlurRadius="20" Opacity="0.5" ShadowDepth="0"/>
-
-            </Border.Effect>
-
-            <StackPanel Orientation="Horizontal">
-
-                <TextBlock x:Name="TxtToastIcon" Text="?" Margin="0,0,12,0" VerticalAlignment="Center" FontSize="16"/>
-
-                <TextBlock x:Name="TxtToastMessage" Text="Preference Saved!" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
-
-            </StackPanel>
-
         </Border>
 
 
 
+
+
+        <!-- Toast Notification Overlay -->
+        <Border x:Name="ToastContainer"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Center"
+                Margin="0,30,0,0"
+                Background="{DynamicResource ThemeSurfaceBrush}"
+                CornerRadius="12"
+                BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}"
+                BorderThickness="1"
+                Padding="18,10"
+                Visibility="Collapsed"
+                Opacity="0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="TxtToastIcon"
+                           Text="&#xE73E;"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Emoji, Segoe UI"
+                           Foreground="{DynamicResource ThemeAccentBrush}"
+                           Margin="0,0,10,0"
+                           VerticalAlignment="Center"
+                           FontSize="15"/>
+                <TextBlock x:Name="TxtToastMessage"
+                           Text="Preference Saved"
+                           Foreground="{DynamicResource ThemeForegroundBrush}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
         <!-- Custom Confirm Delete Overlay -->
-
-        <Grid x:Name="OverlayConfirmDelete" Visibility="Collapsed" Background="#AA000000">
-
-            <Border Background="{DynamicResource ThemeSurfaceBrush}" BorderBrush="{DynamicResource ThemeGlowBrush}" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="30" MinWidth="350">
-
-                <Border.Effect>
-
-                    <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.6"/>
-
-                </Border.Effect>
-
+        <Grid x:Name="OverlayConfirmDelete" Visibility="Collapsed" Background="#CC050507">
+            <Border Background="{DynamicResource ThemeSurfaceBrush}"
+                    BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="28"
+                    MinWidth="360">
                 <StackPanel>
-
-                    <TextBlock Text="Confirm Deletion" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
-
-                    <TextBlock x:Name="TxtConfirmDeleteMessage" Text="Are you sure you want to delete this item?" Foreground="#CCCCCC" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,25"/>
-
+                    <TextBlock Text="Confirm Deletion"
+                               FontFamily="{DynamicResource DisplayFont}"
+                               Foreground="{DynamicResource ThemeForegroundBrush}"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Margin="0,0,0,12"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtConfirmDeleteMessage"
+                               Text="Are you sure you want to delete this item?"
+                               Foreground="{DynamicResource ThemeSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="0,0,0,24"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-
-                        <Button Content="Cancel" Click="CancelDelete_Click" Width="100" Height="35" Margin="0,0,10,0" Background="#20FFFFFF" Foreground="White" BorderThickness="0">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border">
-
-                                    <Setter Property="CornerRadius" Value="8"/>
-
-                                </Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
-                        <Button Content="Delete" Click="ConfirmDelete_Click" Width="100" Height="35" Background="#AAFF453A" Foreground="White" BorderThickness="0" FontWeight="SemiBold">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border">
-
-                                    <Setter Property="CornerRadius" Value="8"/>
-
-                                </Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
+                        <Button Content="Cancel"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="CancelDelete_Click"
+                                MinWidth="104"
+                                Height="38"
+                                Margin="0,0,10,0"/>
+                        <Button Content="Delete"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Click="ConfirmDelete_Click"
+                                MinWidth="104"
+                                Height="38"/>
                     </StackPanel>
-
                 </StackPanel>
-
             </Border>
-
         </Grid>
 
-
-
         <!-- Secure Mode Overlay -->
-
-        <Grid x:Name="OverlaySecureMode" Visibility="Collapsed" Background="#CC050510">
-
-            <Border Background="{DynamicResource ThemeSurfaceBrush}" BorderBrush="#FF453A" BorderThickness="1" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="40" MaxWidth="500">
-
-                <Border.Effect>
-
-                    <DropShadowEffect BlurRadius="40" ShadowDepth="0" Color="#50FF453A"/>
-
-                </Border.Effect>
-
+        <Grid x:Name="OverlaySecureMode" Visibility="Collapsed" Background="#CC050507">
+            <Border Background="{DynamicResource ThemeSurfaceBrush}"
+                    BorderBrush="{DynamicResource ThemeDangerBrush}"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="36"
+                    MaxWidth="480">
                 <StackPanel>
-
-                    <TextBlock Text="&#x1F6E1;" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20" Opacity="0.9"/>
-
-                    <TextBlock Text="Secure Erase" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
-                    <TextBlock Text="This will permanently delete ALL vocabulary entries and transcription hints from your database." Foreground="#FF6666" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,5" FontSize="14"/>
-
-                    <TextBlock Text="This action cannot be undone." Foreground="#AAAAAA" TextAlignment="Center" Margin="0,0,0,30" FontSize="13" FontStyle="Italic"/>
-
-                    
-
+                    <Border Width="56" Height="56" CornerRadius="28" Background="{DynamicResource ThemeDangerSubtleBrush}" BorderBrush="{DynamicResource ThemeDangerBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,18">
+                        <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xEA18;" FontSize="26" Foreground="{DynamicResource ThemeDangerBrush}"/>
+                    </Border>
+                    <TextBlock Text="Secure Erase"
+                               FontFamily="{DynamicResource DisplayFont}"
+                               Foreground="{DynamicResource ThemeForegroundBrush}"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+                    <TextBlock Text="This will permanently delete ALL vocabulary entries and transcription hints from your database."
+                               Foreground="{DynamicResource ThemeDangerBrush}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="0,0,0,6"
+                               FontSize="14"/>
+                    <TextBlock Text="This action cannot be undone."
+                               Foreground="{DynamicResource ThemeSecondaryBrush}"
+                               TextAlignment="Center"
+                               Margin="0,0,0,28"
+                               FontSize="13"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-
-                        <Button Content="Cancel" Click="CancelSecureMode_Click" Width="120" Height="40" Margin="0,0,15,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" FontSize="14" FontWeight="SemiBold" Cursor="Hand">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border">
-
-                                    <Setter Property="CornerRadius" Value="10"/>
-
-                                </Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
-                        <Button Content="Securely Erase All" Click="ConfirmSecureMode_Click" Width="160" Height="40" Background="#E6FF453A" Foreground="White" BorderThickness="0" FontSize="14" FontWeight="Bold" Cursor="Hand">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border">
-
-                                    <Setter Property="CornerRadius" Value="10"/>
-
-                                </Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
+                        <Button Content="Cancel"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="CancelSecureMode_Click"
+                                MinWidth="120"
+                                Height="40"
+                                Margin="0,0,12,0"/>
+                        <Button Content="Securely Erase All"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Click="ConfirmSecureMode_Click"
+                                MinWidth="160"
+                                Height="40"/>
                     </StackPanel>
-
                 </StackPanel>
-
             </Border>
-
         </Grid>
 
         <!-- VAULT PASSWORD OVERLAY -->
-
-        <Grid x:Name="VaultPasswordOverlay" Visibility="Collapsed" Panel.ZIndex="100">
-
-            <Border Background="#CC000000" CornerRadius="30" Margin="20">
-
-                <Border.Effect>
-
-                    <BlurEffect Radius="20"/>
-
-                </Border.Effect>
-
-            </Border>
-
-            <Border x:Name="VaultContent" Width="400" MaxHeight="550" Height="Auto" Background="#18181B" CornerRadius="20" BorderBrush="#27272A" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid x:Name="VaultPasswordOverlay" Visibility="Collapsed" Panel.ZIndex="100" Background="#CC050507">
+            <Border x:Name="VaultContent"
+                    Width="410"
+                    MaxHeight="550"
+                    Height="Auto"
+                    Background="{DynamicResource ThemeSurfaceBrush}"
+                    CornerRadius="18"
+                    BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
                     <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                 </Border.RenderTransform>
-                <Border.RenderTransformOrigin>0.5,0.5</Border.RenderTransformOrigin>
-
-                <Border.Effect>
-
-                    <DropShadowEffect BlurRadius="30" Color="Black" Opacity="0.5"/>
-
-                </Border.Effect>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-
                     <StackPanel Margin="30">
+                        <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,14">
+                            <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE72E;" FontSize="22" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                        </Border>
+                        <TextBlock x:Name="TxtVaultTitle"
+                                   Text="Secure Your Vault"
+                                   FontFamily="{DynamicResource DisplayFont}"
+                                   Foreground="{DynamicResource ThemeForegroundBrush}"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock x:Name="TxtVaultSubtitle"
+                                   Text="Enter a password to encrypt your backup. You will need this same password to restore."
+                                   Foreground="{DynamicResource ThemeSecondaryBrush}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,20"/>
 
-                    <TextBlock x:Name="TxtVaultTitle" Text="&#x1F512; Secure Your Vault" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="LblVaultName" Text="BACKUP NAME (OPTIONAL)" Style="{StaticResource MicroLabelStyle}" Margin="2,0,0,6"/>
+                        <TextBox x:Name="TxtVaultName" Height="40" VerticalContentAlignment="Center" Padding="12,0" Margin="0,0,0,16"/>
 
-                    <TextBlock x:Name="TxtVaultSubtitle" Text="Enter a password to encrypt your backup. You will need this same password to restore." Foreground="White" Opacity="0.6" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <TextBlock x:Name="LblVaultPassword" Text="VAULT PASSWORD" Style="{StaticResource MicroLabelStyle}" Margin="2,0,0,6"/>
+                        <PasswordBox x:Name="TxtVaultPassword" Height="40" VerticalContentAlignment="Center" Padding="12,0"/>
 
-                    <TextBlock x:Name="LblVaultName" Text="Backup Name (Optional)" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
-
-                    <TextBox x:Name="TxtVaultName" Height="40" Background="#10FFFFFF" Foreground="White" CaretBrush="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0" Margin="0,0,0,15">
-                         <TextBox.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="8"/>
-                            </Style>
-                        </TextBox.Resources>
-                    </TextBox>
-
-                    <TextBlock x:Name="LblVaultPassword" Text="Vault Password" Foreground="White" Opacity="0.4" FontSize="10" FontWeight="Bold" Margin="2,0,0,5"/>
-
-                    <PasswordBox x:Name="TxtVaultPassword" Height="40" Background="#10FFFFFF" Foreground="White" CaretBrush="White" BorderBrush="#20FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" Padding="10,0">
-                         <PasswordBox.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="8"/>
-                            </Style>
-                        </PasswordBox.Resources>
-                    </PasswordBox>
-
-                    
-
-                    <Grid Margin="0,20,0,0">
-
-                        <Grid.ColumnDefinitions>
-
-                            <ColumnDefinition Width="*"/>
-
-                            <ColumnDefinition Width="*"/>
-
-                        </Grid.ColumnDefinitions>
-
-                        <Button Content="Cancel" Click="CancelVault_Click" Grid.Column="0" Margin="0,0,10,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Height="40">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
-                        <Button x:Name="BtnConfirmVault" Content="Confirm" Click="ConfirmVault_Click" Grid.Column="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="40">
-
-                            <Button.Resources>
-
-                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-
-                            </Button.Resources>
-
-                        </Button>
-
-                    </Grid>
-
-                </StackPanel>
-
+                        <Grid Margin="0,24,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Content="Cancel" Style="{StaticResource SecondaryButtonStyle}" Click="CancelVault_Click" Grid.Column="0" Height="40"/>
+                            <Button x:Name="BtnConfirmVault" Content="Confirm" Style="{StaticResource PrimaryButtonStyle}" Click="ConfirmVault_Click" Grid.Column="2" Height="40"/>
+                        </Grid>
+                    </StackPanel>
                 </ScrollViewer>
-
             </Border>
-
         </Grid>
 
-
-
         <!-- ONBOARDING OVERLAY -->
-        <Grid x:Name="OverlayOnboarding" Visibility="Collapsed" Opacity="0" Panel.ZIndex="250">
-            <Border Background="#CC000000">
-                <Border.Effect>
-                    <BlurEffect Radius="20"/>
-                </Border.Effect>
-            </Border>
-
-            <Border x:Name="OnboardingBorder" Width="600" MinHeight="540" Height="Auto" MaxHeight="650" Background="#18181B" CornerRadius="30" BorderBrush="#27272A" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="40" Color="Black" Opacity="0.6" ShadowDepth="0"/>
-                </Border.Effect>
-                
+        <Grid x:Name="OverlayOnboarding" Visibility="Collapsed" Opacity="0" Panel.ZIndex="250" Background="#D9050507">
+            <Border x:Name="OnboardingBorder"
+                    Width="580"
+                    MinHeight="480"
+                    Height="Auto"
+                    MaxHeight="640"
+                    Background="{DynamicResource ThemeSurfaceBrush}"
+                    CornerRadius="20"
+                    BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
                 <Grid>
                     <!-- STEP 1: WELCOME -->
                     <Grid x:Name="StepWelcome" Visibility="Visible">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="✨" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Welcome to CosmoWhisper" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="The most powerful voice interface for Windows. Ready to transform how you work?" Foreground="White" Opacity="0.7" FontSize="16" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,40"/>
-                            
-                            <Button Content="Get Started" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE734;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                            </Border>
+                            <TextBlock Text="Welcome to CosmoWhisper" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="The most powerful voice interface for Windows. Ready to transform how you work?" Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,36"/>
+                            <Button Content="Get Started" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingNext_Click" Height="48" FontSize="16"/>
+                            <Button Content="Skip Onboarding" Click="OnboardingSkip_Click" Background="Transparent" Foreground="{DynamicResource ThemeMutedBrush}" Margin="0,14,0,0" Cursor="Hand" BorderThickness="0">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                            
-                            <Button Content="Skip Onboarding" Click="OnboardingSkip_Click" Background="Transparent" Foreground="White" Opacity="0.4" Margin="0,15,0,0" Cursor="Hand" BorderThickness="0">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="Transparent">
+                                        <Border Background="Transparent" Padding="8">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                     </ControlTemplate>
@@ -1188,109 +478,74 @@
 
                     <!-- STEP 2: MICROPHONE -->
                     <Grid x:Name="StepMic" Visibility="Collapsed">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🎙️" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Voice Check" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Select your primary microphone and adjust sensitivity." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,30"/>
-                            
-                            <Border Background="#10FFFFFF" CornerRadius="12" Padding="15" Margin="0,0,0,15">
-                                <ComboBox x:Name="ComboOnboardingMics" Foreground="White" Background="Transparent" BorderThickness="0" FontSize="14"/>
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE720;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
                             </Border>
-                            
+                            <TextBlock Text="Voice Check" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Select your primary microphone and adjust sensitivity." Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextAlignment="Center" Margin="0,0,0,28"/>
+
+                            <ComboBox x:Name="ComboOnboardingMics" Height="44" FontSize="14" Margin="0,0,0,20"/>
+
                             <Grid Margin="0,0,0,30">
-                                <TextBlock Text="Sensitivity" Foreground="White" Opacity="0.5" FontSize="12"/>
-                                <Slider x:Name="SldOnboardingSensitivity" Margin="0,20,0,0" Maximum="100" Value="2"/>
+                                <TextBlock Text="Sensitivity" Style="{StaticResource MicroLabelStyle}"/>
+                                <Slider x:Name="SldOnboardingSensitivity" Margin="0,24,0,0" Maximum="100" Value="2"/>
                             </Grid>
 
-                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="50" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="16" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                            <Button Content="Next Step" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingNext_Click" Height="46" FontSize="15"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- STEP 3: ACTIVATION -->
                     <Grid x:Name="StepActivation" Visibility="Collapsed">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="⚡" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Quick Activation" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Press F9 to activate the voice interface. You can change this shortcut in settings later." Foreground="White" Opacity="0.7" FontSize="18" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
-                            
-                            <Border Background="#10FFFFFF" CornerRadius="12" Padding="20" HorizontalAlignment="Center">
-                                <TextBlock Text="F9" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="36" FontWeight="ExtraBold"/>
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE945;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                            </Border>
+                            <TextBlock Text="Quick Activation" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Press F9 to activate the voice interface. You can change this shortcut in settings later." Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextAlignment="Center" Margin="0,0,0,32" TextWrapping="Wrap"/>
+
+                            <Border Style="{StaticResource SubtlePanelStyle}" Padding="24,14" HorizontalAlignment="Center">
+                                <TextBlock Text="F9" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="34" FontWeight="ExtraBold"/>
                             </Border>
 
-                            <Button Content="Next: Smart Features" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand" Margin="0,40,0,0">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                            <Button Content="Next: Smart Features" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingNext_Click" Height="48" FontSize="16" Margin="0,34,0,0"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- STEP 4: VOCABULARY -->
                     <Grid x:Name="StepVocabulary" Visibility="Collapsed">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🌌" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Train Your AI" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Add names, technical jargon, and acronyms to your personal Vocabulary. CosmoWhisper learns your language for 100% accuracy." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
-                            
-                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE8F1;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                            </Border>
+                            <TextBlock Text="Train Your AI" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Add names, technical jargon, and acronyms to your personal Vocabulary. CosmoWhisper learns your language for 100% accuracy." Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextAlignment="Center" Margin="0,0,0,34" TextWrapping="Wrap"/>
+                            <Button Content="Next Step" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingNext_Click" Height="48" FontSize="16"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- STEP 5: INTELLIGENCE -->
                     <Grid x:Name="StepIntelligence" Visibility="Collapsed">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🤖" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Intelligent Actions" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="It's more than dictation. Use AI to rewrite emails, fix grammar, or summarize documents instantly with voice commands." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
-                            
-                            <Button Content="Next Step" Click="OnboardingNext_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE756;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                            </Border>
+                            <TextBlock Text="Intelligent Actions" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="It's more than dictation. Use AI to rewrite emails, fix grammar, or summarize documents instantly with voice commands." Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextAlignment="Center" Margin="0,0,0,34" TextWrapping="Wrap"/>
+                            <Button Content="Next Step" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingNext_Click" Height="48" FontSize="16"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- STEP 6: LIBRARY -->
                     <Grid x:Name="StepLibrary" Visibility="Collapsed">
-                        <StackPanel VerticalAlignment="Center" Margin="50">
-                            <TextBlock Text="🛸" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                            <TextBlock Text="Global Command Center" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Sync your commands to the cloud and browse the community library for powerful pre-built workflows." Foreground="White" Opacity="0.7" FontSize="16" TextAlignment="Center" Margin="0,0,0,40" TextWrapping="Wrap"/>
-                            
-                            <Button Content="Finish Setup" Click="OnboardingComplete_Click" Height="55" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" FontSize="18" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                        <StackPanel VerticalAlignment="Center" Margin="48">
+                            <Border Width="68" Height="68" CornerRadius="34" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,22">
+                                <TextBlock Style="{StaticResource FluentIconStyle}" Text="&#xE774;" FontSize="32" Foreground="{DynamicResource ThemeAccentBrush}"/>
+                            </Border>
+                            <TextBlock Text="Global Command Center" FontFamily="{DynamicResource DisplayFont}" Foreground="{DynamicResource ThemeForegroundBrush}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Sync your commands to the cloud and browse the community library for powerful pre-built workflows." Foreground="{DynamicResource ThemeSecondaryBrush}" FontSize="15" TextAlignment="Center" Margin="0,0,0,34" TextWrapping="Wrap"/>
+                            <Button Content="Finish Setup" Style="{StaticResource PrimaryButtonStyle}" Click="OnboardingComplete_Click" Height="48" FontSize="16"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -1298,201 +553,125 @@
         </Grid>
 
         <Grid x:Name="UniversalDialog" Visibility="Collapsed" Opacity="0" Panel.ZIndex="200">
+            <!-- Modal Backdrop Scrim -->
+            <Border Background="#CC050507" MouseDown="UniversalDialog_MouseDown"/>
 
-            <!-- Background Backdrop with Blur -->
-
-            <Border Background="#99000000" MouseDown="UniversalDialog_MouseDown">
-
-                <Border.Effect>
-
-                    <BlurEffect Radius="15"/>
-
-                </Border.Effect>
-
-            </Border>
-
-            
-
-            <!-- Dialog Box -->
-
-            <Border x:Name="DialogContent" Width="440" MinHeight="220" MaxHeight="650" Background="#1C1E32" CornerRadius="28" BorderBrush="#35FFFFFF" BorderThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="0,0,0,10">
-
-                <Border.Effect>
-
-                    <DropShadowEffect BlurRadius="40" Color="#000000" Opacity="0.6" ShadowDepth="0"/>
-
-                </Border.Effect>
-
+            <!-- Dialog Card -->
+            <Border x:Name="DialogContent"
+                    Width="430"
+                    MinHeight="210"
+                    MaxHeight="640"
+                    Background="{DynamicResource ThemeSurfaceBrush}"
+                    CornerRadius="18"
+                    BorderBrush="{DynamicResource ThemeCardBorderHoverBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
-
                     <ScaleTransform x:Name="DialogScale" ScaleX="0.9" ScaleY="0.9"/>
-
                 </Border.RenderTransform>
 
-                <Border.RenderTransformOrigin>0.5,0.5</Border.RenderTransformOrigin>
+                <StackPanel Margin="32,34,32,30">
+                    <Border Width="54" Height="54" CornerRadius="27" Background="{DynamicResource ThemeAccentSubtleBrush}" HorizontalAlignment="Center" Margin="0,0,0,18">
+                        <TextBlock x:Name="TxtDialogIcon"
+                                   Text="&#xE946;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Emoji, Segoe UI"
+                                   Foreground="{DynamicResource ThemeAccentBrush}"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
 
+                    <TextBlock x:Name="TxtDialogTitle"
+                               Text="Success"
+                               FontFamily="{DynamicResource DisplayFont}"
+                               Foreground="{DynamicResource ThemeForegroundBrush}"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"
+                               TextAlignment="Center"/>
 
+                    <TextBlock x:Name="TxtDialogMessage"
+                               Text="Your environment is now secured."
+                               Foreground="{DynamicResource ThemeSecondaryBrush}"
+                               FontSize="14"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Margin="0,0,0,20"
+                               LineHeight="21"/>
 
-                <Grid>
+                    <!-- Input Field (Optional) -->
+                    <TextBox x:Name="TxtDialogInput"
+                             Visibility="Collapsed"
+                             Height="44"
+                             Padding="14,0"
+                             VerticalContentAlignment="Center"
+                             Margin="0,0,0,22"/>
 
-                    <!-- Background Glow -->
+                    <!-- Selection List (Optional) -->
+                    <ListBox x:Name="ListDialogOptions"
+                             Visibility="Collapsed"
+                             Background="{DynamicResource ThemeInputBgBrush}"
+                             BorderBrush="{DynamicResource ThemeInputBorderBrush}"
+                             BorderThickness="1"
+                             MaxHeight="200"
+                             Margin="0,0,0,22"
+                             Foreground="{DynamicResource ThemeForegroundBrush}"
+                             SelectionMode="Single">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="12,8"/>
+                                <Setter Property="Margin" Value="4,2"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeHoverSurfaceBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource ThemeAccentForegroundBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
 
-                    <Ellipse Width="300" Height="200" Fill="{DynamicResource ThemeAccentBrush}" Opacity="0.1" VerticalAlignment="Top" Margin="0,-100,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                        <Ellipse.Effect>
+                        <Button x:Name="BtnDialogCancel"
+                                Content="Cancel"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="DialogCancel_Click"
+                                Grid.Column="0"
+                                Margin="0,0,10,0"
+                                Height="44"
+                                Visibility="Collapsed"/>
 
-                            <BlurEffect Radius="100"/>
-
-                        </Ellipse.Effect>
-
-                    </Ellipse>
-
-
-
-                    <StackPanel Margin="35,40,35,35">
-
-                        <TextBlock x:Name="TxtDialogIcon" Text="?" Foreground="White" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-
-                        <TextBlock x:Name="TxtDialogTitle" Text="Success" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,12" TextAlignment="Center">
-
-                            <TextBlock.Effect>
-
-                                <DropShadowEffect BlurRadius="10" Color="Black" Opacity="0.3"/>
-
-                            </TextBlock.Effect>
-
-                        </TextBlock>
-
-                        <TextBlock x:Name="TxtDialogMessage" Text="Your environment is now secured." Foreground="White" Opacity="0.75" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,15" LineHeight="22"/>
-
-                        <!-- Input Field (Optional) -->
-                        <TextBox x:Name="TxtDialogInput" Visibility="Collapsed" Height="45" Background="#2A2D45" Foreground="White" CaretBrush="White" BorderBrush="#35FFFFFF" BorderThickness="1" Padding="15,0" VerticalContentAlignment="Center" Margin="0,0,0,25">
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="12"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
-
-                        <!-- Selection List (Optional) -->
-                        <ListBox x:Name="ListDialogOptions" Visibility="Collapsed" Background="#2A2D45" BorderThickness="0" MaxHeight="200" Margin="0,0,0,25" Foreground="White" SelectionMode="Single">
-
-                            <ListBox.ItemContainerStyle>
-
-                                <Style TargetType="ListBoxItem">
-
-                                    <Setter Property="Padding" Value="10,8"/>
-
-                                    <Setter Property="Margin" Value="0,2"/>
-
-                                    <Setter Property="Template">
-
-                                        <Setter.Value>
-
-                                            <ControlTemplate TargetType="ListBoxItem">
-
-                                                <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="8">
-
-                                                    <ContentPresenter />
-
-                                                </Border>
-
-                                                <ControlTemplate.Triggers>
-
-                                                    <Trigger Property="IsMouseOver" Value="True">
-
-                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#40FFFFFF"/>
-
-                                                    </Trigger>
-
-                                                    <Trigger Property="IsSelected" Value="True">
-
-                                                        <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
-
-                                                        <Setter Property="Foreground" Value="White"/>
-
-                                                    </Trigger>
-
-                                                </ControlTemplate.Triggers>
-
-                                            </ControlTemplate>
-
-                                        </Setter.Value>
-
-                                    </Setter>
-
-                                </Style>
-
-                            </ListBox.ItemContainerStyle>
-
-                        </ListBox>
-
-                        
-
-                        <Grid>
-
-                            <Grid.ColumnDefinitions>
-
-                                <ColumnDefinition Width="*"/>
-
-                                <ColumnDefinition Width="*"/>
-
-                            </Grid.ColumnDefinitions>
-
-                            
-
-                            <Button x:Name="BtnDialogCancel" Content="Cancel" Click="DialogCancel_Click" Grid.Column="0" Margin="0,0,12,0" Background="#15FFFFFF" Foreground="White" BorderThickness="0" Height="50" Visibility="Collapsed" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="CancelBorder" Background="{TemplateBinding Background}" CornerRadius="14" BorderBrush="Transparent" BorderThickness="1">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="CancelBorder" Property="Background" Value="#30FFFFFF"/>
-                                                <Setter TargetName="CancelBorder" Property="BorderBrush" Value="#50FFFFFF"/>
-                                            </Trigger>
-                                            <Trigger Property="IsPressed" Value="True">
-                                                <Setter TargetName="CancelBorder" Property="Background" Value="#10FFFFFF"/>
-                                                <Setter TargetName="CancelBorder" Property="Opacity" Value="0.8"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                            
-                            <Button x:Name="BtnDialogConfirm" Content="Confirm" Click="DialogConfirm_Click" Grid.Column="1" Grid.ColumnSpan="1" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Height="50" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="ConfirmBorder" Background="{TemplateBinding Background}" CornerRadius="14" BorderBrush="Transparent" BorderThickness="1">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="1.0"/>
-                                                <Setter TargetName="ConfirmBorder" Property="BorderBrush" Value="{DynamicResource ThemeGlowBrush}"/>
-                                                <Setter TargetName="ConfirmBorder" Property="Effect">
-                                                    <Setter.Value>
-                                                        <DropShadowEffect Color="{DynamicResource ThemeGlowColor}" BlurRadius="15" Opacity="0.6" ShadowDepth="0"/>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Trigger>
-                                            <Trigger Property="IsPressed" Value="True">
-                                                <Setter TargetName="ConfirmBorder" Property="Opacity" Value="0.8"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-
-                        </Grid>
-
-                    </StackPanel>
-
-                </Grid>
-
+                        <Button x:Name="BtnDialogConfirm"
+                                Content="Confirm"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="DialogConfirm_Click"
+                                Grid.Column="1"
+                                Grid.ColumnSpan="1"
+                                Height="44"/>
+                    </Grid>
+                </StackPanel>
             </Border>
-
         </Grid>
 
     </Grid>

@@ -5,7 +5,7 @@ namespace CosmoWhisper
 {
     public static class CosmoMessage
     {
-        public static async Task<bool> Show(string title, string message, string icon = "✨", bool showCancel = false, string confirmButtonText = "Confirm")
+        public static async Task<bool> Show(string title, string message, string icon = "\uE946", bool showCancel = false, string confirmButtonText = "Confirm")
         {
             if (DashboardWindow.Instance != null)
             {

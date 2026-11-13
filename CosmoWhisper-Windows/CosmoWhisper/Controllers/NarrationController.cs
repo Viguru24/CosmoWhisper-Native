@@ -211,13 +211,13 @@ namespace CosmoWhisper.Controllers
 
                 if (audioFile.StartsWith("Error:"))
                 {
-                    Window.BtnPlaySample.Content = "❌ Failed";
-                    _ = CosmoMessage.Show("Speech Error", audioFile, "🔊");
+                    Window.BtnPlaySample.Content = "Failed";
+                    _ = CosmoMessage.Show("Speech Error", audioFile, "\uE767");
                     await Task.Delay(2000);
                 }
                 else
                 {
-                    Window.BtnPlaySample.Content = "🔊 Playing...";
+                    Window.BtnPlaySample.Content = "Playing...";
                     await AudioRecorder.Shared.PlayAudio(audioFile);
                 }
             }
@@ -233,7 +233,7 @@ namespace CosmoWhisper.Controllers
                 };
                 DiagnosticManager.Shared.TakeSnapshot(ex.Message, state);
                 
-                _ = CosmoMessage.Show("Narration Error", ex.Message, "❌");
+                _ = CosmoMessage.Show("Narration Error", ex.Message, "\uE783");
                 System.Diagnostics.Debug.WriteLine($"Narration Error: {ex.Message}");
             }
             finally

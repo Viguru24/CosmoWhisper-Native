@@ -105,15 +105,7 @@ namespace CosmoWhisper.Controllers
         public void UpdateSignOffUI()
         {
             if (Window.ToggleSignOff == null) return;
-            var p = PreferenceManager.Shared.Preferences;
-            bool isOn = p.EnableSignOff;
-
-            Window.ToggleSignOff.Background = isOn 
-                ? new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#007AFF"))
-                : new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#30FFFFFF"));
-
-            if (Window.DotSignOff != null)
-                Window.DotSignOff.HorizontalAlignment = isOn ? System.Windows.HorizontalAlignment.Right : System.Windows.HorizontalAlignment.Left;
+            Window.ToggleSignOff.IsChecked = PreferenceManager.Shared.Preferences.EnableSignOff;
         }
 
         private void UpdateHintsPlaceholder(TextBox tb)
@@ -135,7 +127,7 @@ namespace CosmoWhisper.Controllers
             {
                 if (VocabularyManager.Shared.Replacements.ContainsKey(key))
                 {
-                    _ = CosmoMessage.Show("Duplicate Entry", $"'{key}' already exists in your vocabulary.", "🗒️");
+                    _ = CosmoMessage.Show("Duplicate Entry", $"'{key}' already exists in your vocabulary.", "\uE946");
                     return;
                 }
 
@@ -198,7 +190,7 @@ namespace CosmoWhisper.Controllers
 
                 if (string.IsNullOrEmpty(newKey) || string.IsNullOrEmpty(newValue))
                 {
-                    _ = CosmoMessage.Show("Invalid Input", "Key and Value cannot be empty.", "⚠️");
+                    _ = CosmoMessage.Show("Invalid Input", "Key and Value cannot be empty.", "\uE7BA");
                     return;
                 }
 
@@ -207,7 +199,7 @@ namespace CosmoWhisper.Controllers
                 {
                     if (VocabularyManager.Shared.Replacements.ContainsKey(newKey))
                     {
-                        _ = CosmoMessage.Show("Duplicate Entry", $"'{newKey}' already exists.", "🗒️");
+                        _ = CosmoMessage.Show("Duplicate Entry", $"'{newKey}' already exists.", "\uE946");
                         return;
                     }
                     VocabularyManager.Shared.RemoveReplacement(item.OriginalKey);

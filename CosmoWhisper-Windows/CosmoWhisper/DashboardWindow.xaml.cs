@@ -6,10 +6,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Windows.Media.SpeechSynthesis;
 using CosmoWhisper.Managers;
@@ -21,6 +21,7 @@ using ComboBox = System.Windows.Controls.ComboBox;
 using ComboBoxItem = System.Windows.Controls.ComboBoxItem;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 using Button = System.Windows.Controls.Button;
+using ToggleButton = System.Windows.Controls.Primitives.ToggleButton;
 using MessageBoxButton = System.Windows.MessageBoxButton;
 using MessageBoxImage = System.Windows.MessageBoxImage;
 using MessageBoxResult = System.Windows.MessageBoxResult;
@@ -85,8 +86,7 @@ namespace CosmoWhisper
         public System.Windows.Controls.ListBox? VocabList => VocabularyViewControl?.VocabListControl;
         public TextBox? TxtVocabHints => VocabularyViewControl?.TxtVocabHintsControl;
         public TextBlock? PlaceholderVocabHints => VocabularyViewControl?.PlaceholderVocabHintsControl;
-        public Border? ToggleSignOff => VocabularyViewControl?.ToggleSignOffControl;
-        public FrameworkElement? DotSignOff => VocabularyViewControl?.DotSignOffControl;
+        public ToggleButton? ToggleSignOff => VocabularyViewControl?.ToggleSignOffControl;
         public TextBox? TxtSignature => VocabularyViewControl?.TxtSignatureControl;
         public TextBlock? PlaceholderSignature => VocabularyViewControl?.PlaceholderSignatureControl;
         public TextBox? TxtNewKey => VocabularyViewControl?.TxtNewKeyControl;
@@ -104,7 +104,7 @@ namespace CosmoWhisper
         public ComboBox? ComboMics => MicrophoneViewControl?.ComboMics;
         public Slider? SldSensitivity => MicrophoneViewControl?.SldSensitivity;
         public TextBlock? TxtSensitivityValue => MicrophoneViewControl?.TxtSensitivityValue;
-        public Border? ToggleInteractionSounds => MicrophoneViewControl?.ToggleInteractionSounds;
+        public ToggleButton? ToggleInteractionSounds => MicrophoneViewControl?.ToggleInteractionSounds;
         public Button? BtnCalibrate => MicrophoneViewControl?.BtnCalibrate;
         
         // Extra missing controls
@@ -118,27 +118,27 @@ namespace CosmoWhisper
         public Button? BtnPlaySample => NarrationViewControl?.BtnPlaySampleControl;
 
         // PreferencesView Controls
-        public Border? ToggleClipboard => PreferencesViewControl?.ToggleClipboardControl;
+        public ToggleButton? ToggleClipboard => PreferencesViewControl?.ToggleClipboardControl;
         public Border? ToggleAutoSubmit => DashboardViewControl?.ToggleAutoSubmitControl;
-        public Border? ToggleAutoCopy => PreferencesViewControl?.ToggleAutoCopyControl;
-        public Border? ToggleSpeechPolish => PreferencesViewControl?.ToggleSpeechPolishControl;
+        public ToggleButton? ToggleAutoCopy => PreferencesViewControl?.ToggleAutoCopyControl;
+        public ToggleButton? ToggleSpeechPolish => PreferencesViewControl?.ToggleSpeechPolishControl;
         public TextBlock? TxtBackupPath => PreferencesViewControl?.TxtBackupPathControl;
         public Button? BtnBackupNow => PreferencesViewControl?.BtnBackupNowControl;
         public TextBlock? TxtHotkey => PreferencesViewControl?.TxtHotkeyControl;
         public TextBlock? TxtListeningPrompt => PreferencesViewControl?.TxtListeningPromptControl;
         public Border? ToggleLocalWhisper => DashboardViewControl?.ToggleLocalWhisperControl;
-        public Border? ToggleForceCloudProxy => PreferencesViewControl?.ToggleForceCloudProxyControl;
-        public Border? ToggleForceDirectApi => PreferencesViewControl?.ToggleForceDirectApiControl;
+        public ToggleButton? ToggleForceCloudProxy => PreferencesViewControl?.ToggleForceCloudProxyControl;
+        public ToggleButton? ToggleForceDirectApi => PreferencesViewControl?.ToggleForceDirectApiControl;
         public Slider? SldWidgetOpacity => PreferencesViewControl?.SldWidgetOpacityControl;
         public TextBlock? TxtWidgetOpacityValue => PreferencesViewControl?.TxtWidgetOpacityValueControl;
         public Slider? SldUIScale => PreferencesViewControl?.SldUIScaleControl;
         public TextBlock? TxtUIScaleValue => PreferencesViewControl?.TxtUIScaleValueControl;
-        public Border? ToggleRegionalSpelling => PreferencesViewControl?.ToggleRegionalSpellingControl;
-        public Border? ToggleLaunchOnStartup => PreferencesViewControl?.ToggleLaunchOnStartupControl;
-        public Border? TogglePasteMode => PreferencesViewControl?.TogglePasteModeControl;
+        public ToggleButton? ToggleRegionalSpelling => PreferencesViewControl?.ToggleRegionalSpellingControl;
+        public ToggleButton? ToggleLaunchOnStartup => PreferencesViewControl?.ToggleLaunchOnStartupControl;
+        public ToggleButton? TogglePasteMode => PreferencesViewControl?.TogglePasteModeControl;
         public ComboBox? ComboDateFormat => PreferencesViewControl?.ComboDateFormatControl;
         public ComboBox? ComboTimeFormat => PreferencesViewControl?.ComboTimeFormatControl;
-        public Border? ToggleAlwaysOnTop => PreferencesViewControl?.ToggleAlwaysOnTopControl;
+        public ToggleButton? ToggleAlwaysOnTop => PreferencesViewControl?.ToggleAlwaysOnTopControl;
         public ComboBox? ComboLocalVoiceEngine => PreferencesViewControl?.ComboLocalVoiceEngineControl;
         public PasswordBox? TxtApiKey => PreferencesViewControl?.TxtApiKeyControl;
         public Border? ToggleLocalOnly => PreferencesViewControl?.ToggleLocalOnlyControl;
@@ -171,6 +171,12 @@ namespace CosmoWhisper
                 InitializeComponent();
 
                 // --- BRANDING & VERSIONING ---
+                var appVer = Assembly.GetExecutingAssembly().GetName().Version;
+                if (TxtAppVersion != null && appVer != null)
+                {
+                    TxtAppVersion.Text = $"v{appVer.Major}.{appVer.Minor}.{appVer.Build}";
+                }
+
                 if (PreferenceManager.Shared.IsDevMode)
                 {
                     // [ORANGE] Development Instance
@@ -209,7 +215,7 @@ namespace CosmoWhisper
                 AudioRecorder.Shared.ErrorOccurred += (msg) =>
                 {
                     System.Diagnostics.Debug.WriteLine($"AUDIO ERROR: {msg}");
-                    Dispatcher.Invoke(() => _ = CosmoMessage.Show("Audio System", msg, "??"));
+                    Dispatcher.Invoke(() => _ = CosmoMessage.Show("Audio System", msg, "\uE783"));
                 };
 
 
@@ -323,13 +329,34 @@ namespace CosmoWhisper
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-                DragMove();
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
+            {
+                try { DragMove(); } catch { }
+            }
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
+        }
+
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            bool isMax = this.WindowState == WindowState.Maximized;
+            if (RootContentBorder != null)
+            {
+                RootContentBorder.Padding = isMax ? new Thickness(7) : new Thickness(0);
+            }
+            if (BtnMaximizeRestore != null)
+            {
+                BtnMaximizeRestore.Content = isMax ? "\uE923" : "\uE922";
+                BtnMaximizeRestore.ToolTip = isMax ? "Restore" : "Maximize";
+            }
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -444,10 +471,10 @@ namespace CosmoWhisper
 
 
         public void SldSensitivity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => _mic?.SensitivityChanged(e.NewValue);
-        public void ToggleInteractionSounds_Click(object sender, MouseButtonEventArgs e) => _mic.ToggleInteractionSounds();
+        public void ToggleInteractionSounds_Click(object sender, RoutedEventArgs e) => _mic.ToggleInteractionSounds();
         public void UpdateInteractionSoundsUI() => _mic.UpdateInteractionSoundsUI();
 
-        public void ToggleAlwaysOnTop_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleAlwaysOnTop();
+        public void ToggleAlwaysOnTop_Click(object sender, RoutedEventArgs e) => _prefs.ToggleAlwaysOnTop();
         public void ApplyAlwaysOnTop() => this.Topmost = PreferenceManager.Shared.Preferences.AlwaysOnTop;
         public void BtnSaveApiKeys_Click(object sender, RoutedEventArgs e) => _intelligence?.SaveApiKeys();
         public async void BtnCalibrate_Click(object sender, RoutedEventArgs e) => await _mic.Calibrate();
@@ -572,7 +599,7 @@ namespace CosmoWhisper
         public void SaveVocabulary_Click(object sender, RoutedEventArgs e) => _vocabulary.SaveVocabulary(((System.Windows.Controls.Button)sender).DataContext);
         public void CancelVocabulary_Click(object sender, RoutedEventArgs e) => _vocabulary.CancelVocabulary(((System.Windows.Controls.Button)sender).DataContext);
         public void TxtSignature_TextChanged(object sender, TextChangedEventArgs e) => _vocabulary.UpdateSignature();
-        public void ToggleSignOff_Click(object sender, MouseButtonEventArgs e) => _vocabulary.ToggleSignOff();
+        public void ToggleSignOff_Click(object sender, RoutedEventArgs e) => _vocabulary.ToggleSignOff();
 
         private void Preferences_Click(object sender, RoutedEventArgs e) => _navigation.ShowPreferences();
 
@@ -607,7 +634,7 @@ namespace CosmoWhisper
             TxtVaultPassword.Password = "";
             
             // Dynamic UI
-            if (TxtVaultTitle != null) TxtVaultTitle.Text = isRestore ? "\uD83D\uDD13 Unlock Your Vault" : "\uD83D\uDD12 Secure Your Vault";
+            if (TxtVaultTitle != null) TxtVaultTitle.Text = isRestore ? "Unlock Your Vault" : "Secure Your Vault";
             
             if (isRestore)
             {
@@ -695,7 +722,7 @@ namespace CosmoWhisper
         private TaskCompletionSource<string?>? _listDialogTask;
         private TaskCompletionSource<string?>? _inputDialogTask;
 
-        public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "", string icon = "\uD83D\uDCDD")
+        public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "", string icon = "\uE70F")
         {
             _inputDialogTask = new TaskCompletionSource<string?>();
             TxtDialogTitle.Text = title;
@@ -717,7 +744,7 @@ namespace CosmoWhisper
             return await _inputDialogTask.Task;
         }
 
-        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "\uD83D\uDCC2")
+        public async Task<string?> ShowListDialogAsync(string title, string message, IEnumerable<string> options, string icon = "\uE8B7")
         {
             _listDialogTask = new TaskCompletionSource<string?>();
             TxtDialogTitle.Text = title;
@@ -745,21 +772,15 @@ namespace CosmoWhisper
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
             
             UniversalDialog.Opacity = 0;
-            DialogScale.ScaleX = 0.8;
-            DialogScale.ScaleY = 0.8;
+            DialogScale.ScaleX = 0.92;
+            DialogScale.ScaleY = 0.92;
             UniversalDialog.Visibility = Visibility.Visible;
             UniversalDialog.IsHitTestVisible = true;
             
-            // Animate in
-            var fadeAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(300)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
-            var scaleXAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(400)) { EasingFunction = new BackEase { Amplitude = 0.3, EasingMode = EasingMode.EaseOut } };
-            var scaleYAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(400)) { EasingFunction = new BackEase { Amplitude = 0.3, EasingMode = EasingMode.EaseOut } };
-            
-            // Add background blur
-            var blur = new BlurEffect { Radius = 0 };
-            RootContentBorder.Effect = blur;
-            var blurAnim = new DoubleAnimation(10, TimeSpan.FromMilliseconds(300)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
-            blur.BeginAnimation(BlurEffect.RadiusProperty, blurAnim);
+            // Animate in (GPU-composited opacity & scale only)
+            var fadeAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(220)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
+            var scaleXAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(260)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var scaleYAnim = new DoubleAnimation(1, TimeSpan.FromMilliseconds(260)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
             
             UniversalDialog.BeginAnimation(OpacityProperty, fadeAnim);
             DialogScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnim);
@@ -768,7 +789,7 @@ namespace CosmoWhisper
             return Task.CompletedTask;
         }
 
-        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "\u2728", bool showCancel = false, string confirmButtonText = "Confirm")
+        public async Task<bool> ShowDialogAsync(string title, string message, string icon = "\uE946", bool showCancel = false, string confirmButtonText = "Confirm")
         {
             _dialogTask = new TaskCompletionSource<bool>();
             if (TxtDialogTitle != null) TxtDialogTitle.Text = title;
@@ -814,25 +835,18 @@ namespace CosmoWhisper
         private async Task HideDialogAsync()
         {
             UniversalDialog.IsHitTestVisible = false;
-            var fadeAnim = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
-            var scaleXAnim = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
-            var scaleYAnim = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(200)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
-
-            if (RootContentBorder.Effect is BlurEffect blur)
-            {
-                var blurAnim = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
-                blur.BeginAnimation(BlurEffect.RadiusProperty, blurAnim);
-            }
+            var fadeAnim = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
+            var scaleXAnim = new DoubleAnimation(0.95, TimeSpan.FromMilliseconds(180)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
+            var scaleYAnim = new DoubleAnimation(0.95, TimeSpan.FromMilliseconds(180)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
 
             UniversalDialog.BeginAnimation(OpacityProperty, fadeAnim);
             DialogScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnim);
             DialogScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnim);
 
-            await Task.Delay(300);
+            await Task.Delay(180);
             UniversalDialog.Visibility = Visibility.Collapsed;
             TxtDialogInput.Visibility = Visibility.Collapsed;
             ListDialogOptions.Visibility = Visibility.Collapsed;
-            RootContentBorder.Effect = null;
         }
 
         private void UniversalDialog_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -840,7 +854,7 @@ namespace CosmoWhisper
             e.Handled = true; // Prevent clicking through the backdrop
         }
 
-        internal void ShowToast(string message, string icon = "\u2728")
+        internal void ShowToast(string message, string icon = "\uE73E")
         {
             if (ToastContainer == null || TxtToastMessage == null || TxtToastIcon == null) return;
 
@@ -867,9 +881,9 @@ namespace CosmoWhisper
 
 
 
-        public void ToggleRegionalSpelling_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleRegionalSpelling();
+        public void ToggleRegionalSpelling_Click(object sender, RoutedEventArgs e) => _prefs.ToggleRegionalSpelling();
 
-        public void ToggleLaunchOnStartup_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLaunchOnStartup();
+        public void ToggleLaunchOnStartup_Click(object sender, RoutedEventArgs e) => _prefs.ToggleLaunchOnStartup();
 
 
 
@@ -891,15 +905,15 @@ namespace CosmoWhisper
                 _prefs?.SetTimeFormat(tf);
         }
 
-        public void ToggleClipboard_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleClipboard();
-        public void TogglePasteMode_Click(object sender, MouseButtonEventArgs e) => _prefs.TogglePasteMode();
+        public void ToggleClipboard_Click(object sender, RoutedEventArgs e) => _prefs.ToggleClipboard();
+        public void TogglePasteMode_Click(object sender, RoutedEventArgs e) => _prefs.TogglePasteMode();
         public void ToggleAutoSubmit_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleAutoSubmit();
-        public void ToggleAutoCopy_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleAutoCopy();
-        public void ToggleSpeechPolish_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleSpeechPolish();
+        public void ToggleAutoCopy_Click(object sender, RoutedEventArgs e) => _prefs.ToggleAutoCopy();
+        public void ToggleSpeechPolish_Click(object sender, RoutedEventArgs e) => _prefs.ToggleSpeechPolish();
         public void BtnRestore_Click(object sender, RoutedEventArgs e) => _prefs.RestoreBackup();
         public void ToggleLocalWhisper_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLocalWhisper();
-        public void ToggleForceCloudProxy_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleForceCloudProxy();
-        public void ToggleForceDirectApi_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleForceDirectApi();
+        public void ToggleForceCloudProxy_Click(object sender, RoutedEventArgs e) => _prefs.ToggleForceCloudProxy();
+        public void ToggleForceDirectApi_Click(object sender, RoutedEventArgs e) => _prefs.ToggleForceDirectApi();
         public void ToggleLocalOnly_Click(object sender, MouseButtonEventArgs e) => _prefs.ToggleLocalOnly();
         public void ComboLocalVoiceEngine_SelectionChanged(object sender, SelectionChangedEventArgs e) => _prefs.LocalVoiceEngineChanged(sender, e);
         public void StartActivationCapture_Click(object sender, MouseButtonEventArgs e) => _prefs.StartActivationCapture();
@@ -934,7 +948,7 @@ namespace CosmoWhisper
         public async void RefreshStatus_Click(object sender, RoutedEventArgs e)
         {
             await _dashboard.CheckAuthStatus();
-            ShowToast("Account Status Refreshed", "🔄");
+            ShowToast("Account Status Refreshed", "\uE72C");
         }
 
         public void UpgradeToPro_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://CosmoWhisper.com/pricing", UseShellExecute = true });
@@ -1175,7 +1189,7 @@ namespace CosmoWhisper
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error opening Groq URL: {ex.Message}");
-                _ = CosmoMessage.Show("Error", "Could not open browser. Please visit console.groq.com manually.", "❌");
+                _ = CosmoMessage.Show("Error", "Could not open browser. Please visit console.groq.com manually.", "\uE783");
             }
         }
 
@@ -1188,7 +1202,7 @@ namespace CosmoWhisper
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error opening Library URL: {ex.Message}");
-                _ = CosmoMessage.Show("Error", "Could not open browser. Please visit CosmoWhisper.com manually.", "❌");
+                _ = CosmoMessage.Show("Error", "Could not open browser. Please visit CosmoWhisper.com manually.", "\uE783");
             }
         }
 
@@ -1220,7 +1234,7 @@ namespace CosmoWhisper
 
             _navigation.ShowDashboard();
             
-            _ = CosmoMessage.Show("Setup Complete", "Welcome to CosmoWhisper! You can change these settings anytime in the sidebar.", "✨");
+            _ = CosmoMessage.Show("Setup Complete", "Welcome to CosmoWhisper! You can change these settings anytime in the sidebar.", "\uE73E");
         }
         public void RestartSetup_Click(object sender, RoutedEventArgs e)
         {

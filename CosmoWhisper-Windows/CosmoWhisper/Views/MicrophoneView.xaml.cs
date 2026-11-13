@@ -17,7 +17,7 @@ namespace CosmoWhisper.Views
 
         private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
-        private void ToggleInteractionSounds_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleInteractionSounds_Click(sender, e);
+        private void ToggleInteractionSounds_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleInteractionSounds_Click(sender, e);
         private void BtnCalibrate_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnCalibrate_Click(sender, e);
     }
 }

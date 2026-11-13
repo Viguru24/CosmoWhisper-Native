@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input;
 using Button = System.Windows.Controls.Button;
+using ToggleButton = System.Windows.Controls.Primitives.ToggleButton;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
@@ -23,6 +24,7 @@ using ComboBoxItem = System.Windows.Controls.ComboBoxItem;
 using TextBox = System.Windows.Controls.TextBox;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Colors = System.Windows.Media.Colors;
 
@@ -126,33 +128,31 @@ namespace CosmoWhisper.Controllers
         }
 
 
+        public void UpdateToggle(ToggleButton? toggle, bool isOn)
+        {
+            if (toggle == null) return;
+            toggle.IsChecked = isOn;
+        }
+
         public void UpdateToggle(Border? toggle, bool isOn)
         {
             if (toggle == null) return;
 
+            var successBrush = Application.Current.TryFindResource("ThemeSuccessBrush") as Brush ?? Brushes.MediumSeaGreen;
+            var accentBrush = Application.Current.TryFindResource("ThemeAccentBrush") as Brush ?? Brushes.DodgerBlue;
+            var subtleBrush = Application.Current.TryFindResource("ThemeSubtleSurfaceBrush") as Brush ?? Brushes.DimGray;
+            var hoverBorderBrush = Application.Current.TryFindResource("ThemeCardBorderHoverBrush") as Brush ?? Brushes.Gray;
+
             if (toggle.Name == "ToggleLocalWhisperControl")
             {
-                if (isOn)
+                var stateBrush = isOn ? successBrush : accentBrush;
+                toggle.Background = stateBrush;
+                toggle.BorderBrush = stateBrush;
+                if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = isOn ? "\uE7F4" : "\uE753";
+                if (Window.LocalWhisperGlow != null)
                 {
-                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
-                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
-                    if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = "💻";
-                    if (Window.LocalWhisperGlow != null)
-                    {
-                        Window.LocalWhisperGlow.Opacity = 0.35;
-                        Window.LocalWhisperGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
-                    }
-                }
-                else
-                {
-                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
-                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
-                    if (Window.LocalWhisperIcon != null) Window.LocalWhisperIcon.Text = "☁";
-                    if (Window.LocalWhisperGlow != null)
-                    {
-                        Window.LocalWhisperGlow.Opacity = 0.35;
-                        Window.LocalWhisperGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"));
-                    }
+                    Window.LocalWhisperGlow.Opacity = 0.35;
+                    Window.LocalWhisperGlow.Fill = stateBrush;
                 }
 
                 if (Window.TxtLocalWhisperStatus != null)
@@ -167,20 +167,20 @@ namespace CosmoWhisper.Controllers
             {
                 if (isOn)
                 {
-                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
-                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
-                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "↵";
+                    toggle.Background = successBrush;
+                    toggle.BorderBrush = successBrush;
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "\uE751";
                     if (Window.AutoSubmitGlow != null)
                     {
                         Window.AutoSubmitGlow.Opacity = 0.35;
-                        Window.AutoSubmitGlow.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34C759"));
+                        Window.AutoSubmitGlow.Fill = successBrush;
                     }
                 }
                 else
                 {
-                    toggle.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#20FFFFFF"));
-                    toggle.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#80FFFFFF"));
-                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "✕";
+                    toggle.Background = subtleBrush;
+                    toggle.BorderBrush = hoverBorderBrush;
+                    if (Window.AutoSubmitIcon != null) Window.AutoSubmitIcon.Text = "\uE711";
                     if (Window.AutoSubmitGlow != null)
                     {
                         Window.AutoSubmitGlow.Opacity = 0.05;
@@ -194,9 +194,7 @@ namespace CosmoWhisper.Controllers
                 return;
             }
 
-            toggle.Background = isOn
-                ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007AFF"))
-                : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#30FFFFFF"));
+            toggle.Background = isOn ? accentBrush : subtleBrush;
 
             if (toggle.Child is System.Windows.Shapes.Ellipse ellipse)
             {
@@ -218,7 +216,7 @@ namespace CosmoWhisper.Controllers
             p.UsePasteMode = !p.UsePasteMode;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.TogglePasteMode, p.UsePasteMode);
-            Window.ShowToast(p.UsePasteMode ? "Instant Paste Enabled" : "Natural Typing Enabled", "\uD83D\uDCCB");
+            Window.ShowToast(p.UsePasteMode ? "Instant Paste Enabled" : "Natural Typing Enabled", "\uE77F");
         }
 
         public void ToggleAutoSubmit()
@@ -227,7 +225,7 @@ namespace CosmoWhisper.Controllers
             p.AutoSubmit = !p.AutoSubmit;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoSubmit, p.AutoSubmit);
-            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "\u26A1");
+            Window.ShowToast(p.AutoSubmit ? "Auto-Submit Enabled" : "Auto-Submit Disabled", "\uE751");
         }
 
         public void ToggleAutoCopy()
@@ -236,7 +234,7 @@ namespace CosmoWhisper.Controllers
             p.AutoCopy = !p.AutoCopy;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleAutoCopy, p.AutoCopy);
-            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uD83D\uDCCB");
+            Window.ShowToast(p.AutoCopy ? "Auto-Copy Enabled" : "Auto-Copy Disabled", "\uE8C8");
         }
 
 
@@ -272,7 +270,7 @@ namespace CosmoWhisper.Controllers
 
                 if (string.IsNullOrWhiteSpace(name)) return; // User cancelled
 
-                btn.Content = "\u23F3 Backing Up...";
+                btn.Content = "Backing Up...";
                 btn.IsEnabled = false;
 
                 var p = PreferenceManager.Shared.Preferences;
@@ -284,19 +282,19 @@ namespace CosmoWhisper.Controllers
                 
                 await System.Threading.Tasks.Task.Delay(500);
 
-                btn.Content = "\u2705 Secured";
+                btn.Content = "✓ Secured";
                 long size = new FileInfo(backupPath).Length;
                 string sizeDisplay = size < 1024 * 1024 ? $"{(size / 1024.0):F1} KB" : $"{(size / (1024.0 * 1024.0)):F2} MB";
                 string type = string.IsNullOrEmpty(password) ? "Unencrypted ZIP" : "Encrypted Vault";
 
                 await Window.ShowDialogAsync("Backup Complete", 
                     $"Configuration successfully saved!\n\nFile: {Path.GetFileName(backupPath)}\nType: {type}\nSize: {sizeDisplay}", 
-                    "\u2705");
+                    "\uE73E");
             }
             catch (Exception ex)
             {
-                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "\u274C");
-                btn.Content = "\u274C Failed";
+                await Window.ShowDialogAsync("Backup Failed", $"Error: {ex.Message}", "\uE783");
+                btn.Content = "Failed";
             }
             finally
             {
@@ -310,7 +308,7 @@ namespace CosmoWhisper.Controllers
         {
             if (_isRestoreInProgress) 
             {
-                Window.ShowToast("Restore already in progress...", "\u23F3");
+                Window.ShowToast("Restore already in progress...", "\uE823");
                 return;
             }
 
@@ -323,19 +321,19 @@ namespace CosmoWhisper.Controllers
 
                 if (!Directory.Exists(destDir))
                 {
-                    await Window.ShowDialogAsync("Backup Folder Missing", $"Directory not found: {destDir}\n\nPlease check your backup path in Settings.", "\uD83D\uDCC2");
+                    await Window.ShowDialogAsync("Backup Folder Missing", $"Directory not found: {destDir}\n\nPlease check your backup path in Settings.", "\uE8B7");
                     return;
                 }
 
-                Window.ShowToast("Scanning Backups...", "\uD83D\uDD0D");
+                Window.ShowToast("Scanning Backups...", "\uE721");
                 var backups = VaultManager.Shared.GetAvailableBackups(destDir);
                 if (backups.Count == 0 || backups == null)
                 {
-                    await Window.ShowDialogAsync("Backup Not Found", "No backup files found in the backup directory.", "\uD83D\uDD0D");
+                    await Window.ShowDialogAsync("Backup Not Found", "No backup files found in the backup directory.", "\uE721");
                     return;
                 }
 
-                string? selectedBackup = await Window.ShowListDialogAsync("Restore Backup", "Select a restore point to apply:", backups, "\u23F3");
+                string? selectedBackup = await Window.ShowListDialogAsync("Restore Backup", "Select a restore point to apply:", backups, "\uE81C");
                 if (string.IsNullOrEmpty(selectedBackup)) 
                 {
                     return;
@@ -356,7 +354,7 @@ namespace CosmoWhisper.Controllers
                 // 1. Confirm Restore
                 bool confirm = await Window.ShowDialogAsync("Confirm Restore?", 
                     "Restoring a backup requires an application restart.\n\nCosmoWhisper will close, apply your settings, and launch automatically.\n\nContinue?", 
-                    "\u26A0\uFE0F", true);
+                    "\uE7BA", true);
                 
                 if (!confirm) 
                 {
@@ -364,7 +362,7 @@ namespace CosmoWhisper.Controllers
                 }
 
                 // 2. Extract to Staging
-                Window.ShowToast("Decrupting & Verifying...", "\uD83D\uDD13");
+                Window.ShowToast("Decrypting & Verifying...", "\uE785");
                 string stagingPath = await VaultManager.Shared.ExtractToStaging(selectedPath, password);
                 
                 if (string.IsNullOrEmpty(stagingPath) || !Directory.Exists(stagingPath))
@@ -578,7 +576,7 @@ try {{
             p.EnableSpeechPolish = !p.EnableSpeechPolish;
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleSpeechPolish, p.EnableSpeechPolish);
-            Window.ShowToast(p.EnableSpeechPolish ? "AI Speech Polish Enabled \u2728" : "Standard Whisper Active (Legacy)", p.EnableSpeechPolish ? "\u2728" : "\u2699");
+            Window.ShowToast(p.EnableSpeechPolish ? "AI Speech Polish Enabled" : "Standard Whisper Active (Legacy)", p.EnableSpeechPolish ? "\uE945" : "\uE713");
         }
 
         public void ToggleRegionalSpelling()
@@ -669,7 +667,7 @@ try {{
             UpdateToggle(Window.ToggleLocalWhisper, p.UseLocalWhisper);
             
             string status = p.UseLocalWhisper ? "Offline Mode (Local) Enabled" : "Cloud Mode (Groq) Enabled";
-            string icon = p.UseLocalWhisper ? "🛡️" : "☁️";
+            string icon = p.UseLocalWhisper ? "\uE7F4" : "\uE753";
             Window.ShowToast(status, icon);
         }
 
@@ -684,7 +682,7 @@ try {{
             }
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleForceCloudProxy, p.ForceCloudProxy);
-            Window.ShowToast(p.ForceCloudProxy ? "VPN Mode Enabled" : "VPN Mode Disabled", "🛡️");
+            Window.ShowToast(p.ForceCloudProxy ? "VPN Mode Enabled" : "VPN Mode Disabled", "\uEA18");
         }
 
         public void ToggleForceDirectApi()
@@ -698,7 +696,7 @@ try {{
             }
             PreferenceManager.Shared.Save();
             UpdateToggle(Window.ToggleForceDirectApi, p.ForceDirectApi);
-            Window.ShowToast(p.ForceDirectApi ? "Direct API Only Enabled" : "Direct API Only Disabled", "⚡");
+            Window.ShowToast(p.ForceDirectApi ? "Direct API Only Enabled" : "Direct API Only Disabled", "\uE945");
         }
 
         public void ToggleLocalOnly()
@@ -707,7 +705,7 @@ try {{
             p.UseLocalWhisperOnly = !p.UseLocalWhisperOnly;
             PreferenceManager.Shared.Save();
             UpdateLocalOnlyUI();
-            Window.ShowToast(p.UseLocalWhisperOnly ? "Survival Mode Enabled" : "Hybrid Mode Enabled", p.UseLocalWhisperOnly ? "🛡️" : "🌐");
+            Window.ShowToast(p.UseLocalWhisperOnly ? "Survival Mode Enabled" : "Hybrid Mode Enabled", p.UseLocalWhisperOnly ? "\uEA18" : "\uE774");
         }
 
         public void UpdateLocalOnlyUI()
@@ -727,7 +725,7 @@ try {{
                 Window.LocalModeStatusDesc.Text = isOn ? "Zero data leaves this machine. AI model running locally." : "Uses super-fast Groq API with local fallback.";
 
             if (Window.LocalOverlayIcon != null)
-                Window.LocalOverlayIcon.Text = isOn ? "🛡️" : "🌐";
+                Window.LocalOverlayIcon.Text = isOn ? "\uEA18" : "\uE774";
         }
 
         public void ToggleAlwaysOnTop()
@@ -738,7 +736,7 @@ try {{
             UpdateToggle(Window.ToggleAlwaysOnTop, p.AlwaysOnTop);
             
             Window.ApplyAlwaysOnTop();
-            Window.ShowToast(p.AlwaysOnTop ? "Always on Top Enabled" : "Always on Top Disabled", "📌");
+            Window.ShowToast(p.AlwaysOnTop ? "Always on Top Enabled" : "Always on Top Disabled", "\uE718");
         }
 
         public void LocalVoiceEngineChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -752,7 +750,7 @@ try {{
                     p.LocalVoiceEngine = tag;
                     PreferenceManager.Shared.Save();
                     string friendlyName = tag == "WhisperTiny" ? "Whisper Tiny (77MB Fallback)" : "Parakeet Redux (High Accuracy)";
-                    Window.ShowToast($"Local Engine: {friendlyName}", "🎙️");
+                    Window.ShowToast($"Local Engine: {friendlyName}", "\uE720");
                 }
             }
         }

@@ -14,7 +14,7 @@ namespace CosmoWhisper.Controls
         private DashboardWindow? GetParentWindow() => Window.GetWindow(this) as DashboardWindow;
 
         private void BtnAddEntry_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.BtnAddVocab_Click(sender, e);
-        private void ToggleSignOff_Click(object sender, MouseButtonEventArgs e) => GetParentWindow()?.ToggleSignOff_Click(sender, e);
+        private void ToggleSignOff_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.ToggleSignOff_Click(sender, e);
         private void BtnResetDefaults_Click(object sender, RoutedEventArgs e) => GetParentWindow()?.LoadExamples_Click(sender, e);
         
         private void DeleteVocabulary_Click(object sender, RoutedEventArgs e) 
