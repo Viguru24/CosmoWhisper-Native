@@ -121,6 +121,7 @@ namespace CosmoWhisper.Managers
         public bool UseLocalWhisper { get; set; } = false; // Enable local Whisper fallback (Disabled by default)
         public bool UseLocalWhisperOnly { get; set; } = false; // Force local usage only
         public string LocalVoiceEngine { get; set; } = "ParakeetRedux"; // "ParakeetRedux" or "WhisperTiny"
+        public bool UseGpuAcceleration { get; set; } = true; // Local Whisper: prefer CUDA GPU, auto-fallback to CPU
         public bool ForceCloudProxy { get; set; } = false; // Force Cloud Proxy (VPN Mode)
         private bool _forceDirectApi = false;
         public bool ForceDirectApi { get => _forceDirectApi; set { _forceDirectApi = value; OnPropertyChanged(nameof(ForceDirectApi)); } }
